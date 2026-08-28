@@ -500,14 +500,19 @@ void update_wifi_ip_label(const char * ip_str) {
 void show_calibration_result_msg(bool success) {
     if (mfs_lvgl_lock(-1)) {
         lv_obj_t * mbox = lv_msgbox_create(NULL);
+        
+        // Force the message box to fit within the 172px portrait width
+        lv_obj_set_width(mbox, 160); 
+        
         if (success) {
-            lv_msgbox_add_title(mbox, "Calibration Success!");
-            lv_msgbox_add_text(mbox, "New calibration matrices have been generated\nand saved successfully.");
+            lv_msgbox_add_title(mbox, "Success!");
+            lv_msgbox_add_text(mbox, "Calibration saved.");
         } else {
-            lv_msgbox_add_title(mbox, "Calibration Failed!");
-            lv_msgbox_add_text(mbox, "Math failed.\nEnsure you wave the wand in a Figure-8\nmotion across all 3 dimensions.");
+            lv_msgbox_add_title(mbox, "Failed!");
+            lv_msgbox_add_text(mbox, "Move in a Figure-8 across all 3 axes.");
         }
-        lv_msgbox_add_close_button(mbox);
+        
+        lv_obj_t * close_btn = lv_msgbox_add_close_button(mbox);
         lv_obj_center(mbox);
         mfs_lvgl_unlock();
     }
@@ -1017,4 +1022,5 @@ void update_detector_ui(const UIData *data) {
         mfs_lvgl_unlock();
     }
 }
+
 
