@@ -1,0 +1,16 @@
+{
+  "minutesOffsetToUTC": -240,
+  "timezonelabel": "EDT",
+  "brightness": 78,
+  "volume": 41,
+  "audio_gain": 3,
+  "cycle_count": 400,
+  "is_muted": true,
+  "auto_tare_on": false,
+  "audio_base_freq": 40.0,
+  "audio_max_freq": 2500.0,
+  "audio_waveform": 0,
+  "wifi_ssid": "MySpectrumWiFi88-2G",
+  "wifi_password": "terrificbike271",
+  "enable_serial_logging": false
+}

@@ -1,0 +1,279 @@
+C:\Users\rguilmet>tree /f C:\Users\rguilmet\Documents\Arduino\Magnetic_Field_Scanner
+Folder PATH listing for volume OS
+Volume serial number is 000000C6 DE93:B925
+C:\USERS\RGUILMET\DOCUMENTS\ARDUINO\MAGNETIC_FIELD_SCANNER
+│   .gitignore
+│   calibration.json
+│   CHANGELOG.md
+│   custom_large_partitions.csv
+│   GEMINI.md
+│   LICENSE
+│   lv_conf.h
+│   Magnetic_Field_Scanner.ino
+│   platformio.ini
+│   README.md
+│   settings.json
+│   user_config.h
+│
+├───docs
+│   │   critical_design_review.md
+│   │   folder_review.md
+│   │   opus_critical_design_review.md
+│   │   project_overview.md
+│   │   session_handoff.md
+│   │   user_manual.md
+│   │
+│   ├───articles
+│   │   ├───I2C
+│   │   │       Choosing the Correct I2C Devices (slva787).pdf
+│   │   │       I2C Bus Pullup Resistor Calculation (slva689).pdf
+│   │   │       I2C Bus Speciifiction UM10204.pdf
+│   │   │       I2C Dynamic Addressing (scaa137).pdf
+│   │   │       I2C Infographc (slyt658).pdf
+│   │   │       Maximum Clock Frequency of I2C Bus Using Repeaters (slva695).pdf
+│   │   │       Understanding the I2C Bus (slva704).pdf
+│   │   │       Understanding Transient Drive Strength (sluaaw1a).pdf
+│   │   │
+│   │   └───RM3100
+│   │           Hackaday.io Project RM3100 Details.pdf
+│   │           Investigation of a low-cost magneto-inductive magnetometer (gi-7-129-2018).pdf
+│   │           Low-cost magnetometer system (1-s2.0-S2468067224000749-main).pdf
+│   │           RM3100 Magnetometer on a Chip.pdf
+│   │           Single-event effect testing of the PNI RM3100 magnetometer (gi-11-219-2022).pdf
+│   │
+│   ├───datasheets
+│   │   ├───AXS15231B
+│   │   │       AXS15231B_Datasheet_V0.5.pdf
+│   │   │
+│   │   ├───ES7210
+│   │   │       ES7210.pdf
+│   │   │
+│   │   ├───ES8311
+│   │   │       ES8311.DS.pdf
+│   │   │       ES8311.user.Guide.pdf
+│   │   │
+│   │   ├───ESP32-S3
+│   │   │       esp32-s3_datasheet_en.pdf
+│   │   │       esp32-s3_technical_reference_manual_en.pdf
+│   │   │
+│   │   ├───PCF85063
+│   │   │       PCF85063_datasheet.pdf
+│   │   │
+│   │   ├───PCT85063
+│   │   │       PCT85063_datasheet.pdf
+│   │   │
+│   │   ├───QMI8658C
+│   │   │       QMI8658C_datasheet_rev_0.9.pdf
+│   │   │
+│   │   ├───RM3100
+│   │   │       RM3100 Arduino Quick Guide.pdf
+│   │   │       RM3100-Breakout-Board-Product-Sheet.pdf
+│   │   │       RM3100-Breakout-Board.pdf
+│   │   │       RM3100-Datasheet.pdf
+│   │   │       RM3100-User-Manual.pdf
+│   │   │
+│   │   ├───ST7701S
+│   │   │       ST7701S_SPEC_V1.4.pdf
+│   │   │
+│   │   ├───TCA9554
+│   │   │       tca9554.pdf
+│   │   │
+│   │   ├───W25Q128JVSI
+│   │   │       16MB_W25Q128JV.pdf
+│   │   │
+│   │   └───Waveshare ESP32-S3-Touch-LCD-3.49-v2
+│   │           Schematic ESP32-S3-Touch-LCD-3.49 V2.pdf
+│   │           Waveshare ESP32-S3-Touch-LCD-3.49 v2 gpio_pin_mapping.csv
+│   │           Waveshare ESP32-S3-Touch-LCD-3.49 v2 gpio_pin_mapping.xlsx
+│   │           Waveshare ESP32-S3-Touch-LCD-3.49 v2 specifications.docx
+│   │
+│   ├───electrical
+│   │   └───wiring
+│   ├───images
+│   │       ESP32-S3-Touch-LCD-3.49-ArduinoToolCfg-18487604f20ee06f9c543932301bdffe.png
+│   │       ESP32-S3-Touch-LCD-3.49-Blank_Landscape.png
+│   │       ESP32-S3-Touch-LCD-3.49-Blank_Portrait.png
+│   │       ESP32-S3-Touch-LCD-3.49-DocHeader-1-2669fb1ab64cd743be19858549427792.png
+│   │       ESP32-S3-Touch-LCD-3.49-HW-d45f2a0617c5f4e05d497ae3533752b7.png
+│   │       ESP32-S3-Touch-LCD-3.49-ProductSize-1-b798e9adb46e2dde7847e5227739baf6.png
+│   │       ESP32-S3-Touch-LCD-3.49-ProductSize-2-53f7565186c1f234cee2f71812a7628d.png
+│   │       Magnetic Field Scanner - Calibration&Tracking.png
+│   │       Magnetic Field Scanner - Main Screen.png
+│   │       Magnetic Field Scanner - Mechanical Overview.png
+│   │       Magnetic Field Scanner - System&Hardware.png
+│   │       raw Magnetic Field Scanner - Calibration&Tracking.png
+│   │       raw Magnetic Field Scanner - Main Screen.png
+│   │       raw Magnetic Field Scanner - System&Hardware.png
+│   │       RM3100 Breakout Board augumented pinout.png
+│   │
+│   └───mechanical
+│       ├───dwg
+│       │       ESP32-S3-Touch-LCD-3.49.DWG
+│       │       Magnetic Wand.rev1.dwg
+│       │
+│       ├───SolidEdge
+│       │       Board_Holder_REF&MID_Part1_(1.75).par
+│       │       Board_Holder_REF&MID_Part2_(0.75).par
+│       │       Board_Holder_TIP_(0.75).par
+│       │       Display_Holder_rev01.par
+│       │       End Cap (ID 25.5 x OD 30mm x L 30mm).par
+│       │       ESP32-S3-Touch-LCD-3.49.par
+│       │       Internal_Rod_Support.par
+│       │       Shim Sleeve (ID 25.5mm x OD 26.2mm x 40mm) no Base.par
+│       │       Wand_Top_Cap.par
+│       │
+│       └───stl
+│               Board_Holder_REF&MID_Part1_(1.75).stl
+│               Board_Holder_REF&MID_Part2_(0.75).stl
+│               Board_Holder_TIP_(0.75).stl
+│               Display_Holder_rev01.stl
+│               End Cap (ID 25.5 x OD 30mm x L 30mm).stl
+│               Internal_Rod_Support.stl
+│               Shim Sleeve (ID 25.5mm x OD 26.2mm x 40mm) no Base.stl
+│               Wand_Top_Cap.stl
+│
+├───example_logs
+│       2026-08-26_17-15-19.913-240_log.csv
+│       2026-08-26_17-23-10.873-240_calibration.csv
+│       2026-08-26_19-17-59.032-240_calibration.csv
+│       2026-08-26_19-55-14.011-240_log.csv
+│       calculated-calibration.json
+│
+├───golden_files
+│       MASTER-calibration.csv
+│       MASTER-calibration.json
+│       MASTER-settings.json
+│
+├───scripts
+│       analyze_log.py
+│       calibrate_wand.py
+│       generate_plots.py
+│
+└───src
+    ├───axs15231b
+    │       esp_lcd_axs15231b.c
+    │       esp_lcd_axs15231b.h
+    │
+    ├───button_bsp
+    │       button_bsp.c
+    │       button_bsp.h
+    │       multi_button.c
+    │       multi_button.h
+    │
+    ├───codec_board
+    │   │   .component_hash
+    │   │   board_cfg.h
+    │   │   board_cfg.txt
+    │   │   cfg_parse.c
+    │   │   CHANGELOG.md
+    │   │   CMakeLists.txt
+    │   │   codec_board.c
+    │   │   codec_board.h
+    │   │   codec_init.c
+    │   │   codec_init.h
+    │   │   dummy_codec.c
+    │   │   dummy_codec.h
+    │   │   idf_component.yml
+    │   │   lcd_init.c
+    │   │   LICENSE
+    │   │   README.md
+    │   │
+    │   └───drv
+    │           tca9554.c
+    │           tca9554.h
+    │
+    ├───esp_codec_dev
+    │   │   .component_hash
+    │   │   audio_codec_sw_vol.c
+    │   │   audio_codec_sw_vol.h
+    │   │   CHANGELOG.md
+    │   │   CMakeLists.txt
+    │   │   esp_codec_dev.c
+    │   │   esp_codec_dev_if.c
+    │   │   esp_codec_dev_vol.c
+    │   │   idf_component.yml
+    │   │   Kconfig
+    │   │   LICENSE
+    │   │   README.md
+    │   │   README_CN.md
+    │   │
+    │   ├───.vscode
+    │   │       settings.json
+    │   │
+    │   ├───device
+    │   │   ├───es7210
+    │   │   │       es7210.c
+    │   │   │       es7210_reg.h
+    │   │   │
+    │   │   ├───es8311
+    │   │   │       es8311.c
+    │   │   │       es8311_reg.h
+    │   │   │
+    │   │   ├───include
+    │   │   │       es7210_adc.h
+    │   │   │       es8311_codec.h
+    │   │   │
+    │   │   └───priv_include
+    │   │           es_common.h
+    │   │
+    │   ├───include
+    │   │       esp_codec_dev.h
+    │   │       esp_codec_dev_defaults.h
+    │   │       esp_codec_dev_os.h
+    │   │       esp_codec_dev_types.h
+    │   │       esp_codec_dev_vol.h
+    │   │
+    │   ├───interface
+    │   │       audio_codec_ctrl_if.h
+    │   │       audio_codec_data_if.h
+    │   │       audio_codec_gpio_if.h
+    │   │       audio_codec_if.h
+    │   │       audio_codec_vol_if.h
+    │   │
+    │   └───platform
+    │           audio_codec_ctrl_i2c.c
+    │           audio_codec_ctrl_spi.c
+    │           audio_codec_data_i2s.c
+    │           audio_codec_gpio.c
+    │           esp_codec_dev_os.c
+    │
+    ├───i2c_bsp
+    │       i2c_bsp.c
+    │       i2c_bsp.h
+    │
+    ├───lcd_bl_bsp
+    │       lcd_bl_pwm_bsp.c
+    │       lcd_bl_pwm_bsp.h
+    │
+    ├───lvgl_port
+    │       lvgl_port.c
+    │       lvgl_port.h
+    │
+    ├───matrix_math
+    │       matrix_math.h
+    │
+    ├───PCF85063
+    │       rtc_bsp.cpp
+    │       rtc_bsp.h
+    │
+    ├───QMI8658
+    │       qmi_bsp.cpp
+    │       qmi_bsp.h
+    │
+    ├───sdcard
+    │       sdcard_bsp.cpp
+    │       sdcard_bsp.h
+    │
+    ├───tca9554
+    │       esp_io_expander.c
+    │       esp_io_expander.h
+    │       esp_io_expander_tca9554.c
+    │       esp_io_expander_tca9554.h
+    │
+    ├───touch
+    │       esp_lcd_touch.c
+    │       esp_lcd_touch.h
+    │
+    └───wifi_logger
+            wifi_logger.cpp
+            wifi_logger.h
