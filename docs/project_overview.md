@@ -2,7 +2,7 @@
 
 **Document Version:** `v1.1.0`
 **Last Updated:** August 28, 2026
-**Firmware Target:** `v3.1.1`
+**Firmware Target:** `v3.4.0`
 **Python Ecosystem Target:** `v1.1.0`
 
 This document serves as the master source of truth for the Magnetic Field Scanner project. It details the mechanical assembly, electrical wiring, pinouts, firmware architecture, critical pitfalls to avoid in future development, and the roadmap for upcoming features.
@@ -31,6 +31,30 @@ To prevent documentation rot and excessive maintenance overhead, documentation u
   * **Physical Misalignment:** There is a permanent, measured physical flex/bend in the carrier assembly of roughly `~9.4` to `~9.8` degrees. The firmware mathematically eliminates this using the Kabsch alignment algorithm.
 
 ### Mechanical Diagram
+(Assuming visual diagram exists elsewhere)
+
+### Sensor Coordinate Systems & Axis Alignment (Phase 7 Discovery)
+Because the BMI270 IMU and the dual RM3100 Magnetometers are mounted to the same rigid Wand structure, they must speak the exact same 3D spatial language for sensor fusion (Madgwick 9-DOF) to work. A live logging "Alignment Dance" revealed the exact physical orientation of the chips on the Veroboard. 
+
+**The IMU (BMI270) Coordinate System (Right-Handed):**
+* +X Axis: Points **Forward** (Towards the sensor tip)
+* +Y Axis: Points **Left**
+* +Z Axis: Points **Up** (Out of the LCD Screen)
+
+**The Magnetometer (RM3100) Coordinate System (Left-Handed):**
+Due to the physical mounting of the breakout boards inside the wand, the RM3100 acts as a Left-Handed coordinate system relative to the IMU.
+* +X Axis: Points **Left**
+* +Y Axis: Points **Forward**
+* +Z Axis: Points **Down** (Into the ground)
+
+**The Translation Key:**
+To safely feed the Magnetometer data into the Right-Handed 9-DOF Madgwick algorithm, the software applies the following mathematical mapping to the RM3100 (efX_cal, refY_cal, refZ_cal) values:
+`c
+float mag_x =  (float)ref.y;  // Maps RM3100 Forward to IMU Forward
+float mag_y = -(float)ref.x;  // Maps RM3100 Right to IMU Left
+float mag_z = -(float)ref.z;  // Maps RM3100 Down to IMU Up
+`
+This permanently locks the Quaternions to True Magnetic North for accurate post-analysis mapping.
 *(Please place your mechanical drawing in a folder named `docs` in the project root and name it `mechanical_drawing.png` or update this link to point to it).*
 ![Mechanical Drawing of Wand and Waveshare](docs/mechanical_drawing.png)
 
@@ -167,4 +191,5 @@ Following the Phase 3 structural refactor, the firmware heavily adheres to the *
 * **Core 0 (Data/Hardware):** 	ask_sensor_read, 	ask_battery_monitor, 	ask_audio_alert. I2C reads and fast math.
 * **Core 1 (UI/Network):** 	ask_display_update (LVGL), mfs_button_pwr_task, WiFi server.
 * **Mutexes:** mfs_lvgl_lock() must be acquired before touching UI elements from Core 0. log_mux must be acquired before writing to logFile.
+
 
