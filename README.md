@@ -1,5 +1,11 @@
 # Magnetic Field Scanner (MFS) Wand
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Firmware](https://img.shields.io/badge/Firmware-v3.1.1-green.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-ESP32--S3-orange.svg)]()
+[![Build](https://img.shields.io/badge/Build-Arduino%20|%20PlatformIO-lightgrey.svg)]()
+
+
 The Magnetic Field Scanner (MFS) Wand is a high-speed, high-precision spatial magnetic field mapping instrument. Powered by an ESP32-S3, it features dual RM3100 geomagnetic sensors, a 6-axis IMU, an RTOS-driven architecture polling at 400Hz, and a full LVGL-based touchscreen user interface.
 
 ## Hardware Configuration
@@ -95,3 +101,7 @@ The static control pins for the LCD and IMU were aggressively offloaded to the T
 
 ### Compilation Note
 All code files adhere to a strict Semantic Versioning (`vX.Y.Z`) rule enforced at every file iteration. Ensure you are building the latest `user_config.h` baseline.
+
+## Open Source & Contributing
+This project is open-sourced under the **GPLv3 License**. See [LICENSE](LICENSE) for details.
+We welcome community contributions! Please review our [Contribution Guidelines](CONTRIBUTING.md) before submitting pull requests.
