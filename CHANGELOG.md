@@ -1,5 +1,9 @@
 # Changelog
 
+## [v3.3.0] - 2026-08-28
+### Added
+- **Phase 6: Buttery Smooth Radar Dot:** Replaced the raw accelerometer tilt-compensation algorithm with the Madgwick Sensor Fusion quaternions. The UI Radar Dot is now completely stabilized by the gyroscope and immune to physical swinging/acceleration artifacts.
+- **Wand-Frame Quaternions:** Shifted the imu_rotation_deg alignment to occur *before* the sensor fusion block. The Quaternions logged in the CSV now correctly represent the physical orientation of the 3D Wand rather than the internal PCB chip.
 ## [v3.2.3] - 2026-08-28
 ### Changed
 - **Geiger Counter Mode (GCM) Architecture:** Completely rewrote GCM audio generation. It now runs inside the standard phase-accumulator loop as a mathematical 2ms impulse function. This allows GCM to inherit the global udio_gain, squelch, and EMA smoothing naturally, rather than relying on an isolated timing loop.
@@ -131,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Sensor Lockup Bug:** Relaxed the I2C Watchdog. The system now requires >10 consecutive I2C failures (instead of 1) before triggering a hard `initRM3100()` reset.
 - **Audio/Data Shriek Bug:** Implemented a mathematical Slew-Rate limit filter. If any axis jumps by >800 counts in a single 2.5ms frame, it is dropped as physical EMI ("cosmic meteor"), completely eliminating random audio spikes.
 - **Calibration Crash:** Added `vTaskDelay(pdMS_TO_TICKS(10))` every 100 iterations inside the synchronous `wifi_logger.cpp` CSV string parsing loop to prevent the FreeRTOS Task Watchdog Timer (TWDT) from rebooting the core at 99%.
+
 
 
 

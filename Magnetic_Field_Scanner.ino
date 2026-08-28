@@ -474,30 +474,36 @@ void task_sensor_read(void *pvParameters) {
             float acc[3], gyr[3];
             imu_read(acc, gyr);
             
-            // Feed data to Madgwick Filter for Quaternion Fusion
-            MadgwickAHRSupdateIMU(gyr[0], gyr[1], gyr[2], acc[0], acc[1], acc[2]);
-            
-            // Align IMU coordinates to the physical wand shaft
+            // 1. Align IMU coordinates to the physical wand shaft BEFORE sensor fusion
             float angle_rad = cal_config.imu_rotation_deg * (float)M_PI / 180.0f;
             float cosA = cosf(angle_rad);
             float sinA = sinf(angle_rad);
             
+            // Align Accelerometer
             float ax_aligned = acc[0] * cosA - acc[2] * sinA;
             float az_aligned = acc[0] * sinA + acc[2] * cosA;
             acc[0] = ax_aligned;
             acc[2] = az_aligned;
 
-            // Vector Projection for True Down
-            float a_mag = sqrtf(acc[0]*acc[0] + acc[1]*acc[1] + acc[2]*acc[2]);
-            float true_Z = 0.0f;
-            float norm_ax = 0.0f, norm_ay = 0.0f, norm_az = 0.0f;
-            if (a_mag > 0.1f) {
-                norm_ax = acc[0] / a_mag;
-                norm_ay = acc[1] / a_mag; // Gravity Y
-                norm_az = acc[2] / a_mag; // Gravity Z
-                // Dot product of Gradient Vector and Gravity Vector
-                true_Z = ((float)gradX * norm_ax) + ((float)gradY * norm_ay) + ((float)gradZ * norm_az);
-            }
+            // Align Gyroscope
+            float gx_aligned = gyr[0] * cosA - gyr[2] * sinA;
+            float gz_aligned = gyr[0] * sinA + gyr[2] * cosA;
+            gyr[0] = gx_aligned;
+            gyr[2] = gz_aligned;
+            
+            // 2. Feed aligned data to Madgwick Filter for Quaternion Fusion
+            // This ensures the Quaternions represent the WAND in 3D space, not the PCB chip!
+            MadgwickAHRSupdateIMU(gyr[0], gyr[1], gyr[2], acc[0], acc[1], acc[2]);
+            
+            // 3. Extract the Gravity Vector directly from the Quaternions (Buttery Smooth!)
+            // Standard AHRS Gravity formula from unit quaternion (q0=w, q1=x, q2=y, q3=z)
+            float norm_ax = 2.0f * (q1 * q3 - q0 * q2);
+            float norm_ay = 2.0f * (q0 * q1 + q2 * q3);
+            float norm_az = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
+            
+            // 4. Vector Projection for True Down
+            // Dot product of Gradient Vector and the new smooth Gravity Vector
+            float true_Z = ((float)gradX * norm_ax) + ((float)gradY * norm_ay) + ((float)gradZ * norm_az);
 
             bool is_pin = false;
             // Negative threshold for True Z depends on sensor polarity and hemisphere
@@ -535,11 +541,6 @@ void task_sensor_read(void *pvParameters) {
             ui_data.battery_voltage = current_battery_voltage;
 
             xQueueOverwrite(audioQueue, &magnitude);
-            
-            float gx_aligned = gyr[0] * cosA - gyr[2] * sinA;
-            float gz_aligned = gyr[0] * sinA + gyr[2] * cosA;
-            gyr[0] = gx_aligned;
-            gyr[2] = gz_aligned;
             
             // Re-calculate the audio target frequency for logging
             float target_freq = 40.0f;
