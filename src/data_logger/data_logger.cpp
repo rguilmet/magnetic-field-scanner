@@ -93,7 +93,7 @@ extern "C" void start_logging(void) {
         return;
     }
     
-    logFile.println("time_ms,timestamp,version,voltage,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ");
+    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ");
     log_sample_count = 0;
     is_logging = true;
     if (log_mux) xSemaphoreGive(log_mux);
@@ -114,7 +114,7 @@ extern "C" void start_calibration_logging(void) {
         return;
     }
     
-    logFile.println("time_ms,timestamp,version,voltage,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ");
+    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ");
     log_sample_count = 0;
     is_logging = true;
     if (log_mux) xSemaphoreGive(log_mux);
@@ -171,7 +171,7 @@ extern "C" bool process_calibration_file(void) {
         }
         
         // Parse 33 columns. refX is idx 5, tipX is idx 8
-        // time_ms,timestamp,version,voltage,cc,refX,refY,refZ,tipX,tipY,tipZ
+        // time_ms,timestamp,version,voltage,audio_gain,cc,refX,refY,refZ,tipX,tipY,tipZ
         int col = 0;
         int start_idx = 0;
         int len = line.length();
@@ -272,14 +272,14 @@ extern "C" bool process_calibration_file(void) {
 }
 
 
-extern "C" void log_data(uint32_t timestamp, float voltage, int cc, int32_t refX_raw, int32_t refY_raw, int32_t refZ_raw, int32_t tipX_raw, int32_t tipY_raw, int32_t tipZ_raw, int32_t refX_cal, int32_t refY_cal, int32_t refZ_cal, int32_t tipX_cal, int32_t tipY_cal, int32_t tipZ_cal, int32_t calOffsetX, int32_t calOffsetY, int32_t calOffsetZ, int32_t gradX, int32_t gradY, int32_t gradZ, float mag, float nT, float accX, float accY, float accZ, float gyrX, float gyrY, float gyrZ, float freq, bool is_muted, float qw, float qx, float qy, float qz) {
+extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, int cc, int32_t refX_raw, int32_t refY_raw, int32_t refZ_raw, int32_t tipX_raw, int32_t tipY_raw, int32_t tipZ_raw, int32_t refX_cal, int32_t refY_cal, int32_t refZ_cal, int32_t tipX_cal, int32_t tipY_cal, int32_t tipZ_cal, int32_t calOffsetX, int32_t calOffsetY, int32_t calOffsetZ, int32_t gradX, int32_t gradY, int32_t gradZ, float mag, float nT, float accX, float accY, float accZ, float gyrX, float gyrY, float gyrZ, float freq, bool is_muted, float qw, float qx, float qy, float qz) {
     char ts[64];
     get_formatted_timestamp(ts, sizeof(ts), true);
     
     char buffer[512];
     snprintf(buffer, sizeof(buffer), 
-             "%lu,%s,%s,%.2f,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%.1f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%d,%.4f,%.4f,%.4f,%.4f",
-             timestamp, ts, FIRMWARE_VERSION, voltage, cc,
+             "%lu,%s,%s,%.2f,%.1f,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%.1f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%d,%.4f,%.4f,%.4f,%.4f",
+             timestamp, ts, FIRMWARE_VERSION, voltage, audio_gain, cc,
              refX_raw, refY_raw, refZ_raw,
              tipX_raw, tipY_raw, tipZ_raw,
              refX_cal, refY_cal, refZ_cal,

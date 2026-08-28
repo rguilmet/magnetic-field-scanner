@@ -549,7 +549,7 @@ void task_sensor_read(void *pvParameters) {
             }
             if (target_freq > 3000.0f) target_freq = 3000.0f;
 
-            log_data(millis(), current_battery_voltage, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref.x, ref.y, ref.z, tip.x, tip.y, tip.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, gradX, gradY, gradZ, magnitude, nt_value, acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], target_freq, is_muted, q0, q1, q2, q3);
+            log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref.x, ref.y, ref.z, tip.x, tip.y, tip.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, gradX, gradY, gradZ, magnitude, nt_value, acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], target_freq, is_muted, q0, q1, q2, q3);
 
             // --- ON-WAND CALIBRATION LOGIC ---
             if (is_calibrating) {
