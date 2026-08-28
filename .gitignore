@@ -6,3 +6,5 @@ build/
 .vscode/
 scratch/
 github_connect.md
+
+test/
