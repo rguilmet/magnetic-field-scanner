@@ -491,9 +491,13 @@ void task_sensor_read(void *pvParameters) {
             gyr[0] = gx_aligned;
             gyr[2] = gz_aligned;
             
-            // 2. Feed aligned data to Madgwick Filter for Quaternion Fusion
-            // This ensures the Quaternions represent the WAND in 3D space, not the PCB chip!
-            MadgwickAHRSupdateIMU(gyr[0], gyr[1], gyr[2], acc[0], acc[1], acc[2]);
+            // 2. Feed aligned data to Madgwick Filter for Quaternion Fusion (9-DOF)
+            // This ensures the Quaternions represent the WAND in 3D space, anchored to True Magnetic North!
+            float mag_x =  (float)ref.y;  // Maps RM3100 Forward to IMU Forward
+            float mag_y = -(float)ref.x;  // Maps RM3100 Right to IMU Left
+            float mag_z = -(float)ref.z;  // Maps RM3100 Down to IMU Up
+            
+            MadgwickAHRSupdate(gyr[0], gyr[1], gyr[2], acc[0], acc[1], acc[2], mag_x, mag_y, mag_z);
             
             // 3. Extract the Gravity Vector directly from the Quaternions (Buttery Smooth!)
             // Standard AHRS Gravity formula from unit quaternion (q0=w, q1=x, q2=y, q3=z)
