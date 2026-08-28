@@ -289,7 +289,7 @@ extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, in
              mag, nT,
              accX, accY, accZ,
              gyrX, gyrY, gyrZ,
-             freq, is_muted ? 1 : 0);
+             freq, is_muted ? 1 : 0, qw, qx, qy, qz);
 
     if (current_settings.enable_serial_logging) {
         Serial.println(buffer);
@@ -313,4 +313,5 @@ extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, in
     log_sample_count++;
 
 }
+
 
