@@ -391,10 +391,11 @@ static void scan_btn_event_cb(lv_event_t * e) {
 
 
 static void wave_btn_event_cb(lv_event_t * e) {
-    current_settings.audio_waveform = (current_settings.audio_waveform + 1) % 3;
+    current_settings.audio_waveform = (current_settings.audio_waveform + 1) % 4;
     if (current_settings.audio_waveform == 0) lv_label_set_text(wave_label, "SQR");
     else if (current_settings.audio_waveform == 1) lv_label_set_text(wave_label, "TRI");
-    else lv_label_set_text(wave_label, "SIN");
+    else if (current_settings.audio_waveform == 2) lv_label_set_text(wave_label, "SIN");
+    else lv_label_set_text(wave_label, "GCM");
     mark_settings_dirty();
 }
 
@@ -674,7 +675,8 @@ void create_detector_ui(void) {
     wave_label = lv_label_create(wave_btn);
     if (current_settings.audio_waveform == 0) lv_label_set_text(wave_label, "SQR");
     else if (current_settings.audio_waveform == 1) lv_label_set_text(wave_label, "TRI");
-    else lv_label_set_text(wave_label, "SIN");
+    else if (current_settings.audio_waveform == 2) lv_label_set_text(wave_label, "SIN");
+    else lv_label_set_text(wave_label, "GCM");
     lv_obj_center(wave_label);
     
     scan_btn = lv_button_create(tile1);
@@ -1022,5 +1024,6 @@ void update_detector_ui(const UIData *data) {
         mfs_lvgl_unlock();
     }
 }
+
 
 

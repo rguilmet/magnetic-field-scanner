@@ -5,3 +5,4 @@ build/
 *.a
 .vscode/
 scratch/
+github_connect.md

@@ -8,6 +8,7 @@ struct MagData {
 };
 #include <math.h>
 #include "user_config.h"
+#include "src/imu_bsp/MadgwickAHRS.h"
 #include "src/i2c_bsp/i2c_bsp.h"
 #include "src/imu_bsp/imu_bsp.h"
 #include "src/lvgl_port/lvgl_port.h"
@@ -473,6 +474,9 @@ void task_sensor_read(void *pvParameters) {
             float acc[3], gyr[3];
             imu_read(acc, gyr);
             
+            // Feed data to Madgwick Filter for Quaternion Fusion
+            MadgwickAHRSupdateIMU(gyr[0], gyr[1], gyr[2], acc[0], acc[1], acc[2]);
+            
             // Align IMU coordinates to the physical wand shaft
             float angle_rad = cal_config.imu_rotation_deg * (float)M_PI / 180.0f;
             float cosA = cosf(angle_rad);
@@ -545,7 +549,7 @@ void task_sensor_read(void *pvParameters) {
             }
             if (target_freq > 3000.0f) target_freq = 3000.0f;
 
-            log_data(millis(), current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref.x, ref.y, ref.z, tip.x, tip.y, tip.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, gradX, gradY, gradZ, magnitude, nt_value, acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], target_freq, is_muted);
+            log_data(millis(), current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref.x, ref.y, ref.z, tip.x, tip.y, tip.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, gradX, gradY, gradZ, magnitude, nt_value, acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], target_freq, is_muted, q0, q1, q2, q3);
 
             // --- ON-WAND CALIBRATION LOGIC ---
             if (is_calibrating) {
@@ -672,27 +676,55 @@ void task_audio_alert(void *pvParameters) {
         
         float phase_increment = 2.0f * (float)M_PI * smoothed_freq / (float)SAMPLE_RATE;
         
+        static int samples_until_next_click = 0;
+        static int click_duration_remaining = 0;
+        
         for (int i = 0; i < AUDIO_CHUNK; i++) {
-            int16_t sample;
-            if (current_settings.audio_waveform == 0) { // Square
-                // Square waves contain massive harmonic energy, so we heavily attenuate them
-                sample = (phase < (float)M_PI) ? 8192 : -8192; 
-            } else if (current_settings.audio_waveform == 1) { // Triangle
-                // Triangle waves have some harmonics, we slightly attenuate them
-                float t = phase / (2.0f * (float)M_PI);
-                sample = (int16_t)(24000.0f * (2.0f * fabs(2.0f * t - 1.0f) - 1.0f));
-            } else { // Sine
-                // Sine waves have no harmonics, so they need full amplitude to sound as loud
-                sample = (int16_t)(32767.0f * sinf(phase));
-            } 
+            int16_t sample = 0;
+            
+            if (current_settings.audio_waveform == 3 && force_audio_tone == 0) { // Geiger Counter Mode (GCM)
+                if (samples_until_next_click <= 0) {
+                    // Trigger a click
+                    click_duration_remaining = (int)(SAMPLE_RATE * 0.005f); // 5ms click
+                    
+                    // Calculate next delay using log10
+                    float delay_ms = 1000.0f; // Default 1 sec delay for background noise
+                    if (current_audio_nt > 20.0f) {
+                        float log_val = log10f(current_audio_nt);
+                        // Map log10(20) ~ 1.3 to log10(50000) ~ 4.7 -> 1000ms to 10ms
+                        float normalized = (log_val - 1.3f) / 3.4f;
+                        if (normalized < 0.0f) normalized = 0.0f;
+                        if (normalized > 1.0f) normalized = 1.0f;
+                        delay_ms = 1000.0f - (normalized * 990.0f);
+                    }
+                    samples_until_next_click = (int)(SAMPLE_RATE * (delay_ms / 1000.0f));
+                }
+                
+                if (click_duration_remaining > 0) {
+                    // Generate white noise burst for a sharp "click" sound
+                    sample = (int16_t)(esp_random() % 16000 - 8000);
+                    click_duration_remaining--;
+                }
+                samples_until_next_click--;
+                
+            } else { // SQR, TRI, SIN (and override tones)
+                if (current_settings.audio_waveform == 0) { // Square
+                    sample = (phase < (float)M_PI) ? 8192 : -8192; 
+                } else if (current_settings.audio_waveform == 1) { // Triangle
+                    float t = phase / (2.0f * (float)M_PI);
+                    sample = (int16_t)(24000.0f * (2.0f * fabs(2.0f * t - 1.0f) - 1.0f));
+                } else { // Sine
+                    sample = (int16_t)(32767.0f * sinf(phase));
+                }
+                
+                phase += phase_increment;
+                if (phase >= 2.0f * (float)M_PI) {
+                    phase -= 2.0f * (float)M_PI;
+                }
+            }
             
             stream_buf[i * 2] = sample;     // Left
             stream_buf[i * 2 + 1] = sample; // Right
-            
-            phase += phase_increment;
-            if (phase >= 2.0f * (float)M_PI) {
-                phase -= 2.0f * (float)M_PI;
-            }
         }
         
         // Blocks until I2S DMA has space
