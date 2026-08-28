@@ -674,41 +674,30 @@ void task_audio_alert(void *pvParameters) {
             smoothed_freq = (0.2f * target_freq) + (0.8f * smoothed_freq);
         }
         
-        float phase_increment = 2.0f * (float)M_PI * smoothed_freq / (float)SAMPLE_RATE;
+        float actual_freq = smoothed_freq;
+        if (current_settings.audio_waveform == 3 && force_audio_tone == 0) {
+            actual_freq = smoothed_freq / 20.0f; // Scale 40Hz-3000Hz down to 2Hz-150Hz for discrete clicks
+        }
         
-        static int samples_until_next_click = 0;
-        static int click_duration_remaining = 0;
+        float phase_increment = 2.0f * (float)M_PI * actual_freq / (float)SAMPLE_RATE;
+        
+        static int click_samples_remaining = 0;
         
         for (int i = 0; i < AUDIO_CHUNK; i++) {
             int16_t sample = 0;
             
-            if (current_settings.audio_waveform == 3 && force_audio_tone == 0) { // Geiger Counter Mode (GCM)
-                if (samples_until_next_click <= 0) {
-                    // Trigger a click
-                    click_duration_remaining = (int)(SAMPLE_RATE * 0.005f); // 5ms click
-                    
-                    // Calculate next delay using log10
-                    float delay_ms = 1000.0f; // Default 1 sec delay for background noise
-                    if (current_audio_nt > 20.0f) {
-                        float log_val = log10f(current_audio_nt);
-                        // Map log10(20) ~ 1.3 to log10(50000) ~ 4.7 -> 1000ms to 10ms
-                        float normalized = (log_val - 1.3f) / 3.4f;
-                        if (normalized < 0.0f) normalized = 0.0f;
-                        if (normalized > 1.0f) normalized = 1.0f;
-                        delay_ms = 1000.0f - (normalized * 990.0f);
-                    }
-                    samples_until_next_click = (int)(SAMPLE_RATE * (delay_ms / 1000.0f));
+            if (current_settings.audio_waveform == 3 && force_audio_tone == 0) { 
+                // Geiger Counter Mode (Impulse waveform)
+                if (click_samples_remaining > 0) {
+                    // Drive speaker cone back and forth violently for maximum RMS volume during the transient
+                    sample = (click_samples_remaining % 2 == 0) ? 32767 : -32767;
+                    click_samples_remaining--;
+                } else {
+                    sample = 0; // Absolute silence between ticks
                 }
-                
-                if (click_duration_remaining > 0) {
-                    // Generate white noise burst for a sharp "click" sound
-                    sample = (int16_t)(esp_random() % 16000 - 8000);
-                    click_duration_remaining--;
-                }
-                samples_until_next_click--;
-                
             } else { // SQR, TRI, SIN (and override tones)
-                if (current_settings.audio_waveform == 0) { // Square
+                if (current_settings.audio_waveform == 0 || (current_settings.audio_waveform == 3 && force_audio_tone > 0)) { 
+                    // Square (Fallback for GCM if forcing a tone, e.g., camera click)
                     sample = (phase < (float)M_PI) ? 8192 : -8192; 
                 } else if (current_settings.audio_waveform == 1) { // Triangle
                     float t = phase / (2.0f * (float)M_PI);
@@ -716,15 +705,19 @@ void task_audio_alert(void *pvParameters) {
                 } else { // Sine
                     sample = (int16_t)(32767.0f * sinf(phase));
                 }
-                
-                phase += phase_increment;
-                if (phase >= 2.0f * (float)M_PI) {
-                    phase -= 2.0f * (float)M_PI;
-                }
             }
             
             stream_buf[i * 2] = sample;     // Left
             stream_buf[i * 2 + 1] = sample; // Right
+            
+            phase += phase_increment;
+            if (phase >= 2.0f * (float)M_PI) {
+                phase -= 2.0f * (float)M_PI;
+                if (current_settings.audio_waveform == 3 && force_audio_tone == 0) {
+                    // Trigger a 2ms transient click exactly once per cycle (wraparound)
+                    click_samples_remaining = (int)(SAMPLE_RATE * 0.002f); 
+                }
+            }
         }
         
         // Blocks until I2S DMA has space
