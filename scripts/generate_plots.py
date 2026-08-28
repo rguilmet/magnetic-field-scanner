@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Magnetic Field Scanner - 3D Plot Generator
-Version: v1.0.0
+Version: v1.1.0
 
 Specialized utility for visualizing 3D ellipsoid point clouds to verify the 
 mathematical perfection of the sphere-fitting algorithms from raw calibration data.
@@ -87,3 +87,4 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     generate_plot(args.input, args.output, args.show)
+

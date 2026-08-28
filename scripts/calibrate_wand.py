@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Magnetic Field Scanner - Calibration Tool
-Version: v1.0.0
+Version: v1.1.0
 
 Ingests raw calibration.csv datasets, computes the 3x3 Soft-Iron matrices (W) 
 and Hard-Iron center offsets (V), applies Kabsch rotational alignment, and 
@@ -198,3 +198,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
