@@ -43,6 +43,22 @@ To prevent documentation rot and excessive maintenance overhead, documentation u
 * **The Fix:** We permanently installed **4.7K pull-up resistors** in the cable harness directly at the Waveshare connection end (SDA/SCL to 3.3V).
 * **The Result:** Combined with the Waveshare's internal pull-ups, this provides a "stiff" ~2K to ~3K ohm equivalent resistance, which is perfect for fighting the heavy capacitance of the 3-foot cable run down the wand.
 
+### CAT6 Wire Harness & Color Coding
+The internal harness from the Waveshare board to the sensor array utilizes a standard CAT6 twisted-pair cable. It perfectly allocates all 8 wires to support three RM3100 sensors while maximizing electrical integrity over the 48" run.
+
+For the full visual diagram, reference the spreadsheet: docs/electrical/Cable_Color_Code.xlsx.
+
+| Component / Function | ESP32 Pin | CAT6 Color | Twisted Pair Strategy (Signal Integrity) |
+| :--- | :--- | :--- | :--- |
+| **3.3V Power** | 3V3 | Orange | **Power & Sync:** Twisted with DRDY_MID. DC power acts as an AC ground, shielding the digital pulse. |
+| **DRDY_MID** | IO05 | Orange/White | *(Future 3rd Sensor)* |
+| **SDA (Data)** | IO47 | Green | **I2C Data Shield:** Twisted directly with GND to prevent capacitive crosstalk against SCL. |
+| **GND** | GND | Green/White | |
+| **SCL (Clock)** | IO48 | Blue | **I2C Clock Shield:** Twisted directly with GND to prevent signal degradation. |
+| **GND** | GND | Blue/White | |
+| **DRDY_TIP** | IO01 | Brown | **Digital Sync:** Low-frequency (400Hz) digital interrupts paired together. |
+| **DRDY_REF** | IO02 | Brown/White | |
+
 ### I2C Architecture & Device Addresses
 The wand utilizes two completely separate hardware I2C buses to isolate the sensitive long-wire sensors from the noisy high-speed screen components.
 
@@ -151,3 +167,4 @@ Following the Phase 3 structural refactor, the firmware heavily adheres to the *
 * **Core 0 (Data/Hardware):** 	ask_sensor_read, 	ask_battery_monitor, 	ask_audio_alert. I2C reads and fast math.
 * **Core 1 (UI/Network):** 	ask_display_update (LVGL), mfs_button_pwr_task, WiFi server.
 * **Mutexes:** mfs_lvgl_lock() must be acquired before touching UI elements from Core 0. log_mux must be acquired before writing to logFile.
+
