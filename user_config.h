@@ -79,7 +79,7 @@
 
 #define USER_DISP_ROT_90    1
 #define USER_DISP_ROT_NONO  0
-#define FIRMWARE_VERSION "v3.1.1"
+#define FIRMWARE_VERSION "v3.1.2"
 
 // --- Wi-Fi Credentials for Data Download ---
 #define Rotated USER_DISP_ROT_NONO   
@@ -93,4 +93,5 @@
 #define LVGL_SPIRAM_BUFF_LEN (MFS_LCD_H_RES * MFS_LCD_V_RES * 2)
 
 #endif
+
 
