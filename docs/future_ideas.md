@@ -17,3 +17,6 @@ This document captures brainstormed ideas for increasing the usability, capabili
 * **Thermal Drift Compensation:** Use the QMI8658's built-in thermometer to track environmental temperature changes. Apply a mathematical correction curve to the RM3100 readings to prevent the zero-baseline from drifting on hot days.
 * **Kalman Filter for Auto-Tare:** Replace the simple Exponential Moving Average (EMA) auto-tare logic with a 1D Kalman filter to better isolate slow temperature drift from the slow approach of a deep magnetic target.
 * **GPS Mapping:** Integrate a standard NMEA GPS module (using the freed IO43 and IO44 pins) to attach Lat/Lon coordinates to every row in the CSV log. This allows for post-processing the CSV into a visual heat-map overlay on Google Earth or QGIS.
+### 4. Digital Compass and 3D Bubble Level (UI Feature)
+**Concept:** Now that the firmware integrates a full 9-DOF Madgwick filter anchored to Magnetic North, the wand inherently knows its absolute Pitch, Roll, and Yaw in the real world. We can add a new LVGL screen that acts as a precision digital compass and 3D inclinometer (bubble level).
+**Implementation:** Convert the QW, QX, QY, QZ Quaternions into Euler angles within the lvgl_port task and draw a rotating compass dial and a moving level indicator.
