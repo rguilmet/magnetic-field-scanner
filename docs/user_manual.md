@@ -1,8 +1,8 @@
 # Magnetic Field Scanner (MFS) - User Manual
 
-**Document Version:** `v1.0.2`
-**Last Updated:** August 27, 2026 @ 12:46 EST
-**Firmware Target:** `v3.0.36`
+**Document Version:** `v1.1.0`
+**Last Updated:** August 28, 2026
+**Firmware Target:** `v3.1.1`
 **Python Ecosystem Target:** `v1.0.0`
 
 Welcome to the User Manual for the Magnetic Field Scanner (MFS). This guide will walk you through the user interface, calibration process, data logging capabilities, and web server connectivity.
@@ -90,3 +90,4 @@ Unlike earlier prototypes, **v3.0.32 does not require a PC for calibration.** Th
 3. The device will run a native 9x9 Jacobi Eigenvalue solver to extract the Hard Iron center offsets and Soft Iron 3x3 scaling matrices.
 4. It then applies a **Kabsch Rotational Alignment** to mathematically "un-bend" the ~9.4-degree physical flex of the wand's internal fiberglass and board seating on the carrier.
 5. The device will automatically save this to `calibration.json` and apply it to all real-time readings.
+

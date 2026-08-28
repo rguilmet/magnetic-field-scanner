@@ -1,9 +1,9 @@
 # Magnetic Field Scanner - Project Overview
 
-**Document Version:** `v1.0.0`
-**Last Updated:** August 27, 2026 @ 07:34 EST
-**Firmware Target:** `v3.0.32`
-**Python Ecosystem Target:** `v1.0.0`
+**Document Version:** `v1.1.0`
+**Last Updated:** August 28, 2026
+**Firmware Target:** `v3.1.1`
+**Python Ecosystem Target:** `v1.1.0`
 
 This document serves as the master source of truth for the Magnetic Field Scanner project. It details the mechanical assembly, electrical wiring, pinouts, firmware architecture, critical pitfalls to avoid in future development, and the roadmap for upcoming features.
 
@@ -15,7 +15,7 @@ This document serves as the master source of truth for the Magnetic Field Scanne
 
 **Documentation Strategy (The "Definition of Done"):**
 To prevent documentation rot and excessive maintenance overhead, documentation updates are strictly tethered to the SemVer lifecycle:
-* **Patch Releases (e.g., `v3.0.32` -> `v3.0.33`):** Bug fixes and math tweaks. Do *not* update the architectural docs (`project_overview.md`, `user_manual.md`). Log these changes exclusively in the root `CHANGELOG.md`.
+* **Patch Releases (e.g., `v3.1.1` -> `v3.0.33`):** Bug fixes and math tweaks. Do *not* update the architectural docs (`project_overview.md`, `user_manual.md`). Log these changes exclusively in the root `CHANGELOG.md`.
 * **Minor Releases (e.g., `v3.0.x` -> `v3.1.0`):** Adding new functional features (e.g., GPS integration). The feature is not considered complete until both the `CHANGELOG.md` and the relevant `docs/` Markdown files are updated to reflect the new capabilities.
 * **Major Releases (e.g., `v3.x` -> `v4.0.0`):** Massive architectural overhauls (e.g., migrating from I2C to CAN bus). Triggers a comprehensive review and rewrite of all files in the `docs/` directory.
 
@@ -133,3 +133,21 @@ The repository includes a suite of offline Python processing scripts located in 
 2. **GPS Module Integration:**
    * Serial unit to be added to pins `IO43` (TX) and `IO44` (RX).
    * Purpose: To embed geospatial coordinates into the SD log files, allowing post-processing software to map buried utilities directly onto a satellite view.
+
+
+## 8. Firmware Architecture & Single Responsibility Principle
+Following the Phase 3 structural refactor, the firmware heavily adheres to the **Single Responsibility Principle (SRP)**. Monolithic files have been rigorously decomposed to prevent cross-domain contamination, particularly between Core 0 (Sensor/SD) and Core 1 (UI/Web).
+
+### src/ Directory Breakdown:
+* **data_logger/**: Solely responsible for writing 400Hz CSV data to the SD card/FFat and handling file flushes.
+* **settings_manager/**: Exclusively manages the saving, loading, and JSON serialization of SystemSettings and CalibrationConfig.
+* **web_server/**: A pure UI/networking layer running on Core 1. It handles HTTP endpoints, file downloads, uploads, and OTA operations without directly touching hardware logic.
+* **screenshot/**: Isolated LVGL screen capture logic (RGB565 to BMP conversion).
+* **lvgl_port/**: Handles the physical drawing of the screen and UI layout.
+* **matrix_math/**: A pure, header-only implementation of the 9x9 Gaussian elimination and 3D Kabsch alignment algorithms.
+* **Hardware BSPs (i2c_bsp, imu_bsp, tc_bsp)**: Board Support Packages that isolate the direct register-level I2C commands from the main business logic.
+
+**Core Separation & Thread Safety:**
+* **Core 0 (Data/Hardware):** 	ask_sensor_read, 	ask_battery_monitor, 	ask_audio_alert. I2C reads and fast math.
+* **Core 1 (UI/Network):** 	ask_display_update (LVGL), mfs_button_pwr_task, WiFi server.
+* **Mutexes:** mfs_lvgl_lock() must be acquired before touching UI elements from Core 0. log_mux must be acquired before writing to logFile.

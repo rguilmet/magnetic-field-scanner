@@ -1,7 +1,7 @@
 # Repository Review & Publishing Guide (Updated)
 
-**Document Version:** `v1.1.0`
-**Last Updated:** August 27, 2026
+**Document Version:** `v1.2.0`
+**Last Updated:** August 28, 2026
 
 **Objective:** Assess the project structure to determine readiness for GitHub and Hackaday, and provide a roadmap to round it out for the global open-source community.
 
@@ -56,3 +56,4 @@ To make this a top-tier Hackaday project, you still need to provide a complete p
 - [ ] Take the 4 recommended photos and place them in `docs/images/`.
 - [ ] Create a Bill of Materials (`docs/BOM.md`).
 - [ ] Create a simple Wiring Diagram showing the 4.7K pull-ups (`docs/electrical/wiring/`).
+
