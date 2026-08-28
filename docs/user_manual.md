@@ -64,7 +64,8 @@ When logging is active (polling at 400Hz), the MFS generates a `.csv` file (`_lo
 | `time_ms` | CPU uptime in milliseconds |
 | `timestamp` | Human-readable date and time |
 | `version` | Firmware version (e.g., v3.0.32) |
-| `voltage` | Battery voltage level |
+| `voltage` | Battery voltage level (float) |
+| `audio_gain` | UI audio gain multiplier setting |
 | `cc` | RM3100 Cycle Count (e.g., 400) |
 | `refX_raw` -> `tipZ_raw` | Uncalibrated raw axes for Reference and Tip sensors |
 | `refX_cal` -> `tipZ_cal` | Hard/Soft iron corrected and Kabsch-aligned axes |
@@ -76,6 +77,7 @@ When logging is active (polling at 400Hz), the MFS generates a `.csv` file (`_lo
 | `gyrX, gyrY, gyrZ` | IMU Gyroscope data (Degrees per Second) - Maps your physical sweep |
 | `freq` | The PWM Audio frequency being output to the speaker (Hz) |
 | `is_muted` | Boolean flag indicating if the UI speaker is muted |
+| `QW, QX, QY, QZ` | Madgwick Sensor Fusion Quaternions (True 3D Spatial Orientation) |
 
 ---
 
@@ -90,4 +92,5 @@ Unlike earlier prototypes, **v3.0.32 does not require a PC for calibration.** Th
 3. The device will run a native 9x9 Jacobi Eigenvalue solver to extract the Hard Iron center offsets and Soft Iron 3x3 scaling matrices.
 4. It then applies a **Kabsch Rotational Alignment** to mathematically "un-bend" the ~9.4-degree physical flex of the wand's internal fiberglass and board seating on the carrier.
 5. The device will automatically save this to `calibration.json` and apply it to all real-time readings.
+
 
