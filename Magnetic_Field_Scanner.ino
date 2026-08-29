@@ -538,38 +538,36 @@ void task_sensor_read(void *pvParameters) {
                 }
             }
             
-            // 2. Subtract Gyro FOC from raw silicon axes BEFORE any rotations
-            gyr[0] -= cal_config.gyr_offset[0];
-            gyr[1] -= cal_config.gyr_offset[1];
-            gyr[2] -= cal_config.gyr_offset[2];
-            
-            // 3. Un-rotate the physical display tilt in the pure Sensor Frame
-            if (cal_config.imu_rotation_deg != 0.0f) {
-                float angle_rad = -cal_config.imu_rotation_deg * (float)M_PI / 180.0f; 
-                float cosA = cosf(angle_rad);
-                float sinA = sinf(angle_rad);
-                
-                // Pitch is around the Y-axis. 
-                float tax = acc[0]*cosA - acc[2]*sinA;
-                float taz = acc[0]*sinA + acc[2]*cosA;
-                acc[0] = tax;
-                acc[2] = taz;
-                
-                float tgx = gyr[0]*cosA - gyr[2]*sinA;
-                float tgz = gyr[0]*sinA + gyr[2]*cosA;
-                gyr[0] = tgx;
-                gyr[2] = tgz;
-            }
-            
-            // 4. Map to strict North-East-Down (NED)
+            // 2. Map raw axes to strict Right-Handed North-East-Down (NED) BEFORE rotating.
+            // This eliminates the Left-Handed geometric reflection of the raw sensor frame!
             float ned_ax = -acc[0];
             float ned_ay =  acc[1];
             float ned_az =  acc[2];
             
-            // Convert Degrees to Radians!
-            float ned_gx =  gyr[0] * (float)M_PI / 180.0f;
-            float ned_gy = -gyr[1] * (float)M_PI / 180.0f;
-            float ned_gz = -gyr[2] * (float)M_PI / 180.0f;
+            float ned_gx =  (gyr[0] - cal_config.gyr_offset[0]) * (float)M_PI / 180.0f;
+            float ned_gy = -(gyr[1] - cal_config.gyr_offset[1]) * (float)M_PI / 180.0f;
+            float ned_gz = -(gyr[2] - cal_config.gyr_offset[2]) * (float)M_PI / 180.0f;
+            
+            // 3. Un-rotate the physical display tilt in the Right-Handed NED Frame!
+            if (cal_config.imu_rotation_deg != 0.0f) {
+                // To un-pitch a 60 deg UP tilt, we apply a -60 deg rotation around Y.
+                float angle_rad = -cal_config.imu_rotation_deg * (float)M_PI / 180.0f; 
+                float cosA = cosf(angle_rad);
+                float sinA = sinf(angle_rad);
+                
+                // Standard 3D Rotation Matrix for Y-Axis (Pitch):
+                // X' = X*cos(A) + Z*sin(A)
+                // Z' = -X*sin(A) + Z*cos(A)
+                float temp_ax = ned_ax * cosA + ned_az * sinA;
+                float temp_az = -ned_ax * sinA + ned_az * cosA;
+                ned_ax = temp_ax;
+                ned_az = temp_az;
+                
+                float temp_gx = ned_gx * cosA + ned_gz * sinA;
+                float temp_gz = -ned_gx * sinA + ned_gz * cosA;
+                ned_gx = temp_gx;
+                ned_gz = temp_gz;
+            }
             
             float ned_mx =  (float)ref.y;
             float ned_my =  (float)ref.x;
