@@ -35,6 +35,7 @@ static lv_obj_t * crosshair_dot;
 static lv_obj_t * mag_label;
 static lv_obj_t * title_label;
 static lv_obj_t * declination_label;
+static lv_obj_t * elevation_label;
 static lv_obj_t * sens_label;
 static lv_obj_t * polarity_label;
 static lv_obj_t * nt_label;
@@ -674,6 +675,10 @@ void create_detector_ui(void) {
     lv_obj_set_style_text_color(declination_label, lv_color_hex(0x888888), 0); // Gray text
     lv_obj_align(declination_label, LV_ALIGN_TOP_RIGHT, -5, 110); // Matches mag_arc Y position
     
+    elevation_label = lv_label_create(tile1);
+    lv_obj_set_style_text_color(elevation_label, lv_color_hex(0xffaa00), 0); // Orange/Amber
+    lv_obj_align(elevation_label, LV_ALIGN_TOP_RIGHT, -5, 130);
+    
     // Huge Mag Label
     mag_label = lv_label_create(tile1);
     lv_obj_set_width(mag_label, 172);
@@ -1059,18 +1064,21 @@ void update_detector_ui(const UIData *data) {
                 }
                 
                 // --- Declination Indicator Update ---
-                if (declination_label != NULL) {
-                    if (current_settings.mag_declination_deg == 0.0f) {
-                        lv_label_set_text(declination_label, "MAG");
-                    } else {
-                        lv_label_set_text(declination_label, "TN");
-                    }
+            if (declination_label != NULL) {
+                if (current_settings.mag_declination_deg == 0.0f) {
+                    lv_label_set_text(declination_label, "MAG");
+                } else {
+                    lv_label_set_text(declination_label, "TN");
                 }
-                
-                // --- 9-DOF Compass Minimap Animation ---
+            }
+            
+            if (elevation_label != NULL) {
+                lv_label_set_text_fmt(elevation_label, "%+05.1f°", data->elevation);
+            }
+// --- 9-DOF Compass Minimap Animation ---
                 if (compass_label_n != NULL) {
                     float cr = 58.0f; // Compass ring radius (just inside the 70px arc)
-                    float yaw_rad = data->yaw * 3.14159f / 180.0f;
+                    float yaw_rad = data->azimuth * 3.14159f / 180.0f;
                     
                     int nx = (int)(sinf(-yaw_rad) * cr);
                     int ny = (int)(-cosf(-yaw_rad) * cr);
