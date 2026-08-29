@@ -1073,7 +1073,9 @@ void update_detector_ui(const UIData *data) {
             }
             
             if (elevation_label != NULL) {
-                lv_label_set_text_fmt(elevation_label, "%+05.1f°", data->elevation);
+                char elev_buf[16];
+                snprintf(elev_buf, sizeof(elev_buf), "%+05.1f°", data->elevation);
+                lv_label_set_text(elevation_label, elev_buf);
             }
 // --- 9-DOF Compass Minimap Animation ---
                 if (compass_label_n != NULL) {
