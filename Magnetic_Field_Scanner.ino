@@ -492,12 +492,22 @@ void task_sensor_read(void *pvParameters) {
             gyr[2] = gz_aligned;
             
             // 2. Feed aligned data to Madgwick Filter for Quaternion Fusion (9-DOF)
-            // This ensures the Quaternions represent the WAND in 3D space, anchored to True Magnetic North!
-            float mag_x =  (float)ref.y;  // Maps RM3100 Forward to IMU Forward
-            float mag_y = -(float)ref.x;  // Maps RM3100 Right to IMU Left
-            float mag_z = -(float)ref.z;  // Maps RM3100 Down to IMU Up
+            // PHASE 7 PATCH: Madgwick requires a North-East-Down (NED) coordinate system.
+            // We map the IMU (Forward, Left, Up) and RM3100 (Left, Forward, Down) into pure NED!
+            float ned_gx =  gyr[0];
+            float ned_gy = -gyr[1];
+            float ned_gz = -gyr[2];
             
-            MadgwickAHRSupdate(gyr[0], gyr[1], gyr[2], acc[0], acc[1], acc[2], mag_x, mag_y, mag_z);
+            // Accelerometers measure REACTION FORCE (Up). We must invert X to get GRAVITY (Down).
+            float ned_ax = -acc[0];
+            float ned_ay =  acc[1];
+            float ned_az =  acc[2];
+            
+            float ned_mx =  (float)ref.y;
+            float ned_my = -(float)ref.x;
+            float ned_mz =  (float)ref.z;
+            
+            MadgwickAHRSupdate(ned_gx, ned_gy, ned_gz, ned_ax, ned_ay, ned_az, ned_mx, ned_my, ned_mz);
             
             // 3. Extract the Gravity Vector directly from the Quaternions (Buttery Smooth!)
             // Standard AHRS Gravity formula from unit quaternion (q0=w, q1=x, q2=y, q3=z)
