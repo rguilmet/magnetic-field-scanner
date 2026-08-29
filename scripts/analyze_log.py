@@ -84,13 +84,16 @@ def analyze_log(input_file, output_file, max_mag):
     ax4.set_xlabel("Time (seconds)", fontsize=12)
 
     plt.tight_layout()
+    out_dir = os.path.dirname(output_file)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     plt.savefig(output_file, dpi=150)
     print(f"Success! Plot saved to {output_file}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze and visualize Wand field logs.")
     parser.add_argument("-i", "--input", required=True, help="Input CSV log file (e.g., _log.csv)")
-    parser.add_argument("-o", "--output", default="log_analysis_plot.png", help="Output plot image file (default: log_analysis_plot.png)")
+    parser.add_argument("-o", "--output", default=os.path.join("plots", "log_analysis_plot.png"), help="Output plot image file")
     parser.add_argument("-m", "--max-mag", type=float, default=10000.0, help="Maximum gradient magnitude to display (filters EMI outliers, default: 10000)")
     
     args = parser.parse_args()

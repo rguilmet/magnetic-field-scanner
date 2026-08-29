@@ -20,3 +20,7 @@ __version__ = "v1.1.1"
 if __name__ == "__main__":
     print(f"=== {__filename__} {__version__} ===")
 ```
+
+# Source Control & Git Consistency
+
+AI Agents must explicitly ensure that all logical chunks of work and state changes are cleanly committed to git before ending a session or moving on to a completely new feature branch. Do not leave uncommitted architectural changes drifting in the working directory. Use clear, descriptive commit messages starting with the version bump if applicable (e.g., `v3.6.15: Fix NED mapping`).

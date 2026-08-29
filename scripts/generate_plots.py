@@ -78,6 +78,9 @@ def generate_plot(input_file, output_file, show_plot):
     plt.tight_layout()
     
     if output_file:
+        out_dir = os.path.dirname(output_file)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
         plt.savefig(output_file, dpi=150)
         print(f"Success! Plot saved to {output_file}")
         
@@ -87,7 +90,7 @@ def generate_plot(input_file, output_file, show_plot):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Wand 3D Point Cloud Plot Generator (v3.0.32)")
     parser.add_argument("-i", "--input", required=True, help="Input calibration.csv file")
-    parser.add_argument("-o", "--output", default="calibration_plot.png", help="Output image file (default: calibration_plot.png)")
+    parser.add_argument("-o", "--output", default=os.path.join("plots", "calibration_plot.png"), help="Output image file")
     parser.add_argument("--show", action="store_true", help="Display the plot interactively in a window")
     
     args = parser.parse_args()
