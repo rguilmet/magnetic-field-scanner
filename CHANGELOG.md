@@ -1,5 +1,8 @@
 # Changelog
 
+## [v3.5.1] - 2026-08-28
+### Added
+- **UI:** Added a "MAG" (Magnetic North) or "TN" (True North) indicator label to the top right of the compass ring to denote if declination compensation is active.
 ## [v3.5.0] - 2026-08-28
 ### Added
 - **Magnetic Declination:** Added mag_declination_deg to System Settings (default 0). This allows the firmware to output True/Geographic North instead of just Magnetic North.
@@ -146,6 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Sensor Lockup Bug:** Relaxed the I2C Watchdog. The system now requires >10 consecutive I2C failures (instead of 1) before triggering a hard `initRM3100()` reset.
 - **Audio/Data Shriek Bug:** Implemented a mathematical Slew-Rate limit filter. If any axis jumps by >800 counts in a single 2.5ms frame, it is dropped as physical EMI ("cosmic meteor"), completely eliminating random audio spikes.
 - **Calibration Crash:** Added `vTaskDelay(pdMS_TO_TICKS(10))` every 100 iterations inside the synchronous `wifi_logger.cpp` CSV string parsing loop to prevent the FreeRTOS Task Watchdog Timer (TWDT) from rebooting the core at 99%.
+
 
 
 

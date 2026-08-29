@@ -30,6 +30,7 @@ static lv_obj_t * compass_label_w;
 static lv_obj_t * crosshair_dot;
 static lv_obj_t * mag_label;
 static lv_obj_t * title_label;
+static lv_obj_t * declination_label;
 static lv_obj_t * sens_label;
 static lv_obj_t * polarity_label;
 static lv_obj_t * nt_label;
@@ -647,7 +648,12 @@ void create_detector_ui(void) {
     compass_label_w = lv_label_create(mag_arc);
     lv_label_set_text(compass_label_w, "W");
     lv_obj_set_style_text_color(compass_label_w, lv_color_hex(0xffffff), 0);
-// Huge Mag Label
+    // Declination Indicator (Top Right of Arc)
+    declination_label = lv_label_create(tile1);
+    lv_obj_set_style_text_color(declination_label, lv_color_hex(0x888888), 0); // Gray text
+    lv_obj_align(declination_label, LV_ALIGN_TOP_RIGHT, -5, 110); // Matches mag_arc Y position
+    
+    // Huge Mag Label
     mag_label = lv_label_create(tile1);
     lv_obj_set_width(mag_label, 172);
     lv_obj_set_style_text_align(mag_label, LV_TEXT_ALIGN_CENTER, 0);
