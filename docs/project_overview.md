@@ -48,7 +48,8 @@ Due to the physical mounting of the breakout boards inside the wand, the RM3100 
 * +Z Axis: Points **Down** (Into the ground)
 
 **The Translation Key:**
-To safely feed the Magnetometer data into the Right-Handed 9-DOF Madgwick algorithm, the software applies the following mathematical mapping to the RM3100 (efX_cal, refY_cal, refZ_cal) values:
+To safely feed the Magnetometer data into the Right-Handed 9-DOF Madgwick algorithm, the software applies the following mathematical mapping to the RM3100 (
+efX_cal, refY_cal, refZ_cal) values:
 `c
 float mag_x =  (float)ref.y;  // Maps RM3100 Forward to IMU Forward
 float mag_y = -(float)ref.x;  // Maps RM3100 Right to IMU Left
@@ -185,7 +186,8 @@ Following the Phase 3 structural refactor, the firmware heavily adheres to the *
 * **screenshot/**: Isolated LVGL screen capture logic (RGB565 to BMP conversion).
 * **lvgl_port/**: Handles the physical drawing of the screen and UI layout.
 * **matrix_math/**: A pure, header-only implementation of the 9x9 Gaussian elimination and 3D Kabsch alignment algorithms.
-* **Hardware BSPs (i2c_bsp, imu_bsp, tc_bsp)**: Board Support Packages that isolate the direct register-level I2C commands from the main business logic.
+* **Hardware BSPs (i2c_bsp, imu_bsp, 
+tc_bsp)**: Board Support Packages that isolate the direct register-level I2C commands from the main business logic.
 
 **Core Separation & Thread Safety:**
 * **Core 0 (Data/Hardware):** 	ask_sensor_read, 	ask_battery_monitor, 	ask_audio_alert. I2C reads and fast math.
