@@ -19,8 +19,10 @@ void imu_init(void) {
     ctrl_buf = 0x53;
     i2c_write_buff(imu_dev_handle, 0x04, &ctrl_buf, 1);
     
-    // Enable Sensors (accel and gyro enabled)
-    ctrl_buf = 0x03;
+    // Enable Sensors (SYS_EN=1, ACC_EN=1, GYR_EN=1)
+    // BUG FIX: 0x03 only enabled SYS and ACC. The Gyroscope was physically disabled and outputting flatline noise!
+    // 0x07 (0b0111) is required to turn on the MEMS Gyroscope oscillator.
+    ctrl_buf = 0x07;
     i2c_write_buff(imu_dev_handle, 0x08, &ctrl_buf, 1);
 }
 
