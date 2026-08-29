@@ -206,7 +206,9 @@ extern "C" void save_calibration(float ref_hard[3], float ref_soft[3][3], float 
     JsonArray th = doc["tip_hard"].to<JsonArray>();
     for(int i=0; i<3; i++) th.add(tip_hard[i]);
     
-        JsonArray go = doc["gyr_offset"].to<JsonArray>();
+    doc["tip_soft_note"] = "Matrix includes Kabsch rotational alignment to match the Reference sensor.";
+    
+    JsonArray go = doc["gyr_offset"].to<JsonArray>();
     for(int i=0; i<3; i++) go.add(cal_config.gyr_offset[i]);
     
     JsonArray ts = doc["tip_soft"].to<JsonArray>();

@@ -226,6 +226,7 @@ def main():
         "ref_hard": [round(x, 2) for x in ref_center],
         "ref_soft": [[round(x, 4) for x in row] for row in ref_soft_final],
         "tip_hard": [round(x, 2) for x in tip_center],
+        "tip_soft_note": "Matrix includes Kabsch rotational alignment to match the Reference sensor.",
         "tip_soft": [[round(x, 4) for x in row] for row in tip_soft_final],
         
         "imu_rotation_deg": existing_rotation
