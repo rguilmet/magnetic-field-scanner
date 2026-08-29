@@ -566,6 +566,11 @@ void task_sensor_read(void *pvParameters) {
                 ned_gz = temp_gz;
             }
             
+            // CONVERT DEGREES PER SECOND TO RADIANS PER SECOND FOR MADGWICK
+            ned_gx *= (float)M_PI / 180.0f;
+            ned_gy *= (float)M_PI / 180.0f;
+            ned_gz *= (float)M_PI / 180.0f;
+            
             float ned_mx =  (float)ref.y;
             float ned_my =  (float)ref.x;
             float ned_mz =  (float)ref.z;
