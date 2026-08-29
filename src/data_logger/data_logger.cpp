@@ -241,9 +241,9 @@ extern "C" bool process_calibration_file(void) {
             // Apply Kabsch alignment to align Tip to Ref
             float R_align[3][3];
             
-            if (kabsch_align_3x3(cal_ref_x, cal_ref_y, cal_ref_z, 
-                                 cal_tip_x, cal_tip_y, cal_tip_z, 
-                                 count, ref_center, ref_soft, tip_center, tip_soft, R_align)) {
+            if (kabsch_align_3x3(cal_tip_x, cal_tip_y, cal_tip_z, 
+                                 cal_ref_x, cal_ref_y, cal_ref_z, 
+                                 count, tip_center, tip_soft, ref_center, ref_soft, R_align)) {
                 
                 // Multiply Tip Soft-Iron Matrix by R_align
                 // R_align * tip_soft

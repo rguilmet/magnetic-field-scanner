@@ -163,8 +163,9 @@ def main():
     tip_cal = (tip_raw - tip_center) @ tip_W.T
     
     # 5. Calculate Physical Alignment (Kabsch Algorithm)
-    R_align = kabsch_alignment(ref_cal, tip_cal)
-    ref_aligned = ref_cal @ R_align.T
+    R_align = kabsch_alignment(tip_cal, ref_cal)
+    tip_aligned = tip_cal @ R_align.T
+    ref_aligned = ref_cal
     
     # Calculate angular misalignment in degrees
     trace = np.trace(R_align)
@@ -202,8 +203,9 @@ def main():
     print(np.round(R_align, 3))
     
     # 6. Generate final combined calibration config
-    # We bake the physical rotation directly into the Reference soft-iron matrix
-    ref_soft_final = R_align @ ref_W
+    # We bake the physical rotation directly into the Tip soft-iron matrix
+    tip_soft_final = R_align @ tip_W
+    ref_soft_final = ref_W
 
     # Attempt to preserve existing imu_rotation_deg if a previous calibration file exists
     existing_rotation = 60.0
@@ -224,7 +226,7 @@ def main():
         "ref_hard": [round(x, 2) for x in ref_center],
         "ref_soft": [[round(x, 4) for x in row] for row in ref_soft_final],
         "tip_hard": [round(x, 2) for x in tip_center],
-        "tip_soft": [[round(x, 4) for x in row] for row in tip_W],
+        "tip_soft": [[round(x, 4) for x in row] for row in tip_soft_final],
         
         "imu_rotation_deg": existing_rotation
     }
@@ -240,7 +242,7 @@ def main():
     # 8. Show Plot
     if args.plot:
         print("Opening 3D visualization. Close the window to exit...")
-        plot_calibration(ref_raw, tip_raw, ref_aligned, tip_cal)
+        plot_calibration(ref_raw, tip_raw, ref_aligned, tip_aligned)
 
 if __name__ == '__main__':
     main()

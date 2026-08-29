@@ -180,6 +180,20 @@ extern "C" void save_calibration(float ref_hard[3], float ref_soft[3][3], float 
     JsonDocument doc;
     doc["calibration_type"] = "Magneto 1.2";
     
+    // Add missing tags to match Python script
+    // Note: Arduino millis() isn't unix epoch, but the Python script expects a number here, or it can be a 0 placeholder.
+    // Or we can just use 0, since it's just a timestamp reference.
+    doc["calibration_date_ms"] = millis(); 
+    
+    extern void get_formatted_timestamp(char* buffer, size_t max_len, bool include_ms);
+    char ts[64];
+    get_formatted_timestamp(ts, sizeof(ts), false);
+    // Replace underscores and hyphens in the filename-safe timestamp to match standard YYYY-MM-DD HH:MM:SS if possible
+    // actually, let's just use the timestamp as is (YYYY-MM-DD_HH-MM-SS)
+    doc["calibration_date"] = ts;
+    
+    doc["matrix_version"] = "2.0";
+    
     JsonArray rh = doc["ref_hard"].to<JsonArray>();
     for(int i=0; i<3; i++) rh.add(ref_hard[i]);
     
