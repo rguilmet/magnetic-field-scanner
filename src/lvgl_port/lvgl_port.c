@@ -512,6 +512,20 @@ void update_wifi_ip_label(const char * ip_str) {
     }
 }
 
+static lv_timer_t * cal_msg_timer = NULL;
+
+static void cal_msg_timer_cb(lv_timer_t * timer) {
+    if (cal_status_label) {
+        lv_label_set_text(cal_status_label, "Ready for Calibration");
+        lv_obj_set_style_text_color(cal_status_label, lv_color_hex(0xffffff), LV_PART_MAIN);
+    }
+    if (cal_progress_bar) {
+        lv_bar_set_value(cal_progress_bar, 0, LV_ANIM_OFF);
+    }
+    cal_msg_timer = NULL;
+    lv_timer_del(timer);
+}
+
 void show_calibration_result_msg(bool success) {
     if (mfs_lvgl_lock(-1)) {
         is_calibrating = false;
@@ -528,6 +542,10 @@ void show_calibration_result_msg(bool success) {
                 lv_obj_set_style_text_color(cal_status_label, lv_color_hex(0xff0000), LV_PART_MAIN);
             }
         }
+        
+        if (cal_msg_timer) lv_timer_del(cal_msg_timer);
+        cal_msg_timer = lv_timer_create(cal_msg_timer_cb, 4000, NULL);
+        
         mfs_lvgl_unlock();
     }
 }
@@ -585,6 +603,9 @@ static void start_cal_event_cb(lv_event_t * e) {
             lv_label_set_text(cal_status_label, "Stopped");
             lv_obj_set_style_text_color(cal_status_label, lv_color_hex(0xffffff), LV_PART_MAIN);
         }
+        
+        if (cal_msg_timer) lv_timer_del(cal_msg_timer);
+        cal_msg_timer = lv_timer_create(cal_msg_timer_cb, 3000, NULL);
     }
 }
 
