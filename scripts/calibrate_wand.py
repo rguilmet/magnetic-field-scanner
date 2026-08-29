@@ -200,6 +200,17 @@ def main():
     # We bake the physical rotation directly into the Reference soft-iron matrix
     ref_soft_final = R_align @ ref_W
 
+    # Attempt to preserve existing imu_rotation_deg if a previous calibration file exists
+    existing_rotation = 60.0
+    if os.path.exists(output_file):
+        try:
+            with open(output_file, 'r') as f:
+                old_config = json.load(f)
+                if "imu_rotation_deg" in old_config:
+                    existing_rotation = old_config["imu_rotation_deg"]
+        except Exception:
+            pass
+
     config = {
         "calibration_type": "PC Python Calibration",
         "calibration_date_ms": int(time.time() * 1000),
@@ -210,7 +221,7 @@ def main():
         "tip_offset": [round(x, 2) for x in tip_center],
         "tip_soft": [[round(x, 4) for x in row] for row in tip_W],
         
-        "imu_rotation_deg": 60.0
+        "imu_rotation_deg": existing_rotation
     }
     
     # 7. Save to JSON
