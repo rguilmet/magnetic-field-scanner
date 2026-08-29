@@ -477,6 +477,61 @@ void task_sensor_read(void *pvParameters) {
             // IMU is rigidly mounted to the PCB. 
             // Axis mapping to NED is handled directly below.
             
+            // --- DYNAMIC GYRO AUTO-ZERO (TARE) ---
+            // If the accelerometer is extremely stable (variance < threshold) for 1 second, 
+            // recalculate the Gyroscope hardware bias on the fly to eliminate thermal/mechanical drift!
+            static float acc_history[50][3] = {0};
+            static float gyr_history[50][3] = {0};
+            static int history_idx = 0;
+            static int stable_ticks = 0;
+            
+            acc_history[history_idx][0] = acc[0];
+            acc_history[history_idx][1] = acc[1];
+            acc_history[history_idx][2] = acc[2];
+            gyr_history[history_idx][0] = gyr[0];
+            gyr_history[history_idx][1] = gyr[1];
+            gyr_history[history_idx][2] = gyr[2];
+            history_idx = (history_idx + 1) % 50; // ~1 second rolling buffer at 50Hz
+            
+            if (current_cycle_count > 100) { // Let it boot up first
+                float mx=0, my=0, mz=0;
+                for (int i=0; i<50; i++) {
+                    mx += acc_history[i][0];
+                    my += acc_history[i][1];
+                    mz += acc_history[i][2];
+                }
+                mx /= 50.0f; my /= 50.0f; mz /= 50.0f;
+                
+                float var = 0;
+                for (int i=0; i<50; i++) {
+                    var += (acc_history[i][0]-mx)*(acc_history[i][0]-mx) + 
+                           (acc_history[i][1]-my)*(acc_history[i][1]-my) + 
+                           (acc_history[i][2]-mz)*(acc_history[i][2]-mz);
+                }
+                var /= 50.0f;
+                
+                // If Accel variance is extremely low, the wand is sitting on a table!
+                if (var < 0.001f) {
+                    stable_ticks++;
+                    if (stable_ticks == 50) { // Been perfectly stable for 1 full second
+                        // Recalculate Gyro Bias!
+                        float g_mx=0, g_my=0, g_mz=0;
+                        for (int i=0; i<50; i++) {
+                            g_mx += gyr_history[i][0];
+                            g_my += gyr_history[i][1];
+                            g_mz += gyr_history[i][2];
+                        }
+                        cal_config.gyr_offset[0] = g_mx / 50.0f;
+                        cal_config.gyr_offset[1] = g_my / 50.0f;
+                        cal_config.gyr_offset[2] = g_mz / 50.0f;
+                        Serial.println("DYNAMIC AUTO-ZERO: Gyro bias updated!");
+                        stable_ticks = 40; // Don't recalculate every single tick, but recalculate often if it stays still
+                    }
+                } else {
+                    stable_ticks = 0;
+                }
+            }
+            
             // 2. Subtract FOC and map to North-East-Down (NED) coordinate system.
             float ned_gx =  (gyr[0] - cal_config.gyr_offset[0]);
             float ned_gy = -(gyr[1] - cal_config.gyr_offset[1]);
