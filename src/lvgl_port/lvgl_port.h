@@ -27,7 +27,15 @@ typedef struct {
 
 void lvgl_port_init(void);
 
-// Expose UI functions for the Magnetic Field Detector
+// Expose specific UI widgets to ino if they need to be dynamically updated
+extern lv_obj_t * ui_date_label;
+extern lv_obj_t * ui_time_label;
+
+extern lv_obj_t * cal_progress_bar;
+extern lv_obj_t * cal_status_label;
+extern lv_obj_t * full_cal_btn;
+extern lv_obj_t * full_cal_label;
+
 void create_detector_ui(void);
 void update_detector_ui(const UIData *data);
 void update_wifi_ip_label(const char * ip_str);

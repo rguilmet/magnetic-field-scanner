@@ -129,6 +129,18 @@ extern "C" void stop_logging(void) {
     if (log_mux) xSemaphoreGive(log_mux);
 }
 
+extern "C" void rename_calibration_file_to_stopped(void) {
+    if (log_mux) xSemaphoreTake(log_mux, portMAX_DELAY);
+    if (current_log_filename.startsWith("/calibration_") && !current_log_filename.endsWith("_stopped.csv")) {
+        String new_filename = current_log_filename;
+        new_filename.replace(".csv", "_stopped.csv");
+        if (get_active_fs().rename(current_log_filename, new_filename)) {
+            current_log_filename = new_filename;
+        }
+    }
+    if (log_mux) xSemaphoreGive(log_mux);
+}
+
 
 #include "../matrix_math/matrix_math.h"
 

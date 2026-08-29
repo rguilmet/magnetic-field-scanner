@@ -47,9 +47,12 @@ static lv_obj_t * mute_label;
 static lv_obj_t * wave_btn;
 static lv_obj_t * wave_label;
 static lv_obj_t * tare_btn;
-static lv_obj_t * reset_cal_btn;
-static lv_obj_t * full_cal_btn;
-static lv_obj_t * full_cal_label;
+static lv_obj_t * tare_label;
+static int main_tare_state = 0; // 0=RAW, 1=TARE, 2=AUTO
+lv_obj_t * cal_progress_bar;
+lv_obj_t * cal_status_label;
+lv_obj_t * full_cal_btn;
+lv_obj_t * full_cal_label;
 static lv_obj_t * wifi_btn;
 static lv_obj_t * wifi_label;
 lv_obj_t * ui_date_label;
@@ -388,11 +391,11 @@ static void scan_btn_event_cb(lv_event_t * e) {
     bool is_scanning = lv_obj_has_state(scan_btn, LV_STATE_CHECKED);
     if (is_scanning) {
         lv_obj_clear_state(scan_btn, LV_STATE_CHECKED);
-        lv_label_set_text(scan_label, "PAUSED");
+        lv_label_set_text(scan_label, LV_SYMBOL_PAUSE);
         is_scanning = false;
     } else {
         lv_obj_add_state(scan_btn, LV_STATE_CHECKED);
-        lv_label_set_text(scan_label, "SCANNING");
+        lv_label_set_text(scan_label, LV_SYMBOL_PLAY);
         is_scanning = true;
     }
     toggle_scanning(is_scanning);
@@ -441,7 +444,7 @@ static void cycle_count_event_cb(lv_event_t * e) {
     if (cc_label) lv_label_set_text_fmt(cc_label, "%d", c);
     mark_settings_dirty();
     set_rm3100_cycle_count(c);
-    if (reset_cal_btn) lv_obj_add_state(reset_cal_btn, LV_STATE_DISABLED);
+    // if (reset_cal_btn) lv_obj_add_state(reset_cal_btn, LV_STATE_DISABLED);
 }
 
 
@@ -510,71 +513,76 @@ void update_wifi_ip_label(const char * ip_str) {
 
 void show_calibration_result_msg(bool success) {
     if (mfs_lvgl_lock(-1)) {
-        lv_obj_t * mbox = lv_msgbox_create(NULL);
-        
-        // Force the message box to fit within the 172px portrait width
-        lv_obj_set_width(mbox, 160); 
-        
-        if (success) {
-            lv_msgbox_add_title(mbox, "Success!");
-            lv_msgbox_add_text(mbox, "Calibration saved.");
-        } else {
-            lv_msgbox_add_title(mbox, "Failed!");
-            lv_msgbox_add_text(mbox, "Move in a Figure-8 across all 3 axes.");
+        is_calibrating = false;
+        if (full_cal_btn && full_cal_label) {
+            lv_obj_set_style_bg_color(full_cal_btn, lv_palette_main(LV_PALETTE_BLUE), 0);
+            lv_label_set_text(full_cal_label, "Calibrate");
         }
-        
-        lv_obj_t * close_btn = lv_msgbox_add_close_button(mbox);
-        lv_obj_center(mbox);
+        if (cal_status_label) {
+            if (success) {
+                lv_label_set_text(cal_status_label, "Calibration Complete!");
+                lv_obj_set_style_text_color(cal_status_label, lv_color_hex(0x00ff00), LV_PART_MAIN);
+            } else {
+                lv_label_set_text(cal_status_label, "Math Solver Failed!");
+                lv_obj_set_style_text_color(cal_status_label, lv_color_hex(0xff0000), LV_PART_MAIN);
+            }
+        }
         mfs_lvgl_unlock();
     }
 }
 
 
 
-static void tare_event_cb(lv_event_t * e) {
-    trigger_manual_tare();
+static void main_tare_btn_event_cb(lv_event_t * e) {
+    if (main_tare_state == 0) {
+        // RAW -> TARE
+        trigger_manual_tare();
+        main_tare_state = 1;
+        lv_label_set_text(tare_label, "TARE");
+        lv_obj_set_style_bg_color(tare_btn, lv_palette_main(LV_PALETTE_RED), 0);
+    } else if (main_tare_state == 1) {
+        // TARE -> AUTO
+        current_settings.auto_tare_on = true;
+        set_auto_tare(true);
+        mark_settings_dirty();
+        main_tare_state = 2;
+        lv_label_set_text(tare_label, "AUTO");
+        lv_obj_set_style_bg_color(tare_btn, lv_palette_main(LV_PALETTE_GREEN), 0);
+    } else {
+        // AUTO -> RAW
+        current_settings.auto_tare_on = false;
+        set_auto_tare(false);
+        mark_settings_dirty();
+        reset_tare();
+        main_tare_state = 0;
+        lv_label_set_text(tare_label, "RAW");
+        lv_obj_set_style_bg_color(tare_btn, lv_palette_main(LV_PALETTE_BLUE), 0);
+    }
 }
 
-static lv_obj_t * cal_modal = NULL;
-static lv_obj_t * cal_bar = NULL;
-static lv_obj_t * cal_label = NULL;
 extern void start_on_wand_calibration(void);
+extern void stop_on_wand_calibration(void);
+static bool is_calibrating = false;
 
 static void start_cal_event_cb(lv_event_t * e) {
-    start_on_wand_calibration();
-    if (full_cal_btn && full_cal_label) {
-        lv_obj_set_style_bg_color(full_cal_btn, lv_color_hex(0xff0000), 0);
-        lv_label_set_text(full_cal_label, "Calibrating");
+    if (!is_calibrating) {
+        start_on_wand_calibration();
+        is_calibrating = true;
+        if (full_cal_btn && full_cal_label) {
+            lv_obj_set_style_bg_color(full_cal_btn, lv_palette_main(LV_PALETTE_RED), 0);
+            lv_label_set_text(full_cal_label, "STOP");
+        }
+        if (cal_status_label) lv_label_set_text(cal_status_label, "Capturing Data: 0%");
+        if (cal_progress_bar) lv_bar_set_value(cal_progress_bar, 0, LV_ANIM_OFF);
+    } else {
+        stop_on_wand_calibration();
+        is_calibrating = false;
+        if (full_cal_btn && full_cal_label) {
+            lv_obj_set_style_bg_color(full_cal_btn, lv_palette_main(LV_PALETTE_BLUE), 0);
+            lv_label_set_text(full_cal_label, "Calibrate");
+        }
+        if (cal_status_label) lv_label_set_text(cal_status_label, "Calibration Stopped");
     }
-    
-    // Create modal
-    cal_modal = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(cal_modal, 280, 160);
-    lv_obj_center(cal_modal);
-    lv_obj_set_style_bg_color(cal_modal, lv_color_hex(0x222222), 0);
-    
-    cal_label = lv_label_create(cal_modal);
-    lv_label_set_text(cal_label, "Calibrating...\nDraw Figure 8s!");
-    lv_obj_set_style_text_align(cal_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_style_text_color(cal_label, lv_color_hex(0xffffff), 0);
-    lv_obj_align(cal_label, LV_ALIGN_TOP_MID, 0, 10);
-    
-    cal_bar = lv_bar_create(cal_modal);
-    lv_obj_set_size(cal_bar, 200, 20);
-    lv_obj_align(cal_bar, LV_ALIGN_CENTER, 0, 20);
-    lv_bar_set_range(cal_bar, 0, 100);
-    lv_bar_set_value(cal_bar, 0, LV_ANIM_OFF);
-}
-
-static void reset_tare_event_cb(lv_event_t * e) {
-    reset_tare();
-}
-static void auto_tare_event_cb(lv_event_t * e) {
-    lv_obj_t * sw = (lv_obj_t *)lv_event_get_target(e);
-    bool enabled = lv_obj_has_state(sw, LV_STATE_CHECKED);
-    current_settings.auto_tare_on = enabled;
-    mark_settings_dirty();
-    set_auto_tare(enabled);
 }
 
 
@@ -732,13 +740,22 @@ void create_detector_ui(void) {
     lv_obj_center(wave_label);
     
     scan_btn = lv_button_create(tile1);
-    lv_obj_set_size(scan_btn, 120, 50);
-    lv_obj_align(scan_btn, LV_ALIGN_TOP_MID, 0, 490);
+    lv_obj_set_size(scan_btn, 70, 50);
+    lv_obj_align(scan_btn, LV_ALIGN_TOP_MID, -40, 490);
     lv_obj_add_event_cb(scan_btn, scan_btn_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_add_state(scan_btn, LV_STATE_CHECKED);
     scan_label = lv_label_create(scan_btn);
-    lv_label_set_text(scan_label, "SCANNING");
+    lv_label_set_text(scan_label, LV_SYMBOL_PLAY);
     lv_obj_center(scan_label);
+
+    tare_btn = lv_button_create(tile1);
+    lv_obj_set_size(tare_btn, 70, 50);
+    lv_obj_align(tare_btn, LV_ALIGN_TOP_MID, 40, 490);
+    lv_obj_set_style_bg_color(tare_btn, lv_palette_main(LV_PALETTE_BLUE), 0);
+    lv_obj_add_event_cb(tare_btn, main_tare_btn_event_cb, LV_EVENT_CLICKED, NULL);
+    tare_label = lv_label_create(tare_btn);
+    lv_label_set_text(tare_label, "RAW");
+    lv_obj_center(tare_label);
 
     // Date/Time Labels
     ui_date_label = lv_label_create(tile1);
@@ -774,38 +791,24 @@ void create_detector_ui(void) {
     lv_obj_set_style_text_font(fw_label2, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_align(fw_label2, LV_ALIGN_TOP_MID, 0, 60);
 
-    lv_obj_t * auto_tare_label = lv_label_create(tile2);
-    lv_label_set_text(auto_tare_label, "Auto-Tare");
-    lv_obj_set_style_text_color(auto_tare_label, lv_color_hex(0xffffff), LV_PART_MAIN);
-    lv_obj_set_style_text_font(auto_tare_label, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_align(auto_tare_label, LV_ALIGN_TOP_MID, 0, 110);
-    
-    lv_obj_t * auto_tare_sw = lv_switch_create(tile2);
-    lv_obj_align(auto_tare_sw, LV_ALIGN_TOP_MID, 0, 140);
-    if (current_settings.auto_tare_on) lv_obj_add_state(auto_tare_sw, LV_STATE_CHECKED); lv_obj_add_event_cb(auto_tare_sw, auto_tare_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    cal_status_label = lv_label_create(tile2);
+    lv_label_set_text(cal_status_label, "Ready for Calibration");
+    lv_obj_set_style_text_color(cal_status_label, lv_color_hex(0xffffff), LV_PART_MAIN);
+    lv_obj_set_style_text_font(cal_status_label, &lv_font_montserrat_16, LV_PART_MAIN);
+    lv_obj_align(cal_status_label, LV_ALIGN_TOP_MID, 0, 160);
 
-    lv_obj_t * tare_btn = lv_button_create(tile2);
-    lv_obj_set_size(tare_btn, 140, 50);
-    lv_obj_align(tare_btn, LV_ALIGN_TOP_MID, 0, 230);
-    lv_obj_add_event_cb(tare_btn, tare_event_cb, LV_EVENT_CLICKED, NULL);
-    lv_obj_t * tare_label = lv_label_create(tare_btn);
-    lv_label_set_text(tare_label, "Manual Tare");
-    lv_obj_center(tare_label);
-
-    reset_cal_btn = lv_button_create(tile2);
-    lv_obj_set_size(reset_cal_btn, 140, 50);
-    lv_obj_align(reset_cal_btn, LV_ALIGN_TOP_MID, 0, 310);
-    lv_obj_add_state(reset_cal_btn, LV_STATE_DISABLED); // Grayed out by default!
-    lv_obj_add_event_cb(reset_cal_btn, reset_tare_event_cb, LV_EVENT_CLICKED, NULL);
-    lv_obj_t * reset_cal_label = lv_label_create(reset_cal_btn);
-    lv_label_set_text(reset_cal_label, "Reset Tare");
-    lv_obj_center(reset_cal_label);
+    cal_progress_bar = lv_bar_create(tile2);
+    lv_obj_set_size(cal_progress_bar, 200, 20);
+    lv_obj_align(cal_progress_bar, LV_ALIGN_TOP_MID, 0, 190);
+    lv_bar_set_range(cal_progress_bar, 0, 100);
+    lv_bar_set_value(cal_progress_bar, 0, LV_ANIM_OFF);
 
     full_cal_btn = lv_button_create(tile2);
     lv_obj_set_size(full_cal_btn, 140, 50);
-    lv_obj_align(full_cal_btn, LV_ALIGN_TOP_MID, 0, 410);
+    lv_obj_align(full_cal_btn, LV_ALIGN_TOP_MID, 0, 260);
+    lv_obj_set_style_bg_color(full_cal_btn, lv_palette_main(LV_PALETTE_BLUE), 0);
     full_cal_label = lv_label_create(full_cal_btn);
-    lv_label_set_text(full_cal_label, "Start Calibration");
+    lv_label_set_text(full_cal_label, "Calibrate");
     lv_obj_add_event_cb(full_cal_btn, start_cal_event_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_set_style_text_align(full_cal_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_center(full_cal_label);
@@ -942,30 +945,24 @@ void update_detector_ui(const UIData *data) {
             lv_label_set_text(ui_date_label, d_str);
             lv_label_set_text(ui_time_label, t_str);
         }
-        if (cal_modal != NULL) {
+        if (cal_progress_bar != NULL && cal_status_label != NULL) {
             if (data->cal_progress > 0 && data->cal_progress < 100) {
-                lv_bar_set_value(cal_bar, data->cal_progress, LV_ANIM_ON);
-                if (cal_label) {
-                    int remain = (100 - data->cal_progress) * 60 / 100; // 3000 pts @ 50hz = 60s
-                    lv_label_set_text_fmt(cal_label, "Calibrating...\n%d%% (%ds left)", data->cal_progress, remain);
-                }
+                lv_bar_set_value(cal_progress_bar, data->cal_progress, LV_ANIM_ON);
+                int remain = (100 - data->cal_progress) * 60 / 100;
+                lv_label_set_text_fmt(cal_status_label, "Capturing Data: %d%% (%ds left)", data->cal_progress, remain);
             } else if (data->cal_progress >= 100) {
-                lv_obj_del(cal_modal);
-                cal_modal = NULL;
-                cal_bar = NULL;
-                cal_label = NULL;
-                if (full_cal_btn && full_cal_label) {
-                    lv_obj_set_style_bg_color(full_cal_btn, lv_color_hex(0x00a8ff), 0);
-                    lv_label_set_text(full_cal_label, "Start Calibration");
-                }
+                lv_bar_set_value(cal_progress_bar, 100, LV_ANIM_ON);
+                lv_label_set_text(cal_status_label, "Calculating...");
             }
         }
 
-        if (reset_cal_btn) {
+        if (title_label != NULL) {
             if (data->auto_tare_on || data->tare_active) {
-                lv_obj_clear_state(reset_cal_btn, LV_STATE_DISABLED);
+                lv_label_set_text(title_label, "Magnetic Field\n(TARED)");
+                lv_obj_set_style_text_color(title_label, lv_color_hex(0xff0000), LV_PART_MAIN);
             } else {
-                lv_obj_add_state(reset_cal_btn, LV_STATE_DISABLED);
+                lv_label_set_text(title_label, "Magnetic Field\nScanner");
+                lv_obj_set_style_text_color(title_label, lv_color_hex(0xffffff), LV_PART_MAIN);
             }
         }
     
