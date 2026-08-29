@@ -4,7 +4,7 @@
 #include "MadgwickAHRS.h"
 #include <math.h>
 
-#define sampleFreq	400.0f		// sample frequency in Hz (matches MFS SensorTask)
+#define sampleFreq	50.0f		// sample frequency in Hz (matches MFS SensorTask)
 #define betaDef		0.05f		// 2 * proportional gain
 
 volatile float beta = betaDef;								// 2 * proportional gain (Kp)
