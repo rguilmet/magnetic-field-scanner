@@ -46,6 +46,13 @@ def kabsch_alignment(P, Q):
         R = Vt.T @ U.T
     return R
 
+def calculate_coverage(x, y, z, ideal_radius):
+    ideal_diameter = ideal_radius * 2
+    x_cov = (np.max(x) - np.min(x)) / ideal_diameter * 100
+    y_cov = (np.max(y) - np.min(y)) / ideal_diameter * 100
+    z_cov = (np.max(z) - np.min(z)) / ideal_diameter * 100
+    return round(x_cov, 1), round(y_cov, 1), round(z_cov, 1)
+
 def plot_3d(ref_raw, tip_raw, ref_cal, tip_cal, out_path):
     fig = plt.figure(figsize=(12, 6))
     ax1 = fig.add_subplot(121, projection='3d')
@@ -174,6 +181,13 @@ def main():
         metrics["Ref Fit Variance"] = round(float(np.var(ref_mags)), 4)
         metrics["Tip Fit Variance"] = round(float(np.var(tip_mags)), 4)
         metrics["Kabsch Rotation (deg)"] = round(np.degrees(np.arccos(np.clip((np.trace(R_align) - 1.0) / 2.0, -1.0, 1.0))), 2)
+        
+        ref_cov = calculate_coverage(ref_x, ref_y, ref_z, ref_radius)
+        tip_cov = calculate_coverage(tip_x, tip_y, tip_z, tip_radius)
+        
+        metrics["Ref Coverage"] = f"X={ref_cov[0]}%, Y={ref_cov[1]}%, Z={ref_cov[2]}%"
+        metrics["Tip Coverage"] = f"X={tip_cov[0]}%, Y={tip_cov[1]}%, Z={tip_cov[2]}%"
+        
         fit_success = True
     except Exception as e:
         metrics["Fit Error"] = str(e)
