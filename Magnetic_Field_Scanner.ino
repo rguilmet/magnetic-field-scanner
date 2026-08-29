@@ -549,6 +549,15 @@ void task_sensor_read(void *pvParameters) {
             ui_data.gradX = right_grad;
             ui_data.gradY = fwd_grad;
             ui_data.trueZ = true_Z;
+            
+            // Extract absolute Yaw (Heading) and apply magnetic declination
+            float siny_cosp = 2.0f * (q0 * q3 + q1 * q2);
+            float cosy_cosp = 1.0f - 2.0f * (q2 * q2 + q3 * q3);
+            float yaw_deg = atan2(siny_cosp, cosy_cosp) * 180.0f / PI;
+            yaw_deg += current_settings.mag_declination_deg;
+            if (yaw_deg < 0.0f) yaw_deg += 360.0f;
+            if (yaw_deg >= 360.0f) yaw_deg -= 360.0f;
+            ui_data.yaw = yaw_deg;
             ui_data.is_pin = is_pin;
             ui_data.tare_active = (calibration_offset.x != 0 || calibration_offset.y != 0 || calibration_offset.z != 0);
             ui_data.auto_tare_on = auto_tare_enabled;

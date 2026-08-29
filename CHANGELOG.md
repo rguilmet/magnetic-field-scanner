@@ -1,5 +1,9 @@
 # Changelog
 
+## [v3.5.0] - 2026-08-28
+### Added
+- **Magnetic Declination:** Added mag_declination_deg to System Settings (default 0). This allows the firmware to output True/Geographic North instead of just Magnetic North.
+- **Videogame Minimap UI:** Integrated a live, rotating compass ring directly onto the main Radar Arc. It dynamically animates N, E, S, W letters around the perimeter based on the 9-DOF Yaw heading. The top of the screen always represents the wand's forward physical direction (Heading-Up).
 ## [v3.4.1] - 2026-08-28
 ### Fixed
 - **9-DOF Coordinate System Flip:** Fixed a massive inversion bug where the IMU inputs (North-West-Up) and the Magnetometer inputs were fighting the Madgwick filter's native expectation (North-East-Down). Translated all 9 sensor axes perfectly into the NED frame before sensor fusion. The Quaternions are now right-side up and physically accurate.
@@ -142,6 +146,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Sensor Lockup Bug:** Relaxed the I2C Watchdog. The system now requires >10 consecutive I2C failures (instead of 1) before triggering a hard `initRM3100()` reset.
 - **Audio/Data Shriek Bug:** Implemented a mathematical Slew-Rate limit filter. If any axis jumps by >800 counts in a single 2.5ms frame, it is dropped as physical EMI ("cosmic meteor"), completely eliminating random audio spikes.
 - **Calibration Crash:** Added `vTaskDelay(pdMS_TO_TICKS(10))` every 100 iterations inside the synchronous `wifi_logger.cpp` CSV string parsing loop to prevent the FreeRTOS Task Watchdog Timer (TWDT) from rebooting the core at 99%.
+
 
 
 

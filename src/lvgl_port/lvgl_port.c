@@ -23,6 +23,10 @@ static SemaphoreHandle_t lvgl_mux = NULL;
 
 // UI Elements for Detector
 static lv_obj_t * mag_arc;
+static lv_obj_t * compass_label_n;
+static lv_obj_t * compass_label_e;
+static lv_obj_t * compass_label_s;
+static lv_obj_t * compass_label_w;
 static lv_obj_t * crosshair_dot;
 static lv_obj_t * mag_label;
 static lv_obj_t * title_label;
@@ -619,15 +623,31 @@ void create_detector_ui(void) {
     lv_obj_set_style_border_width(v_line, 0, LV_PART_MAIN);
     lv_obj_center(v_line);
 
-    // Crosshair Dot
+    // Crosshair Dot    // Crosshair Dot
     crosshair_dot = lv_obj_create(mag_arc);
     lv_obj_set_size(crosshair_dot, 10, 10);
     lv_obj_set_style_radius(crosshair_dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_bg_color(crosshair_dot, lv_color_hex(0x00ff00), LV_PART_MAIN); // Light Green
     lv_obj_set_style_border_width(crosshair_dot, 0, LV_PART_MAIN);
     lv_obj_center(crosshair_dot); 
-
-    // Huge Mag Label
+    
+    // Compass Labels (Videogame Minimap)
+    compass_label_n = lv_label_create(mag_arc);
+    lv_label_set_text(compass_label_n, "N");
+    lv_obj_set_style_text_color(compass_label_n, lv_color_hex(0xff0000), 0); // Red North
+    
+    compass_label_e = lv_label_create(mag_arc);
+    lv_label_set_text(compass_label_e, "E");
+    lv_obj_set_style_text_color(compass_label_e, lv_color_hex(0xffffff), 0);
+    
+    compass_label_s = lv_label_create(mag_arc);
+    lv_label_set_text(compass_label_s, "S");
+    lv_obj_set_style_text_color(compass_label_s, lv_color_hex(0xffffff), 0);
+    
+    compass_label_w = lv_label_create(mag_arc);
+    lv_label_set_text(compass_label_w, "W");
+    lv_obj_set_style_text_color(compass_label_w, lv_color_hex(0xffffff), 0);
+// Huge Mag Label
     mag_label = lv_label_create(tile1);
     lv_obj_set_width(mag_label, 172);
     lv_obj_set_style_text_align(mag_label, LV_TEXT_ALIGN_CENTER, 0);

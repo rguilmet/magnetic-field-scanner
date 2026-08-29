@@ -16,6 +16,7 @@ typedef struct {
     float gradX;
     float gradY;
     float trueZ;
+    float yaw;
     bool is_pin;
     bool tare_active;
     bool auto_tare_on;
