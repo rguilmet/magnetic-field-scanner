@@ -484,6 +484,7 @@ void task_sensor_read(void *pvParameters) {
             static float gyr_history[50][3] = {0};
             static int history_idx = 0;
             static int stable_ticks = 0;
+            static bool has_printed_tare = false;
             
             acc_history[history_idx][0] = acc[0];
             acc_history[history_idx][1] = acc[1];
@@ -524,11 +525,15 @@ void task_sensor_read(void *pvParameters) {
                         cal_config.gyr_offset[0] = g_mx / 50.0f;
                         cal_config.gyr_offset[1] = g_my / 50.0f;
                         cal_config.gyr_offset[2] = g_mz / 50.0f;
-                        Serial.println("DYNAMIC AUTO-ZERO: Gyro bias updated!");
+                        if (!has_printed_tare) {
+                            Serial.println("DYNAMIC AUTO-ZERO: Gyro bias updated!");
+                            has_printed_tare = true;
+                        }
                         stable_ticks = 40; // Don't recalculate every single tick, but recalculate often if it stays still
                     }
                 } else {
                     stable_ticks = 0;
+                    has_printed_tare = false;
                 }
             }
             
