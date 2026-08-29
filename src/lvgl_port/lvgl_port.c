@@ -1057,6 +1057,54 @@ void update_detector_ui(const UIData *data) {
 
                     lv_obj_align(crosshair_dot, LV_ALIGN_CENTER, (int32_t)px, (int32_t)py);
                 }
+                
+                // --- Declination Indicator Update ---
+                if (declination_label != NULL) {
+                    if (current_settings.mag_declination_deg == 0.0f) {
+                        lv_label_set_text(declination_label, "MAG");
+                    } else {
+                        lv_label_set_text(declination_label, "TN");
+                    }
+                }
+                
+                // --- 9-DOF Compass Minimap Animation ---
+                if (compass_label_n != NULL) {
+                    float cr = 58.0f; // Compass ring radius (just inside the 70px arc)
+                    float yaw_rad = data->yaw * 3.14159f / 180.0f;
+                    
+                    int nx = (int)(sinf(-yaw_rad) * cr);
+                    int ny = (int)(-cosf(-yaw_rad) * cr);
+                    lv_obj_align(compass_label_n, LV_ALIGN_CENTER, nx, ny);
+                    
+                    int ex = (int)(sinf(1.5708f - yaw_rad) * cr);
+                    int ey = (int)(-cosf(1.5708f - yaw_rad) * cr);
+                    lv_obj_align(compass_label_e, LV_ALIGN_CENTER, ex, ey);
+                    
+                    int sx = (int)(sinf(3.14159f - yaw_rad) * cr);
+                    int sy = (int)(-cosf(3.14159f - yaw_rad) * cr);
+                    lv_obj_align(compass_label_s, LV_ALIGN_CENTER, sx, sy);
+                    
+                    int wx = (int)(sinf(4.71239f - yaw_rad) * cr);
+                    int wy = (int)(-cosf(4.71239f - yaw_rad) * cr);
+                    lv_obj_align(compass_label_w, LV_ALIGN_CENTER, wx, wy);
+                    
+                    // Ticks Animation
+                    int nex = (int)(sinf(0.785398f - yaw_rad) * cr);
+                    int ney = (int)(-cosf(0.785398f - yaw_rad) * cr);
+                    lv_obj_align(compass_label_ne, LV_ALIGN_CENTER, nex, ney);
+                    
+                    int sex = (int)(sinf(2.356194f - yaw_rad) * cr);
+                    int sey = (int)(-cosf(2.356194f - yaw_rad) * cr);
+                    lv_obj_align(compass_label_se, LV_ALIGN_CENTER, sex, sey);
+                    
+                    int swx = (int)(sinf(3.926991f - yaw_rad) * cr);
+                    int swy = (int)(-cosf(3.926991f - yaw_rad) * cr);
+                    lv_obj_align(compass_label_sw, LV_ALIGN_CENTER, swx, swy);
+                    
+                    int nwx = (int)(sinf(5.497787f - yaw_rad) * cr);
+                    int nwy = (int)(-cosf(5.497787f - yaw_rad) * cr);
+                    lv_obj_align(compass_label_nw, LV_ALIGN_CENTER, nwx, nwy);
+                }
             }
 
             // Polarity Label Update
