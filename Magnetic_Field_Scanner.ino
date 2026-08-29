@@ -477,17 +477,34 @@ void task_sensor_read(void *pvParameters) {
             // IMU is rigidly mounted to the PCB. 
             // Axis mapping to NED is handled directly below.
             
-            // 2. Feed aligned data to Madgwick Filter for Quaternion Fusion (9-DOF)
-            // PHASE 7 PATCH: Madgwick requires a North-East-Down (NED) coordinate system.
-            // We map the IMU (Forward, Left, Up) and RM3100 (Left, Forward, Down) into pure NED!
+            // 2. Subtract FOC and map to North-East-Down (NED) coordinate system.
             float ned_gx =  (gyr[0] - cal_config.gyr_offset[0]);
             float ned_gy = -(gyr[1] - cal_config.gyr_offset[1]);
             float ned_gz = -(gyr[2] - cal_config.gyr_offset[2]);
             
-            // Accelerometers measure REACTION FORCE (Up). We must invert X to get GRAVITY (Down).
             float ned_ax = -acc[0];
             float ned_ay =  acc[1];
             float ned_az =  acc[2];
+
+            // 2b. The display board (IMU) is physically pitched relative to the wand tube!
+            // We must mathematically rotate the IMU readings around the Y-axis (Pitch) to align them with the Wand.
+            if (cal_config.imu_rotation_deg != 0.0f) {
+                float angle_rad = cal_config.imu_rotation_deg * (float)M_PI / 180.0f;
+                float cosA = cosf(angle_rad);
+                float sinA = sinf(angle_rad);
+                
+                // Rotate Accelerometer
+                float temp_ax = ned_ax * cosA - ned_az * sinA;
+                float temp_az = ned_ax * sinA + ned_az * cosA;
+                ned_ax = temp_ax;
+                ned_az = temp_az;
+                
+                // Rotate Gyroscope
+                float temp_gx = ned_gx * cosA - ned_gz * sinA;
+                float temp_gz = ned_gx * sinA + ned_gz * cosA;
+                ned_gx = temp_gx;
+                ned_gz = temp_gz;
+            }
             
             float ned_mx =  (float)ref.y;
             float ned_my =  (float)ref.x;
