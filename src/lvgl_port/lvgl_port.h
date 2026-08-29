@@ -9,6 +9,7 @@ extern "C" {
 
 
 #include <stdbool.h>
+#include <lvgl.h>
 
 typedef struct {
     float mag;

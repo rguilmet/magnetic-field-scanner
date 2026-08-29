@@ -267,7 +267,6 @@ extern "C" void stop_on_wand_calibration(void) {
     is_calibrating = false;
     stop_logging(); // This closes the file
     rename_calibration_file_to_stopped();
-    ui_data.cal_progress = 0;
 }
 
 void task_sensor_read(void *pvParameters) {
