@@ -32,7 +32,8 @@ struct SystemSettings current_settings = {
     "Your_SSID",      // wifi_ssid
     "Your_PASSWORD",  // wifi_password
     true,             // enable_serial_logging
-    "UTC"             // timezone_label
+    "UTC",            // timezone_label
+    0.0f              // mag_declination_deg
 };
 volatile bool settings_dirty = false;
 volatile uint32_t last_settings_change_ms = 0;
@@ -65,6 +66,7 @@ extern "C" void load_settings(void) {
         if (!doc["wifi_password"].isNull()) strncpy(current_settings.wifi_password, doc["wifi_password"], sizeof(current_settings.wifi_password) - 1);
         if (!doc["enable_serial_logging"].isNull()) current_settings.enable_serial_logging = doc["enable_serial_logging"];
         if (!doc["timezonelabel"].isNull()) strncpy(current_settings.timezone_label, doc["timezonelabel"], sizeof(current_settings.timezone_label) - 1);
+        if (!doc["mag_declination_deg"].isNull()) current_settings.mag_declination_deg = doc["mag_declination_deg"];
     }
     file.close();
 }
@@ -87,6 +89,7 @@ extern "C" void save_settings(void) {
     doc["wifi_password"] = current_settings.wifi_password;
     doc["enable_serial_logging"] = current_settings.enable_serial_logging;
     doc["timezonelabel"] = current_settings.timezone_label;
+    doc["mag_declination_deg"] = current_settings.mag_declination_deg;
     
     String output;
     serializeJson(doc, output);
