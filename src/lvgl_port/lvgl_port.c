@@ -581,7 +581,10 @@ static void start_cal_event_cb(lv_event_t * e) {
             lv_obj_set_style_bg_color(full_cal_btn, lv_palette_main(LV_PALETTE_BLUE), 0);
             lv_label_set_text(full_cal_label, "Calibrate");
         }
-        if (cal_status_label) lv_label_set_text(cal_status_label, "Calibration Stopped");
+        if (cal_status_label) {
+            lv_label_set_text(cal_status_label, "Stopped");
+            lv_obj_set_style_text_color(cal_status_label, lv_color_hex(0xffffff), LV_PART_MAIN);
+        }
     }
 }
 
