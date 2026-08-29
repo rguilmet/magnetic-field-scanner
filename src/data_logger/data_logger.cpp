@@ -272,7 +272,7 @@ extern "C" bool process_calibration_file(void) {
 }
 
 
-extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, int cc, int32_t refX_raw, int32_t refY_raw, int32_t refZ_raw, int32_t tipX_raw, int32_t tipY_raw, int32_t tipZ_raw, int32_t refX_cal, int32_t refY_cal, int32_t refZ_cal, int32_t tipX_cal, int32_t tipY_cal, int32_t tipZ_cal, int32_t calOffsetX, int32_t calOffsetY, int32_t calOffsetZ, int32_t gradX, int32_t gradY, int32_t gradZ, float mag, float nT, float accX, float accY, float accZ, float gyrX, float gyrY, float gyrZ, float freq, bool is_muted, float qw, float qx, float qy, float qz) {
+extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, int cc, int32_t refX_raw, int32_t refY_raw, int32_t refZ_raw, int32_t tipX_raw, int32_t tipY_raw, int32_t tipZ_raw, int32_t refX_cal, int32_t refY_cal, int32_t refZ_cal, int32_t tipX_cal, int32_t tipY_cal, int32_t tipZ_cal, int32_t calOffsetX, int32_t calOffsetY, int32_t calOffsetZ, int32_t gradX, int32_t gradY, int32_t gradZ, float mag, float nT, float accX, float accY, float accZ, float gyrX, float gyrY, float gyrZ, float freq, bool is_muted, float qw, float qx, float qy, float qz, float azimuth, float elevation, float declination) {
     char ts[64];
     get_formatted_timestamp(ts, sizeof(ts), true);
     
@@ -289,7 +289,7 @@ extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, in
              mag, nT,
              accX, accY, accZ,
              gyrX, gyrY, gyrZ,
-             freq, is_muted ? 1 : 0, qw, qx, qy, qz);
+             freq, is_muted ? 1 : 0, qw, qx, qy, qz, azimuth, elevation, declination);
 
     if (current_settings.enable_serial_logging) {
         Serial.println(buffer);

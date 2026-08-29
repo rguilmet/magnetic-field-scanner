@@ -14,7 +14,8 @@ CalibrationConfig cal_config = {
     {{0.9890f, 0.0214f, -0.1652f}, {-0.0385f, 1.0030f, 0.0006f}, {0.1710f, -0.0272f, 0.9793f}},
     {59.28f, 80.59f, -11.78f},
     {{1.0163f, -0.0080f, 0.0049f}, {-0.0080f, 0.9941f, 0.0048f}, {0.0049f, 0.0048f, 0.9902f}},
-    60.0f
+    60.0f,
+    {0.0f, 0.0f, 0.0f}
 };
 
 
@@ -142,6 +143,10 @@ extern "C" void load_calibration(void) {
             JsonArray arr = doc["tip_hard"].as<JsonArray>();
             for(int i=0; i<3; i++) cal_config.tip_hard[i] = arr[i];
         }
+                if(doc["gyr_offset"].is<JsonArray>()) {
+            JsonArray arr = doc["gyr_offset"].as<JsonArray>();
+            for(int i=0; i<3; i++) cal_config.gyr_offset[i] = arr[i];
+        }
         if(doc["tip_soft"].is<JsonArray>()) {
             JsonArray arr = doc["tip_soft"].as<JsonArray>();
             for(int i=0; i<3; i++) {
@@ -174,6 +179,9 @@ extern "C" void save_calibration(float ref_hard[3], float ref_soft[3][3], float 
     
     JsonArray th = doc["tip_hard"].to<JsonArray>();
     for(int i=0; i<3; i++) th.add(tip_hard[i]);
+    
+        JsonArray go = doc["gyr_offset"].to<JsonArray>();
+    for(int i=0; i<3; i++) go.add(cal_config.gyr_offset[i]);
     
     JsonArray ts = doc["tip_soft"].to<JsonArray>();
     for(int i=0; i<3; i++) {

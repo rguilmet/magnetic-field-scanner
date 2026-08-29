@@ -165,6 +165,33 @@ def main():
     trace = np.trace(R_align)
     angle_deg = np.degrees(np.arccos(np.clip((trace - 1.0) / 2.0, -1.0, 1.0)))
     print(f"\n--- Physical Misalignment Analysis ---")
+    # 5b. Find Gyroscope Zero-Rate Offset (FOC)
+    print("Searching for Gyroscope Zero-Rate offset (FOC)...")
+    window_size = 50
+    min_var = float('inf')
+    best_idx = 0
+    for i in range(len(df) - window_size):
+        window = df['gyrZ'].iloc[i:i+window_size]
+        var = window.var()
+        if var < min_var:
+            min_var = var
+            best_idx = i
+            
+    if min_var > 5.0:
+        print(f"  WARNING: Could not find a quiet stationary window (min variance {min_var:.4f} > 5.0).")
+        print("  Skipping Gyro FOC extraction! To calibrate the gyroscope, you must leave the wand perfectly still for at least 1 second during the log.")
+        foc_x = 0.0
+        foc_y = 0.0
+        foc_z = 0.0
+        has_foc = False
+    else:
+        foc_x = df['gyrX'].iloc[best_idx:best_idx+window_size].mean()
+        foc_y = df['gyrY'].iloc[best_idx:best_idx+window_size].mean()
+        foc_z = df['gyrZ'].iloc[best_idx:best_idx+window_size].mean()
+        print(f"  Found quiet window at row {best_idx} with variance {min_var:.4f}")
+        print(f"  Gyro Offsets: X={foc_x:.3f}, Y={foc_y:.3f}, Z={foc_z:.3f} dps")
+        has_foc = True
+
     print(f"Sensors are physically misaligned by: {angle_deg:.2f} degrees")
     print("Rotation Matrix (Kabsch):")
     print(np.round(R_align, 3))
@@ -182,10 +209,13 @@ def main():
         "ref_soft": [[round(x, 4) for x in row] for row in ref_soft_final],
         "tip_offset": [round(x, 2) for x in tip_center],
         "tip_soft": [[round(x, 4) for x in row] for row in tip_W],
+        
         "imu_rotation_deg": 45.0
     }
     
     # 7. Save to JSON
+        if has_foc:
+        config["gyr_offset"] = [round(foc_x, 3), round(foc_y, 3), round(foc_z, 3)]
     with open(output_file, 'w') as f:
         json.dump(config, f, indent=4)
         

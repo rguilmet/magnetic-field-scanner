@@ -494,9 +494,9 @@ void task_sensor_read(void *pvParameters) {
             // 2. Feed aligned data to Madgwick Filter for Quaternion Fusion (9-DOF)
             // PHASE 7 PATCH: Madgwick requires a North-East-Down (NED) coordinate system.
             // We map the IMU (Forward, Left, Up) and RM3100 (Left, Forward, Down) into pure NED!
-            float ned_gx =  gyr[0];
-            float ned_gy = -gyr[1];
-            float ned_gz = -gyr[2];
+            float ned_gx =  (gyr[0] - cal_config.gyr_offset[0]);
+            float ned_gy = -(gyr[1] - cal_config.gyr_offset[1]);
+            float ned_gz = -(gyr[2] - cal_config.gyr_offset[2]);
             
             // Accelerometers measure REACTION FORCE (Up). We must invert X to get GRAVITY (Down).
             float ned_ax = -acc[0];
@@ -582,7 +582,7 @@ void task_sensor_read(void *pvParameters) {
             }
             if (target_freq > 3000.0f) target_freq = 3000.0f;
 
-            log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref.x, ref.y, ref.z, tip.x, tip.y, tip.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, gradX, gradY, gradZ, magnitude, nt_value, acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], target_freq, is_muted, q0, q1, q2, q3);
+            log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref.x, ref.y, ref.z, tip.x, tip.y, tip.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, gradX, gradY, gradZ, magnitude, nt_value, acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], target_freq, is_muted, q0, q1, q2, q3, ui_data.azimuth, ui_data.elevation, current_settings.mag_declination_deg);
 
             // --- ON-WAND CALIBRATION LOGIC ---
             if (is_calibrating) {
