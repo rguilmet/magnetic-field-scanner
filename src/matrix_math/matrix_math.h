@@ -202,7 +202,7 @@ inline bool get_calibration_matrices(int32_t *x, int32_t *y, int32_t *z, int cou
     
     double offset = 0;
     for(int i=0; i<3; i++) offset += n_center[i] * b[i];
-    double denom = offset - (-1.0);
+    double denom = 1.0 - offset;
     
     double R[3][3];
     for(int i=0; i<3; i++) {

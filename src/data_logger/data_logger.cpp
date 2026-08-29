@@ -170,16 +170,17 @@ extern "C" bool process_calibration_file(void) {
             continue; // Skip header
         }
         
-        // Parse 33 columns. refX is idx 5, tipX is idx 8
-        // time_ms,timestamp,version,voltage,audio_gain,cc,refX,refY,refZ,tipX,tipY,tipZ
+        // Parse 33 columns. refX is idx 6, tipZ is idx 11
+        // 0:time_ms, 1:timestamp, 2:version, 3:voltage, 4:audio_gain, 5:cc,
+        // 6:refX, 7:refY, 8:refZ, 9:tipX, 10:tipY, 11:tipZ
         int col = 0;
         int start_idx = 0;
         int len = line.length();
-        int32_t parsed_vals[11] = {0}; // We only care up to index 10
+        int32_t parsed_vals[12] = {0}; // We need up to index 11
         
-        for (int i = 0; i <= len && col < 11; i++) {
+        for (int i = 0; i <= len && col < 12; i++) {
             if (i == len || line.charAt(i) == ',') {
-                if (col >= 5 && col <= 10) {
+                if (col >= 6 && col <= 11) {
                     parsed_vals[col] = line.substring(start_idx, i).toInt();
                 }
                 start_idx = i + 1;
@@ -191,7 +192,7 @@ extern "C" bool process_calibration_file(void) {
         // Earth's magnetic field at CC=800 is roughly ~30,000 counts. 
         // Any value > 50,000 is physically impossible without a neodymium magnet.
         bool is_valid = true;
-        for (int i=5; i<=10; i++) {
+        for (int i=6; i<=11; i++) {
             if (abs(parsed_vals[i]) > 50000) {
                 is_valid = false;
                 break;
@@ -199,12 +200,12 @@ extern "C" bool process_calibration_file(void) {
         }
         
         if (is_valid) {
-            cal_ref_x[count] = parsed_vals[5];
-            cal_ref_y[count] = parsed_vals[6];
-            cal_ref_z[count] = parsed_vals[7];
-            cal_tip_x[count] = parsed_vals[8];
-            cal_tip_y[count] = parsed_vals[9];
-            cal_tip_z[count] = parsed_vals[10];
+            cal_ref_x[count] = parsed_vals[6];
+            cal_ref_y[count] = parsed_vals[7];
+            cal_ref_z[count] = parsed_vals[8];
+            cal_tip_x[count] = parsed_vals[9];
+            cal_tip_y[count] = parsed_vals[10];
+            cal_tip_z[count] = parsed_vals[11];
             count++;
             
             // Pet the watchdog to prevent a crash during this long parsing loop!
