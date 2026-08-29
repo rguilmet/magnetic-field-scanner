@@ -782,7 +782,7 @@ void create_detector_ui(void) {
     lv_obj_set_scrollbar_mode(tile2, LV_SCROLLBAR_MODE_OFF);
 
     lv_obj_t * cal_title = lv_label_create(tile2);
-    lv_label_set_text(cal_title, "Calibration\n& Tracking");
+    lv_label_set_text(cal_title, "Calibration");
     lv_obj_set_style_text_align(cal_title, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_style_text_color(cal_title, lv_color_hex(0xffffff), LV_PART_MAIN);
     lv_obj_set_style_text_font(cal_title, &lv_font_montserrat_16, LV_PART_MAIN);
