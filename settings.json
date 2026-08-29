@@ -10,7 +10,7 @@
   "audio_base_freq": 40.0,
   "audio_max_freq": 2500.0,
   "audio_waveform": 0,
-  "wifi_ssid": "MySpectrumWiFi88-2G",
-  "wifi_password": "terrificbike271",
+  "wifi_ssid": "Your-SSID-Here",
+  "wifi_password": "Your-PSW-Here",
   "enable_serial_logging": false
 }

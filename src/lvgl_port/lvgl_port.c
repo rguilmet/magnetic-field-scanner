@@ -53,6 +53,7 @@ lv_obj_t * cal_progress_bar;
 lv_obj_t * cal_status_label;
 lv_obj_t * full_cal_btn;
 lv_obj_t * full_cal_label;
+static bool is_calibrating = false;
 static lv_obj_t * wifi_btn;
 static lv_obj_t * wifi_label;
 lv_obj_t * ui_date_label;
@@ -562,7 +563,6 @@ static void main_tare_btn_event_cb(lv_event_t * e) {
 
 extern void start_on_wand_calibration(void);
 extern void stop_on_wand_calibration(void);
-static bool is_calibrating = false;
 
 static void start_cal_event_cb(lv_event_t * e) {
     if (!is_calibrating) {
