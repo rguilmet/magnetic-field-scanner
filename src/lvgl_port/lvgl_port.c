@@ -963,7 +963,10 @@ void update_detector_ui(const UIData *data) {
         }
 
         if (title_label != NULL) {
-            if (data->auto_tare_on || data->tare_active) {
+            if (data->auto_tare_on) {
+                lv_label_set_text(title_label, "Magnetic Field\n(AUTO)");
+                lv_obj_set_style_text_color(title_label, lv_color_hex(0x00ff00), LV_PART_MAIN);
+            } else if (data->tare_active) {
                 lv_label_set_text(title_label, "Magnetic Field\n(TARED)");
                 lv_obj_set_style_text_color(title_label, lv_color_hex(0xff0000), LV_PART_MAIN);
             } else {
