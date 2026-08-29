@@ -677,7 +677,7 @@ void create_detector_ui(void) {
     
     elevation_label = lv_label_create(tile1);
     lv_obj_set_style_text_color(elevation_label, lv_color_hex(0xffaa00), 0); // Orange/Amber
-    lv_obj_align(elevation_label, LV_ALIGN_TOP_RIGHT, -5, 130);
+    lv_obj_align(elevation_label, LV_ALIGN_TOP_LEFT, 5, 110);
     
     // Huge Mag Label
     mag_label = lv_label_create(tile1);
