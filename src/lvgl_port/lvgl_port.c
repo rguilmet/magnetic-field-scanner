@@ -27,6 +27,10 @@ static lv_obj_t * compass_label_n;
 static lv_obj_t * compass_label_e;
 static lv_obj_t * compass_label_s;
 static lv_obj_t * compass_label_w;
+static lv_obj_t * compass_label_ne;
+static lv_obj_t * compass_label_se;
+static lv_obj_t * compass_label_sw;
+static lv_obj_t * compass_label_nw;
 static lv_obj_t * crosshair_dot;
 static lv_obj_t * mag_label;
 static lv_obj_t * title_label;
@@ -648,6 +652,23 @@ void create_detector_ui(void) {
     compass_label_w = lv_label_create(mag_arc);
     lv_label_set_text(compass_label_w, "W");
     lv_obj_set_style_text_color(compass_label_w, lv_color_hex(0xffffff), 0);
+    
+    // Intercardinal Ticks
+    compass_label_ne = lv_label_create(mag_arc);
+    lv_label_set_text(compass_label_ne, "NE");
+    lv_obj_set_style_text_color(compass_label_ne, lv_color_hex(0x888888), 0);
+    
+    compass_label_se = lv_label_create(mag_arc);
+    lv_label_set_text(compass_label_se, "SE");
+    lv_obj_set_style_text_color(compass_label_se, lv_color_hex(0x888888), 0);
+    
+    compass_label_sw = lv_label_create(mag_arc);
+    lv_label_set_text(compass_label_sw, "SW");
+    lv_obj_set_style_text_color(compass_label_sw, lv_color_hex(0x888888), 0);
+    
+    compass_label_nw = lv_label_create(mag_arc);
+    lv_label_set_text(compass_label_nw, "NW");
+    lv_obj_set_style_text_color(compass_label_nw, lv_color_hex(0x888888), 0);
     // Declination Indicator (Top Right of Arc)
     declination_label = lv_label_create(tile1);
     lv_obj_set_style_text_color(declination_label, lv_color_hex(0x888888), 0); // Gray text
