@@ -214,7 +214,7 @@ def main():
     }
     
     # 7. Save to JSON
-        if has_foc:
+    if has_foc:
         config["gyr_offset"] = [round(foc_x, 3), round(foc_y, 3), round(foc_z, 3)]
     with open(output_file, 'w') as f:
         json.dump(config, f, indent=4)
