@@ -795,20 +795,23 @@ void create_detector_ui(void) {
     lv_obj_align(fw_label2, LV_ALIGN_TOP_MID, 0, 60);
 
     cal_status_label = lv_label_create(tile2);
+    lv_label_set_long_mode(cal_status_label, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(cal_status_label, 160);
+    lv_obj_set_style_text_align(cal_status_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(cal_status_label, "Ready for Calibration");
     lv_obj_set_style_text_color(cal_status_label, lv_color_hex(0xffffff), LV_PART_MAIN);
     lv_obj_set_style_text_font(cal_status_label, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_align(cal_status_label, LV_ALIGN_TOP_MID, 0, 160);
+    lv_obj_align(cal_status_label, LV_ALIGN_TOP_MID, 0, 140);
 
     cal_progress_bar = lv_bar_create(tile2);
-    lv_obj_set_size(cal_progress_bar, 200, 20);
-    lv_obj_align(cal_progress_bar, LV_ALIGN_TOP_MID, 0, 190);
+    lv_obj_set_size(cal_progress_bar, 140, 20);
+    lv_obj_align(cal_progress_bar, LV_ALIGN_TOP_MID, 0, 215);
     lv_bar_set_range(cal_progress_bar, 0, 100);
     lv_bar_set_value(cal_progress_bar, 0, LV_ANIM_OFF);
 
     full_cal_btn = lv_button_create(tile2);
     lv_obj_set_size(full_cal_btn, 140, 50);
-    lv_obj_align(full_cal_btn, LV_ALIGN_TOP_MID, 0, 260);
+    lv_obj_align(full_cal_btn, LV_ALIGN_TOP_MID, 0, 250);
     lv_obj_set_style_bg_color(full_cal_btn, lv_palette_main(LV_PALETTE_BLUE), 0);
     full_cal_label = lv_label_create(full_cal_btn);
     lv_label_set_text(full_cal_label, "Calibrate");
