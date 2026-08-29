@@ -235,7 +235,7 @@ extern "C" bool process_calibration_file(void) {
                 // Multiply Tip Soft-Iron Matrix by R_align
                 // R_align * tip_soft
                 float new_tip_soft[3][3];
-                mat_mult_3x3(R_align, tip_soft, new_tip_soft);
+                mat_mult_3x3_float(R_align, tip_soft, new_tip_soft);
                 
                 for(int i=0; i<3; i++) {
                     for(int j=0; j<3; j++) {

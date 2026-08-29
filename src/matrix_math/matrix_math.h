@@ -78,6 +78,15 @@ inline void mat_mult_3x3(double A[3][3], double B[3][3], double C[3][3]) {
     }
 }
 
+inline void mat_mult_3x3_float(float A[3][3], float B[3][3], float C[3][3]) {
+    for(int i=0; i<3; i++) {
+        for(int j=0; j<3; j++) {
+            C[i][j] = 0.0f;
+            for(int k=0; k<3; k++) C[i][j] += A[i][k] * B[k][j];
+        }
+    }
+}
+
 inline void mat_trans_3x3(double A[3][3], double B[3][3]) {
     for(int i=0; i<3; i++) {
         for(int j=0; j<3; j++) B[i][j] = A[j][i];
