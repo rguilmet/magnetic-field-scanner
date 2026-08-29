@@ -210,7 +210,7 @@ def main():
         "tip_offset": [round(x, 2) for x in tip_center],
         "tip_soft": [[round(x, 4) for x in row] for row in tip_W],
         
-        "imu_rotation_deg": 45.0
+        "imu_rotation_deg": 0.0
     }
     
     # 7. Save to JSON

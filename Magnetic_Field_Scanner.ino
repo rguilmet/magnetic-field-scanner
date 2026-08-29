@@ -474,22 +474,8 @@ void task_sensor_read(void *pvParameters) {
             float acc[3], gyr[3];
             imu_read(acc, gyr);
             
-            // 1. Align IMU coordinates to the physical wand shaft BEFORE sensor fusion
-            float angle_rad = cal_config.imu_rotation_deg * (float)M_PI / 180.0f;
-            float cosA = cosf(angle_rad);
-            float sinA = sinf(angle_rad);
-            
-            // Align Accelerometer
-            float ax_aligned = acc[0] * cosA - acc[2] * sinA;
-            float az_aligned = acc[0] * sinA + acc[2] * cosA;
-            acc[0] = ax_aligned;
-            acc[2] = az_aligned;
-
-            // Align Gyroscope
-            float gx_aligned = gyr[0] * cosA - gyr[2] * sinA;
-            float gz_aligned = gyr[0] * sinA + gyr[2] * cosA;
-            gyr[0] = gx_aligned;
-            gyr[2] = gz_aligned;
+            // IMU is rigidly mounted to the PCB. 
+            // Axis mapping to NED is handled directly below.
             
             // 2. Feed aligned data to Madgwick Filter for Quaternion Fusion (9-DOF)
             // PHASE 7 PATCH: Madgwick requires a North-East-Down (NED) coordinate system.
