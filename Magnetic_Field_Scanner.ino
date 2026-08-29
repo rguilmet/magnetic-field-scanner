@@ -474,8 +474,9 @@ void task_sensor_read(void *pvParameters) {
             float acc[3], gyr[3];
             imu_read(acc, gyr);
             
-            // IMU is rigidly mounted to the PCB. 
-            // Axis mapping to NED is handled directly below.
+            // Save pure raw hardware values for CSV logging and Python FOC extraction
+            float raw_acc[3] = {acc[0], acc[1], acc[2]};
+            float raw_gyr[3] = {gyr[0], gyr[1], gyr[2]};
             
             // --- DYNAMIC GYRO AUTO-ZERO (TARE) ---
             // If the accelerometer is extremely stable (variance < threshold) for 1 second, 
@@ -529,7 +530,7 @@ void task_sensor_read(void *pvParameters) {
                             Serial.println("DYNAMIC AUTO-ZERO: Gyro bias updated!");
                             has_printed_tare = true;
                         }
-                        stable_ticks = 40; // Don't recalculate every single tick, but recalculate often if it stays still
+                        stable_ticks = 40; 
                     }
                 } else {
                     stable_ticks = 0;
@@ -537,39 +538,38 @@ void task_sensor_read(void *pvParameters) {
                 }
             }
             
-            // 2. Subtract FOC and map to North-East-Down (NED) coordinate system.
-            float ned_gx =  (gyr[0] - cal_config.gyr_offset[0]);
-            float ned_gy = -(gyr[1] - cal_config.gyr_offset[1]);
-            float ned_gz = -(gyr[2] - cal_config.gyr_offset[2]);
+            // 2. Subtract Gyro FOC from raw silicon axes BEFORE any rotations
+            gyr[0] -= cal_config.gyr_offset[0];
+            gyr[1] -= cal_config.gyr_offset[1];
+            gyr[2] -= cal_config.gyr_offset[2];
             
-            float ned_ax = -acc[0];
-            float ned_ay =  acc[1];
-            float ned_az =  acc[2];
-
-            // 2b. The display board (IMU) is physically pitched relative to the wand tube!
-            // We must mathematically rotate the IMU readings around the Y-axis (Pitch) to align them with the Wand.
+            // 3. Un-rotate the physical display tilt in the pure Sensor Frame
             if (cal_config.imu_rotation_deg != 0.0f) {
-                float angle_rad = -cal_config.imu_rotation_deg * (float)M_PI / 180.0f; // Negative to UN-ROTATE
+                float angle_rad = -cal_config.imu_rotation_deg * (float)M_PI / 180.0f; 
                 float cosA = cosf(angle_rad);
                 float sinA = sinf(angle_rad);
                 
-                // Rotate Accelerometer
-                float temp_ax = ned_ax * cosA - ned_az * sinA;
-                float temp_az = ned_ax * sinA + ned_az * cosA;
-                ned_ax = temp_ax;
-                ned_az = temp_az;
+                // Pitch is around the Y-axis. 
+                float tax = acc[0]*cosA - acc[2]*sinA;
+                float taz = acc[0]*sinA + acc[2]*cosA;
+                acc[0] = tax;
+                acc[2] = taz;
                 
-                // Rotate Gyroscope
-                float temp_gx = ned_gx * cosA - ned_gz * sinA;
-                float temp_gz = ned_gx * sinA + ned_gz * cosA;
-                ned_gx = temp_gx;
-                ned_gz = temp_gz;
+                float tgx = gyr[0]*cosA - gyr[2]*sinA;
+                float tgz = gyr[0]*sinA + gyr[2]*cosA;
+                gyr[0] = tgx;
+                gyr[2] = tgz;
             }
             
-            // CONVERT DEGREES PER SECOND TO RADIANS PER SECOND FOR MADGWICK
-            ned_gx *= (float)M_PI / 180.0f;
-            ned_gy *= (float)M_PI / 180.0f;
-            ned_gz *= (float)M_PI / 180.0f;
+            // 4. Map to strict North-East-Down (NED)
+            float ned_ax = -acc[0];
+            float ned_ay =  acc[1];
+            float ned_az =  acc[2];
+            
+            // Convert Degrees to Radians!
+            float ned_gx =  gyr[0] * (float)M_PI / 180.0f;
+            float ned_gy = -gyr[1] * (float)M_PI / 180.0f;
+            float ned_gz = -gyr[2] * (float)M_PI / 180.0f;
             
             float ned_mx =  (float)ref.y;
             float ned_my =  (float)ref.x;
@@ -650,7 +650,7 @@ void task_sensor_read(void *pvParameters) {
             }
             if (target_freq > 3000.0f) target_freq = 3000.0f;
 
-            log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref.x, ref.y, ref.z, tip.x, tip.y, tip.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, gradX, gradY, gradZ, magnitude, nt_value, acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], target_freq, is_muted, q0, q1, q2, q3, ui_data.azimuth, ui_data.elevation, current_settings.mag_declination_deg);
+            log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref.x, ref.y, ref.z, tip.x, tip.y, tip.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, gradX, gradY, gradZ, magnitude, nt_value, raw_acc[0], raw_acc[1], raw_acc[2], raw_gyr[0], raw_gyr[1], raw_gyr[2], target_freq, is_muted, q0, q1, q2, q3, ui_data.azimuth, ui_data.elevation, current_settings.mag_declination_deg);
 
             // --- ON-WAND CALIBRATION LOGIC ---
             if (is_calibrating) {
