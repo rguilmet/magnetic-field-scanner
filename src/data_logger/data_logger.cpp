@@ -93,7 +93,7 @@ extern "C" void start_logging(void) {
         return;
     }
     
-    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ");
+    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ,Yaw,Declination");
     log_sample_count = 0;
     is_logging = true;
     if (log_mux) xSemaphoreGive(log_mux);
@@ -114,7 +114,7 @@ extern "C" void start_calibration_logging(void) {
         return;
     }
     
-    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ");
+    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ,Yaw,Declination");
     log_sample_count = 0;
     is_logging = true;
     if (log_mux) xSemaphoreGive(log_mux);
@@ -278,7 +278,7 @@ extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, in
     
     char buffer[512];
     snprintf(buffer, sizeof(buffer), 
-             "%lu,%s,%s,%.2f,%.1f,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%.1f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%d,%.4f,%.4f,%.4f,%.4f",
+             "%lu,%s,%s,%.2f,%.1f,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%.1f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%d,%.4f,%.4f,%.4f,%.4f,%.1f,%.1f",
              timestamp, ts, FIRMWARE_VERSION, voltage, audio_gain, cc,
              refX_raw, refY_raw, refZ_raw,
              tipX_raw, tipY_raw, tipZ_raw,
