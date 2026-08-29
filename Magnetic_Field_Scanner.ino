@@ -549,7 +549,7 @@ void task_sensor_read(void *pvParameters) {
             // 2b. The display board (IMU) is physically pitched relative to the wand tube!
             // We must mathematically rotate the IMU readings around the Y-axis (Pitch) to align them with the Wand.
             if (cal_config.imu_rotation_deg != 0.0f) {
-                float angle_rad = cal_config.imu_rotation_deg * (float)M_PI / 180.0f;
+                float angle_rad = -cal_config.imu_rotation_deg * (float)M_PI / 180.0f; // Negative to UN-ROTATE
                 float cosA = cosf(angle_rad);
                 float sinA = sinf(angle_rad);
                 
