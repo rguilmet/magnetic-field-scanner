@@ -96,6 +96,15 @@ extern "C" void save_settings(void) {
     serializeJson(doc, output);
     file.print(output);
     file.close();
+    
+    // Mirror to FFat if SD card is currently active (ensure internal storage is always up to date)
+    if (sd_card_mounted) {
+        File ffat_file = FFat.open("/settings.json", "w");
+        if (ffat_file) {
+            ffat_file.print(output);
+            ffat_file.close();
+        }
+    }
     if (sd_card_mounted) {
         Serial.println("Settings saved to SD Card.");
     } else {
@@ -191,5 +200,14 @@ extern "C" void save_calibration(float ref_hard[3], float ref_soft[3][3], float 
     
     serializeJson(doc, file);
     file.close();
+    
+    // Mirror to FFat if SD card is currently active (ensure internal storage is always calibrated)
+    if (sd_card_mounted) {
+        File ffat_file = FFat.open("/calibration.json", "w");
+        if (ffat_file) {
+            serializeJson(doc, ffat_file);
+            ffat_file.close();
+        }
+    }
     Serial.println("Calibration saved!");
 }
