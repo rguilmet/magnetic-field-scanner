@@ -539,14 +539,15 @@ void task_sensor_read(void *pvParameters) {
             }
             
             // 2. Map raw axes to strict Right-Handed North-East-Down (NED) BEFORE rotating.
-            // This eliminates the Left-Handed geometric reflection of the raw sensor frame!
-            float ned_ax = -acc[0];
-            float ned_ay =  acc[1];
-            float ned_az =  acc[2];
+            // DISCOVERY: The BMI270 is ALREADY mounted in a perfect Right-Handed NED frame!
+            // (+X = Forward, +Y = Right, +Z = Down). No axis mirroring is required!
+            float ned_ax = acc[0];
+            float ned_ay = acc[1];
+            float ned_az = acc[2];
             
-            float ned_gx =  (gyr[0] - cal_config.gyr_offset[0]) * (float)M_PI / 180.0f;
-            float ned_gy = -(gyr[1] - cal_config.gyr_offset[1]) * (float)M_PI / 180.0f;
-            float ned_gz = -(gyr[2] - cal_config.gyr_offset[2]) * (float)M_PI / 180.0f;
+            float ned_gx = (gyr[0] - cal_config.gyr_offset[0]) * (float)M_PI / 180.0f;
+            float ned_gy = (gyr[1] - cal_config.gyr_offset[1]) * (float)M_PI / 180.0f;
+            float ned_gz = (gyr[2] - cal_config.gyr_offset[2]) * (float)M_PI / 180.0f;
             
             // 3. Un-rotate the physical display tilt in the Right-Handed NED Frame!
             if (cal_config.imu_rotation_deg != 0.0f) {
