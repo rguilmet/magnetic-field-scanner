@@ -4,6 +4,12 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import argparse
 import sys
+import os
+
+__filename__ = os.path.basename(__file__)
+__version__ = "v1.0.1"
+
+print(f"=== {__filename__} {__version__} ===")
 
 parser = argparse.ArgumentParser(description='3D Wand Visualizer')
 parser.add_argument('csv_file', help='Path to the log CSV file')

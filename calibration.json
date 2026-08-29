@@ -1,9 +1,9 @@
 {
     "calibration_type": "PC Python Calibration",
-    "calibration_date_ms": 1788004443157,
-    "calibration_date": "2026-08-29 07:54:03",
+    "calibration_date_ms": 1788026657190,
+    "calibration_date": "2026-08-29 14:04:17",
     "matrix_version": "2.0",
-    "ref_offset": [
+    "ref_hard": [
         4.16,
         10.19,
         -141.39
@@ -25,7 +25,7 @@
             0.965
         ]
     ],
-    "tip_offset": [
+    "tip_hard": [
         172.34,
         147.4,
         -62.78
@@ -47,7 +47,7 @@
             0.9836
         ]
     ],
-    "imu_rotation_deg": 45.0,
+    "imu_rotation_deg": 60.0,
     "gyr_offset": [
         -2.056,
         -0.666,

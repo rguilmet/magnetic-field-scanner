@@ -15,6 +15,11 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
+__filename__ = os.path.basename(__file__)
+__version__ = "v1.1.1"
+
+print(f"=== {__filename__} {__version__} ===")
+
 def analyze_log(input_file, output_file, max_mag):
     # Windows path bulletproofing: strip accidental terminal quotes and normalize slashes
     input_file = os.path.normpath(input_file.strip('\'"'))

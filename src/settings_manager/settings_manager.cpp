@@ -163,6 +163,9 @@ extern "C" void load_calibration(void) {
                 for(int j=0; j<3; j++) cal_config.tip_soft[i][j] = row[j];
             }
         }
+        if(!doc["imu_rotation_deg"].isNull()) {
+            cal_config.imu_rotation_deg = doc["imu_rotation_deg"];
+        }
     }
     file.close();
 }
@@ -197,6 +200,8 @@ extern "C" void save_calibration(float ref_hard[3], float ref_soft[3][3], float 
         JsonArray row = ts.add<JsonArray>();
         for(int j=0; j<3; j++) row.add(tip_soft[i][j]);
     }
+    
+    doc["imu_rotation_deg"] = cal_config.imu_rotation_deg;
     
     serializeJson(doc, file);
     file.close();

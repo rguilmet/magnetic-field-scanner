@@ -78,7 +78,7 @@
 
 #define USER_DISP_ROT_90    1
 #define USER_DISP_ROT_NONO  0
-#define FIRMWARE_VERSION "v3.6.13"
+#define FIRMWARE_VERSION "v3.6.15"
 
 #define Rotated USER_DISP_ROT_NONO   
 

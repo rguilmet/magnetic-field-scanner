@@ -571,8 +571,8 @@ void task_sensor_read(void *pvParameters) {
             }
             
             float ned_mx =  (float)ref.y;
-            float ned_my =  (float)ref.x;
-            float ned_mz =  (float)ref.z;
+            float ned_my = -(float)ref.x;
+            float ned_mz = -(float)ref.z;
             
             MadgwickAHRSupdate(ned_gx, ned_gy, ned_gz, ned_ax, ned_ay, ned_az, ned_mx, ned_my, ned_mz);
             

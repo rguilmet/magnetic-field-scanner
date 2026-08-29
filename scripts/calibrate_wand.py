@@ -16,6 +16,11 @@ import os
 import time
 import matplotlib.pyplot as plt
 
+__filename__ = os.path.basename(__file__)
+__version__ = "v1.1.1"
+
+print(f"=== {__filename__} {__version__} ===")
+
 def get_calibration_matrices(x, y, z):
     """
     Fits an ellipsoid to 3D spatial data using the Least-Squares method.
@@ -216,9 +221,9 @@ def main():
         "calibration_date_ms": int(time.time() * 1000),
         "calibration_date": time.strftime("%Y-%m-%d %H:%M:%S"),
         "matrix_version": "2.0",
-        "ref_offset": [round(x, 2) for x in ref_center],
+        "ref_hard": [round(x, 2) for x in ref_center],
         "ref_soft": [[round(x, 4) for x in row] for row in ref_soft_final],
-        "tip_offset": [round(x, 2) for x in tip_center],
+        "tip_hard": [round(x, 2) for x in tip_center],
         "tip_soft": [[round(x, 4) for x in row] for row in tip_W],
         
         "imu_rotation_deg": existing_rotation

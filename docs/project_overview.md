@@ -1,9 +1,9 @@
 # Magnetic Field Scanner - Project Overview
 
-**Document Version:** `v1.1.0`
-**Last Updated:** August 28, 2026
-**Firmware Target:** `v3.4.0`
-**Python Ecosystem Target:** `v1.1.0`
+**Document Version:** `v1.1.1`
+**Last Updated:** August 29, 2026
+**Firmware Target:** `v3.6.15`
+**Python Ecosystem Target:** `v1.1.1`
 
 This document serves as the master source of truth for the Magnetic Field Scanner project. It details the mechanical assembly, electrical wiring, pinouts, firmware architecture, critical pitfalls to avoid in future development, and the roadmap for upcoming features.
 
