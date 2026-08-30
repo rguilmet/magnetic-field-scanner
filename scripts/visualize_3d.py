@@ -26,11 +26,10 @@ except Exception as e:
 df['time_sec'] = (df['time_ms'] - df['time_ms'].iloc[0]) / 1000.0
 qw, qx, qy, qz = df['QW'], df['QX'], df['QY'], df['QZ']
 
-# To find where the Wand Tip (+X) points in the Earth frame, we rotate (1,0,0) by the CONJUGATE quaternion.
-# q_conj = (qw, -qx, -qy, -qz)
+# To find where the Wand Tip (+X) points in the Earth frame, we rotate (1,0,0) by the quaternion q (Sensor relative to Earth).
 vec_x = 1.0 - 2.0 * (qy**2 + qz**2)
-vec_y = 2.0 * (qx*qy - qw*qz)  # Note the MINUS sign (Conjugate math)
-vec_z = 2.0 * (qx*qz + qw*qy)  # Note the PLUS sign (Conjugate math)
+vec_y = 2.0 * (qx*qy + qw*qz)  
+vec_z = 2.0 * (qx*qz - qw*qy)  
 
 # Map NED (North, East, Down) to Matplotlib (Horizontal, Depth, Vertical)
 # Earth North (+X) -> Plot Depth (+Y)
