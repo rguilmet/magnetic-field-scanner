@@ -14,6 +14,7 @@ print(f"=== {__filename__} {__version__} ===")
 parser = argparse.ArgumentParser(description='3D Wand Visualizer')
 parser.add_argument('csv_file', help='Path to the log CSV file')
 parser.add_argument('--speed', type=int, default=1, help='Playback speed multiplier')
+parser.add_argument('--trail', type=float, default=5.0, help='Length of the trail in seconds (default: 5.0)')
 args = parser.parse_args()
 
 try:
@@ -58,6 +59,7 @@ ax.plot_surface(xx, yy, zz, alpha=0.2, color='green')
 ax.quiver(0, 0, -0.5, 0, 1.0, 0, color='red', arrow_length_ratio=0.2, linewidth=2)
 ax.text(0, 1.2, -0.5, "NORTH", color='red', fontweight='bold')
 
+trail_line, = ax.plot([], [], [], color='cyan', linewidth=2, alpha=0.6)
 wand_line, = ax.plot([0, plot_x.iloc[0]], [0, plot_y.iloc[0]], [0, plot_z.iloc[0]], color='blue', linewidth=5)
 time_text = ax.text2D(0.05, 0.95, '', transform=ax.transAxes, fontsize=12)
 
@@ -67,10 +69,23 @@ def update(frame):
     idx = frame * step
     if idx >= len(df): idx = len(df) - 1
     
+    current_time = df['time_sec'].iloc[idx]
+    start_time = max(0, current_time - args.trail)
+    
+    # Find the dataframe slice for the trail
+    trail_mask = (df['time_sec'] >= start_time) & (df['time_sec'] <= current_time)
+    trail_x = plot_x[trail_mask]
+    trail_y = plot_y[trail_mask]
+    trail_z = plot_z[trail_mask]
+    
+    trail_line.set_data(trail_x, trail_y)
+    trail_line.set_3d_properties(trail_z)
+    
     wand_line.set_data([0, plot_x.iloc[idx]], [0, plot_y.iloc[idx]])
     wand_line.set_3d_properties([0, plot_z.iloc[idx]])
-    time_text.set_text(f"Time: {df['time_sec'].iloc[idx]:.1f}s")
-    return wand_line, time_text
+    time_text.set_text(f"Time: {current_time:.1f}s")
+    
+    return wand_line, trail_line, time_text
 
 ani = animation.FuncAnimation(fig, update, frames=len(df)//step, interval=33, blit=False)
 plt.show()
