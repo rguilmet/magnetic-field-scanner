@@ -197,7 +197,7 @@ The BMI270 IMU is located inside the display head, which is physically pitched U
   
 ### C. Gyroscope FOC & Dynamic Auto-Zero (Tare)
 MEMS Gyroscopes (like the BMI270) suffer from thermal drift and high "g-sensitivity" (where laying the wand on its side causes gravity to pull the silicon mass differently, altering the zero-rate offset by up to 4 dps). A static calibration file is completely insufficient to cancel this.
-* **The Solution:** The Magnetic_Field_Scanner.ino loop implements a real-time **Dynamic Auto-Zero** algorithm. 
+* **The Solution:** The `SensorFusion` class implements a real-time **Dynamic Auto-Zero** algorithm.
 * It maintains a silent 1-second rolling buffer (50 ticks at 50Hz) of the Accelerometer and Gyroscope.
 * If the variance of the Accelerometer drops below 0.001g (meaning the wand was set down on a desk/ground), it instantly recalculates the Gyroscope FOC from the buffer and updates the RAM seamlessly.
 * This completely eliminates Elevation and Azimuth drift regardless of temperature or resting orientation.
@@ -212,6 +212,7 @@ MEMS Gyroscopes (like the BMI270) suffer from thermal drift and high "g-sensitiv
 Following the Phase 3 structural refactor, the firmware heavily adheres to the **Single Responsibility Principle (SRP)**. Monolithic files have been rigorously decomposed to prevent cross-domain contamination, particularly between Core 0 (Sensor/SD) and Core 1 (UI/Web).
 
 ### src/ Directory Breakdown:
+* **sensor_fusion/**: A dedicated, stateful C++ class that handles all 3D matrix algebra, auto-tare EMA filtering, Madgwick AHRS updates, and vector geometry for the radar dot. Extracts all dense math from the main `.ino` loop.
 * **data_logger/**: Solely responsible for writing 400Hz CSV data to the SD card/FFat and handling file flushes.
 * **settings_manager/**: Exclusively manages the saving, loading, and JSON serialization of SystemSettings and CalibrationConfig.
 * **web_server/**: A pure UI/networking layer running on Core 1. It handles HTTP endpoints, file downloads, uploads, and OTA operations without directly touching hardware logic.

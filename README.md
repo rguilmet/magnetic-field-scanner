@@ -1,7 +1,7 @@
 # Magnetic Field Scanner (MFS) Wand
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Firmware](https://img.shields.io/badge/Firmware-v3.1.1-green.svg)]()
+[![Firmware](https://img.shields.io/badge/Firmware-v3.6.27-green.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-ESP32--S3-orange.svg)]()
 [![Build](https://img.shields.io/badge/Build-Arduino%20|%20PlatformIO-lightgrey.svg)]()
 
@@ -65,9 +65,11 @@ The scanner features a robust storage abstraction (`get_active_fs()`) that dynam
 ### 3. Integrated Web Server
 The device hosts a captive-portal-capable Web Server allowing the user to seamlessly download logs, upload calibration matrices, and format drives. It explicitly serves HTTP headers (`Content-Disposition`, `Content-Length`) for flawless browser compatibility across local networks.
 
-### 4. Calibration & Spatial Geometry
+### 4. Calibration & Spatial Geometry (SensorFusion)
+All intensive 3D mathematics have been encapsulated into a stateful `SensorFusion` C++ class to maintain strict Single Responsibility Principle (SRP) and keep the I2C polling loop clean.
 * **Hard/Soft Iron Correction:** The system applies 3x3 rotational/scaling matrices and 3D offset vectors to the raw magnetic data to correct for local distortions caused by the battery and LCD.
 * **IMU Mechanical Offset (`imu_rotation_deg`):** A fixed `60.0` degree rotation is mathematically applied to the IMU to account for the physical bend between the wand handle and the sensor shaft, allowing accurate radar projection mapping.
+* **Dynamic Auto-Zero:** Eliminates Gyroscope thermal drift by silently recalculating FOC bias during periods of extreme stillness.
 
 ---
 
