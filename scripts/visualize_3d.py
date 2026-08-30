@@ -31,17 +31,20 @@ vec_x = 1.0 - 2.0 * (qy**2 + qz**2)
 vec_y = 2.0 * (qx*qy + qw*qz)  
 vec_z = 2.0 * (qx*qz - qw*qy)  
 
-# Map NED (North, East, Down) to Matplotlib (Horizontal, Depth, Vertical)
+# Map NED (North, East, Down) to Matplotlib
 # Earth North (+X) -> Plot Depth (+Y)
 # Earth East (+Y) -> Plot Horizontal (+X)
-# Earth Down (+Z) -> Plot Vertical (-Z)
+# Earth Down (+Z) -> Plot Vertical (+Z, but inverted)
 plot_x = vec_y
 plot_y = vec_x
-plot_z = -vec_z
+plot_z = vec_z  # Pure NED Z
 
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
 fig.canvas.manager.set_window_title('Magnetic Field Scanner - 3D Playback')
+
+# Invert Z axis so negative (Sky) is at the top, positive (Dirt) is at the bottom
+ax.invert_zaxis()
 
 ax.set_xlim([-1.5, 1.5])
 ax.set_ylim([-1.5, 1.5])
