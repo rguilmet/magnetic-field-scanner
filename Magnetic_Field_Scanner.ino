@@ -122,7 +122,7 @@ volatile bool is_muted = false;
 volatile float current_audio_gain = 50.0f;
 uint16_t current_cycle_count = 200;
 volatile uint16_t pending_cycle_count = 0;
-#include "sensor_fusion/SensorFusion.h"
+#include "src/sensor_fusion/SensorFusion.h"
 SensorFusion sensorFusion;
 
 extern "C" void set_auto_tare(bool enable) {

@@ -1,8 +1,8 @@
 
 #pragma once
 #include <Arduino.h>
-#include "settings_manager/settings_manager.h"
-#include "imu_bsp/MadgwickAHRS.h"
+#include "src/settings_manager/settings_manager.h"
+#include "src/imu_bsp/MadgwickAHRS.h"
 
 #define MFS_NT_CONVERSION_FACTOR 0.03671f
 #define MFS_EMA_ALPHA 0.999f
