@@ -49,6 +49,17 @@ void SensorFusion::setAutoTareEnabled(bool enabled) {
     }
 }
 
+void SensorFusion::scaleTare(float scale) {
+    if (!tare_requested) {
+        calibration_offset.x = (int32_t)((float)calibration_offset.x * scale);
+        calibration_offset.y = (int32_t)((float)calibration_offset.y * scale);
+        calibration_offset.z = (int32_t)((float)calibration_offset.z * scale);
+    }
+    auto_tare_x *= scale;
+    auto_tare_y *= scale;
+    auto_tare_z *= scale;
+}
+
 SensorFusionOutput SensorFusion::processUpdate(Vector3Int& tip, Vector3Int& ref, float acc[3], float gyr[3], uint16_t cycle_count) {
     SensorFusionOutput out = {0};
 

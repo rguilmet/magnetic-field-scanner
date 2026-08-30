@@ -3,10 +3,7 @@
 #include <Arduino.h>
 #include "src/settings_manager/settings_manager.h"
 #include "src/imu_bsp/MadgwickAHRS.h"
-
-#define MFS_NT_CONVERSION_FACTOR 0.03671f
-#define MFS_EMA_ALPHA 0.999f
-#define MFS_AUTO_TARE_THRESHOLD 50.0f
+#include "user_config.h"
 
 struct Vector3Int {
     int32_t x;
@@ -40,6 +37,8 @@ public:
     void setAutoTareEnabled(bool enabled);
     bool isAutoTareEnabled() const { return auto_tare_enabled; }
     bool isTareActive() const { return (calibration_offset.x != 0 || calibration_offset.y != 0 || calibration_offset.z != 0); }
+    bool isTareRequested() const { return tare_requested; }
+    void scaleTare(float scale);
     
     Vector3Int getCalibrationOffset() const { return calibration_offset; }
 

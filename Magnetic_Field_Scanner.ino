@@ -189,13 +189,11 @@ extern "C" {
 
     void calibrate_sensors() {
         // We will trigger a calibration on the next successful read
-        tare_requested = true;
+        sensorFusion.setTareRequested();
     }
 
     void reset_calibration() {
-        calibration_offset.x = 0;
-        calibration_offset.y = 0;
-        calibration_offset.z = 0;
+        sensorFusion.resetTare();
         Serial.println("Calibration reset! Showing raw readings.");
     }
 }
@@ -310,21 +308,12 @@ void task_sensor_read(void *pvParameters) {
             if (old_count > 0) {
                 float scale = (float)count / (float)old_count;
                 
-                // Avoid scaling if a tare is currently requested and hasn't been processed yet
-                if (!tare_requested) {
-                    calibration_offset.x = (int32_t)((float)calibration_offset.x * scale);
-                    calibration_offset.y = (int32_t)((float)calibration_offset.y * scale);
-                    calibration_offset.z = (int32_t)((float)calibration_offset.z * scale);
-                }
-                
                 // Auto-scale the Hard-Iron calibration matrix centers!
                 for(int i=0; i<3; i++) {
                     cal_config.tip_hard[i] *= scale;
                     cal_config.ref_hard[i] *= scale;
                 }
-                auto_tare_x *= scale;
-                auto_tare_y *= scale;
-                auto_tare_z *= scale;
+                sensorFusion.scaleTare(scale);
             }
             
             Serial.println("Cycle count update complete. CMM restarted.");
@@ -404,6 +393,9 @@ void task_sensor_read(void *pvParameters) {
             
             Vector3Int tip_vec = {tip.x, tip.y, tip.z};
             Vector3Int ref_vec = {ref.x, ref.y, ref.z};
+
+            float raw_acc[3], raw_gyr[3];
+            imu_read(raw_acc, raw_gyr);
             
             SensorFusionOutput out = sensorFusion.processUpdate(tip_vec, ref_vec, raw_acc, raw_gyr, current_cycle_count);
             
