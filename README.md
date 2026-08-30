@@ -6,7 +6,7 @@
 [![Build](https://img.shields.io/badge/Build-Arduino%20|%20PlatformIO-lightgrey.svg)]()
 
 
-The Magnetic Field Scanner (MFS) Wand is a high-speed, high-precision spatial magnetic field mapping instrument. Powered by an ESP32-S3, it features dual RM3100 geomagnetic sensors, a 6-axis IMU, an RTOS-driven architecture polling at 400Hz, and a full LVGL-based touchscreen user interface.
+The Magnetic Field Scanner (MFS) Wand is a high-precision spatial magnetic field mapping instrument. Powered by an ESP32-S3, it features dual RM3100 geomagnetic sensors, a 6-axis IMU, an RTOS-driven architecture, and a full LVGL-based touchscreen user interface.
 
 ## Hardware Configuration
 
@@ -34,7 +34,7 @@ To support this many peripherals on a single ESP32-S3, strict pin management and
 | **SD Card** | CS: 38, MOSI: 39, MISO: 40, SCLK: 41 | SPI | Dedicated high-speed SPI bus for high-bandwidth data logging. |
 | **LCD Display** | CS: 9, PCLK: 10, D0-D3: 11, 12, 13, 14, TE: 21 | QSPI / 8080 | High-speed bus dedicated to driving the 172x640 LVGL display. |
 | **Battery ADC** | 4 | Analog (ADC1) | Dedicated for battery voltage monitoring. |
-| **RM3100 DRDY** | TIP: 3, REF: 2, MID: 5 | Interrupt | Direct hardware interrupts for 400Hz synchronization. |
+| **RM3100 DRDY** | TIP: 3, REF: 2, MID: 5 | Interrupt | Direct hardware interrupts for DRDY synchronization. |
 | **Future GPS** | TX: 43, RX: 44 | UART | Reserved. Freed up by migrating static control pins to the IO Expander. |
 
 ### TCA9554 I/O Expander (Address 0x20)
@@ -55,7 +55,7 @@ The software is built on the Arduino ESP32 Core but heavily utilizes ESP-IDF nat
 
 ### 1. FreeRTOS Task Isolation
 The architecture strictly separates deterministic sensor polling from UI rendering:
-* **Sensor Polling Task:** Pinned to Core 0 (or Core 1 depending on load). Runs a tight loop polling the RM3100 sensors at 400Hz (2.5ms). 
+* **Sensor Polling Task:** Pinned to Core 0 (or Core 1 depending on load). Runs a tight loop polling the RM3100 sensors synced to the hardware DRDY pins (Capped at 50Hz via software). 
 * **LVGL UI Task:** Pinned to the opposing core. Handles the display rendering, touch inputs, and UI updates without interrupting the I2C sensor bus.
 
 ### 2. Dual-Drive Filesystem & Smart Fallback

@@ -1,6 +1,6 @@
 # Magnetic Field Scanner - Project Overview
 
-**Document Version:** `v1.1.3`
+**Document Version:** `v1.1.4`
 **Last Updated:** August 30, 2026
 **Firmware Target:** `v3.6.27`
 **Python Ecosystem Target:** `v1.1.1`
@@ -81,7 +81,7 @@ For the full visual diagram, reference the spreadsheet: docs/electrical/Cable_Co
 | **GND** | GND | Green/White | |
 | **SCL (Clock)** | IO48 | Blue | **I2C Clock Shield:** Twisted directly with GND to prevent signal degradation. |
 | **GND** | GND | Blue/White | |
-| **DRDY_TIP** | IO01 | Brown | **Digital Sync:** Low-frequency (400Hz) digital interrupts paired together. |
+| **DRDY_TIP** | IO01 | Brown | **Digital Sync:** Hardware data-ready interrupt signals. |
 | **DRDY_REF** | IO02 | Brown/White | |
 
 ### I2C Architecture & Device Addresses
@@ -213,7 +213,7 @@ Following the Phase 3 structural refactor, the firmware heavily adheres to the *
 
 ### src/ Directory Breakdown:
 * **sensor_fusion/**: A dedicated, stateful C++ class that handles all 3D matrix algebra, auto-tare EMA filtering, Madgwick AHRS updates, and vector geometry for the radar dot. Extracts all dense math from the main `.ino` loop.
-* **data_logger/**: Solely responsible for writing 400Hz CSV data to the SD card/FFat and handling file flushes.
+* **data_logger/**: Solely responsible for writing CSV data to the SD card/FFat and handling file flushes.
 * **settings_manager/**: Exclusively manages the saving, loading, and JSON serialization of SystemSettings and CalibrationConfig.
 * **web_server/**: A pure UI/networking layer running on Core 1. It handles HTTP endpoints, file downloads, uploads, and OTA operations without directly touching hardware logic.
 * **screenshot/**: Isolated LVGL screen capture logic (RGB565 to BMP conversion).
@@ -235,3 +235,15 @@ tc_bsp)**: Board Support Packages that isolate the direct register-level I2C com
 When powering on the ESP32 via the physical battery button, the hardware PMIC requires the ESP32 to quickly assert the \SYS_EN\ pin HIGH (via the TCA9554 IO Expander on I2C) to latch the power circuit on.
 * **The Pitfall:** If the firmware waits for a Serial connection or performs long blocking tasks before initializing the IO Expander, the user will be forced to physically hold the power button down for several seconds. If they let go early, power is cut instantly.
 * **The Solution:** The I2C bus (\i2c_master_Init()\) and the IO Expander (\esp_io_expander_set_level(io_expander, MFS_EXIO_PIN_SYS_EN, 1)\) must be executed as the absolute very first commands in \setup()\, BEFORE any \while(!Serial)\ delay loops.
+
+### 2. The 400Hz Myth & True Polling Rates
+The documentation previously falsely stated the wand polled at 400Hz. This is a hardware and software impossibility given the current architecture.
+
+**The Hardware Limit (TMRC Register):** The RM3100 hardware data-ready (DRDY) rate is dynamically controlled by the Cycle Count (CC) via the \TMRC\ register. Higher cycle counts take longer to measure:
+* **CC 50:** ~150 Hz
+* **CC 100:** ~75 Hz
+* **CC 200:** ~37 Hz
+* **CC 400:** ~18 Hz
+* **CC 800:** ~9 Hz
+
+**The Software Limit:** Even at CC 50 (150Hz hardware speed), the software will NOT poll at 150Hz. The \	ask_sensor_read\ loop contains a hardcoded \TaskDelay(pdMS_TO_TICKS(20))\ which acts as a 50Hz throttle to prevent the ESP32 from locking up the UI task. This means the firmware's absolute maximum polling speed is **~50Hz**, and for CC >= 100, the polling speed is bottlenecked purely by the hardware (e.g. 18Hz at CC 400, 9Hz at CC 800).
