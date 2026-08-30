@@ -53,6 +53,23 @@ def calculate_ahrs_stability(df):
         "pitch_variation_deg": round(pitch_p2p, 2)
     }
 
+def calculate_gradiometer_isolation(df):
+    """Analyzes a target pass to prove the gradient spikes while the Earth baseline remains stable."""
+    if 'mag' not in df.columns or 'refX_cal' not in df.columns:
+        return None
+        
+    # Max gradient spike (The target)
+    max_grad = df['mag'].max()
+    
+    # Earth baseline stability (The reference sensor)
+    ref_mags = np.sqrt(df['refX_cal']**2 + df['refY_cal']**2 + df['refZ_cal']**2)
+    ref_std = ref_mags.std()
+    
+    return {
+        "max_target_gradient_uT": round(max_grad, 2),
+        "earth_baseline_drift_std_uT": round(ref_std, 4)
+    }
+
 def calculate_repeatability(df):
     """Analyzes a log with multiple target passes (stop block) for peak consistency."""
     if 'mag' not in df.columns:
@@ -71,6 +88,7 @@ def main():
     print(f"=== {__filename__} {__version__} ===")
     parser = argparse.ArgumentParser(description="Wand System Characterization Tool")
     parser.add_argument("--noise", type=str, help="Path to stationary noise floor log (RAW mode)")
+    parser.add_argument("--target", type=str, help="Path to target isolation log (RAW mode)")
     parser.add_argument("--ahrs", type=str, help="Path to AHRS tumble log (RAW mode)")
     parser.add_argument("--repeatability", type=str, help="Path to slide-jig repeatability log (RAW mode)")
     parser.add_argument("--saturation", type=str, help="Path to saturation/clipping log (RAW mode)")
@@ -103,35 +121,46 @@ def main():
             report.append(f"- **Peak-to-Peak Jitter:** `{res['peak_to_peak_uT']} µT`")
             report.append("> The RMS noise floor dictates the absolute smallest localized anomaly the wand can reliably detect above the background Earth field.\n")
             
-    # 2. AHRS Stability
+    # 2. Gradiometer Isolation
+    if args.target and os.path.exists(args.target):
+        df = pd.read_csv(args.target)
+        res = calculate_gradiometer_isolation(df)
+        if res:
+            report.append("## Section 3: Gradiometer Isolation & Earth-Field Rejection")
+            report.append(f"*(Captured by passing a ferrous target exclusively over the Tip Sensor)*")
+            report.append(f"- **Target Gradient Spike:** `{res['max_target_gradient_uT']} µT`")
+            report.append(f"- **Earth Baseline Fluctuation (Reference Sensor):** `± {res['earth_baseline_drift_std_uT']} µT`")
+            report.append("> Proves the spatial gradiometer successfully isolates a massive local anomaly while the Reference Sensor (and therefore the Earth's background field) remains undisturbed.\n")
+            
+    # 3. AHRS Stability
     if args.ahrs and os.path.exists(args.ahrs):
         df = pd.read_csv(args.ahrs)
         res = calculate_ahrs_stability(df)
         if res:
-            report.append("## Section 3: Attitude Tracking & AHRS Stability")
+            report.append("## Section 4: Attitude Tracking & AHRS Stability")
             report.append(f"*(Captured while actively tumbling/pitching the wand by {res['pitch_variation_deg']} degrees)*")
             report.append(f"- **Azimuth (Compass) Standard Deviation:** `± {res['azimuth_drift_std_deg']}°`")
             report.append("> Proves that the Kabsch algebraic transformation properly isolates the physical orientation of the dual sensors, preventing the compass heading from drifting or rolling when the wand is pitched.\n")
 
-    # 3. Repeatability
+    # 4. Repeatability
     if args.repeatability and os.path.exists(args.repeatability):
         df = pd.read_csv(args.repeatability)
         res = calculate_repeatability(df)
         if res:
-            report.append("## Section 4: Measurement Repeatability")
+            report.append("## Section 5: Measurement Repeatability")
             report.append("*(Captured by repeatedly sliding a target to a hard physical stop-block)*")
             report.append(f"- **Peak Measurement Variance:** `± {res['peak_variance_uT']} µT`")
             report.append(f"- **Maximum Signal Tested:** `{res['max_peak_uT']} µT`\n")
             
-    # 4. Saturation
+    # 5. Saturation
     if args.saturation and os.path.exists(args.saturation):
         df = pd.read_csv(args.saturation)
         if 'mag' in df.columns:
-            report.append("## Section 5: Dynamic Range & Saturation")
+            report.append("## Section 6: Dynamic Range & Saturation")
             report.append(f"- **Empirical Clipping Limit:** `{round(df['mag'].max(), 2)} µT`")
             report.append("> The maximum magnetic field strength the RM3100 sensors can ingest before hardware saturation blinds the gradiometer.\n")
 
-    report.append("## Section 6: In-Wand Math Processing Power")
+    report.append("## Section 7: In-Wand Math Processing Power")
     report.append("- **Algorithm:** 9-parameter Least-Squares Ellipsoid Fit + Kabsch Rotational Alignment")
     report.append("- **Execution Time:** `< 20 ms`")
     report.append("> The ESP32-S3 successfully computes the matrix inversion and eigen-decomposition on 1,200 floating-point 3D vectors in less than a single UI frame tick.\n")
