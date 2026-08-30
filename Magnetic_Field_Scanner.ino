@@ -656,6 +656,19 @@ void setup() {
     Serial.begin(921600);
     pinMode(0, INPUT_PULLUP); // BOOT button for screenshots
     
+    // =========================================================================
+    // CRITICAL: BATTERY LATCH INITIALIZATION
+    // We must assert SYS_EN high IMMEDIATELY on boot. If we don't, the user 
+    // has to physically hold the power button for the entire 3000ms Serial 
+    // timeout delay below to keep the device alive!
+    // =========================================================================
+    i2c_master_Init(); // Boot I2C hardware bus for IO Expander
+    i2c_master_bus_handle_t tca9554_i2c_bus = NULL;
+    ESP_ERROR_CHECK(i2c_master_get_bus_handle(0, &tca9554_i2c_bus));
+    ESP_ERROR_CHECK(esp_io_expander_new_i2c_tca9554(tca9554_i2c_bus, ESP_IO_EXPANDER_I2C_TCA9554_ADDRESS_000, &io_expander));
+    ESP_ERROR_CHECK(esp_io_expander_set_dir(io_expander, MFS_EXIO_PIN_SYS_EN, IO_EXPANDER_OUTPUT));
+    ESP_ERROR_CHECK(esp_io_expander_set_level(io_expander, MFS_EXIO_PIN_SYS_EN, 1)); // Latch battery power ON!
+
     // Wait for native USB Serial to connect, with a 3 second timeout 
     // so the wand still boots instantly on battery power without a PC!
     unsigned long start_time = millis();
@@ -672,9 +685,6 @@ void setup() {
 
     Serial.printf("\n--- Magnetic Field Scanner %s ---\n", FIRMWARE_VERSION);
 
-    // Initialize display components first (which initializes hardware I2C buses)
-    i2c_master_Init(); // I2C for touch panel and peripherals
-    
     // Register RM3100s on the shared hardware I2C bus (user_i2c_port0_handle)
     i2c_device_config_t dev_cfg = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,

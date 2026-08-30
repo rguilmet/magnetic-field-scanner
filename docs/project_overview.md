@@ -1,6 +1,6 @@
 # Magnetic Field Scanner - Project Overview
 
-**Document Version:** `v1.1.2`
+**Document Version:** `v1.1.3`
 **Last Updated:** August 30, 2026
 **Firmware Target:** `v3.6.27`
 **Python Ecosystem Target:** `v1.1.1`
@@ -228,3 +228,10 @@ tc_bsp)**: Board Support Packages that isolate the direct register-level I2C com
 * **Mutexes:** mfs_lvgl_lock() must be acquired before touching UI elements from Core 0. log_mux must be acquired before writing to logFile.
 
 
+
+## 10. Critical Hardware Quirks & Engineering Notes
+
+### 1. Battery Power Keep-Alive Latch (SYS_EN)
+When powering on the ESP32 via the physical battery button, the hardware PMIC requires the ESP32 to quickly assert the \SYS_EN\ pin HIGH (via the TCA9554 IO Expander on I2C) to latch the power circuit on.
+* **The Pitfall:** If the firmware waits for a Serial connection or performs long blocking tasks before initializing the IO Expander, the user will be forced to physically hold the power button down for several seconds. If they let go early, power is cut instantly.
+* **The Solution:** The I2C bus (\i2c_master_Init()\) and the IO Expander (\esp_io_expander_set_level(io_expander, MFS_EXIO_PIN_SYS_EN, 1)\) must be executed as the absolute very first commands in \setup()\, BEFORE any \while(!Serial)\ delay loops.
