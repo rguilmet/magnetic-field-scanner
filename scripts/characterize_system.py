@@ -19,13 +19,16 @@ __version__ = "v1.0.0"
 
 def calculate_noise_floor(df):
     """Analyzes a stationary log to find the exact hardware noise floor."""
-    if 'mag' not in df.columns:
+    if 'nT' not in df.columns:
         return None
     
+    # Convert nT to uT
+    ut_values = df['nT'] / 1000.0
+    
     # Calculate standard deviation (RMS noise)
-    std_dev = df['mag'].std()
-    variance = df['mag'].var()
-    p2p = df['mag'].max() - df['mag'].min()
+    std_dev = ut_values.std()
+    variance = ut_values.var()
+    p2p = ut_values.max() - ut_values.min()
     
     # Calculate update rate (Latency)
     time_deltas = df['time_ms'].diff().dropna()
@@ -45,7 +48,18 @@ def calculate_ahrs_stability(df):
     if 'Azimuth' not in df.columns or 'Elevation' not in df.columns:
         return None
         
-    azimuth_std = df['Azimuth'].std()
+    # Circular standard deviation for Azimuth (angles wrap 0-360)
+    angles_rad = np.deg2rad(df['Azimuth'])
+    sin_mean = np.sin(angles_rad).mean()
+    cos_mean = np.cos(angles_rad).mean()
+    R = np.sqrt(sin_mean**2 + cos_mean**2)
+    # Circular std dev = sqrt(-2 * ln(R))
+    # If R=0 (uniform distribution), it's undefined/infinite drift.
+    if R <= 0:
+        azimuth_std = 180.0
+    else:
+        azimuth_std = np.rad2deg(np.sqrt(-2 * np.log(R)))
+        
     pitch_p2p = df['Elevation'].max() - df['Elevation'].min()
     
     return {
@@ -55,15 +69,27 @@ def calculate_ahrs_stability(df):
 
 def calculate_gradiometer_isolation(df):
     """Analyzes a target pass to prove the gradient spikes while the Earth baseline remains stable."""
-    if 'mag' not in df.columns or 'refX_cal' not in df.columns:
+    if 'nT' not in df.columns or 'refX_cal' not in df.columns:
         return None
         
+    # Convert nT to uT
+    ut_values = df['nT'] / 1000.0
+    
     # Max gradient spike (The target)
-    max_grad = df['mag'].max()
+    max_grad = ut_values.max()
     
     # Earth baseline stability (The reference sensor)
-    ref_mags = np.sqrt(df['refX_cal']**2 + df['refY_cal']**2 + df['refZ_cal']**2)
-    ref_std = ref_mags.std()
+    # The raw counts for ref sensor need to be converted to uT as well
+    # (magnitude * 1000.0) / (75 * cc) => For CC=400, denominator is 75*400 = 30000
+    # So counts * 1000 / 30000 = counts / 30 = nT. 
+    # nT / 1000 = uT = counts / 30000
+    cc = df['cc'].iloc[0] if 'cc' in df.columns else 400
+    conversion = 75.0 * cc
+    
+    ref_mags_counts = np.sqrt(df['refX_cal']**2 + df['refY_cal']**2 + df['refZ_cal']**2)
+    ref_mags_ut = (ref_mags_counts * 1000.0 / conversion) / 1000.0
+    
+    ref_std = ref_mags_ut.std()
     
     return {
         "max_target_gradient_uT": round(max_grad, 2),
@@ -72,16 +98,18 @@ def calculate_gradiometer_isolation(df):
 
 def calculate_repeatability(df):
     """Analyzes a log with multiple target passes (stop block) for peak consistency."""
-    if 'mag' not in df.columns:
+    if 'nT' not in df.columns:
         return None
         
+    ut_values = df['nT'] / 1000.0
+    
     # We will just calculate the variance of the top 5% of peaks as a rough proxy
-    threshold = df['mag'].quantile(0.95)
-    peaks = df[df['mag'] > threshold]['mag']
+    threshold = ut_values.quantile(0.95)
+    peaks = ut_values[ut_values > threshold]
     
     return {
         "peak_variance_uT": round(peaks.std(), 4) if len(peaks) > 0 else 0.0,
-        "max_peak_uT": round(df['mag'].max(), 2)
+        "max_peak_uT": round(ut_values.max(), 2)
     }
 
 def main():
@@ -155,9 +183,10 @@ def main():
     # 5. Saturation
     if args.saturation and os.path.exists(args.saturation):
         df = pd.read_csv(args.saturation)
-        if 'mag' in df.columns:
+        if 'nT' in df.columns:
+            ut_values = df['nT'] / 1000.0
             report.append("## Section 6: Dynamic Range & Saturation")
-            report.append(f"- **Empirical Clipping Limit:** `{round(df['mag'].max(), 2)} µT`")
+            report.append(f"- **Empirical Clipping Limit:** `{round(ut_values.max(), 2)} µT`")
             report.append("> The maximum magnetic field strength the RM3100 sensors can ingest before hardware saturation blinds the gradiometer.\n")
 
     report.append("## Section 7: In-Wand Math Processing Power")
