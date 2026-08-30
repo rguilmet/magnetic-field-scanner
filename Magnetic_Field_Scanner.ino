@@ -122,30 +122,19 @@ volatile bool is_muted = false;
 volatile float current_audio_gain = 50.0f;
 uint16_t current_cycle_count = 200;
 volatile uint16_t pending_cycle_count = 0;
-MagData calibration_offset = {0, 0, 0};
-
-volatile bool auto_tare_enabled = false;
-float auto_tare_x = 0.0f;
-float auto_tare_y = 0.0f;
-float auto_tare_z = 0.0f;
+#include "sensor_fusion/SensorFusion.h"
+SensorFusion sensorFusion;
 
 extern "C" void set_auto_tare(bool enable) {
-    auto_tare_enabled = enable;
+    sensorFusion.setAutoTareEnabled(enable);
 }
 
-volatile bool tare_requested = false;
-
 extern "C" void trigger_manual_tare(void) {
-    tare_requested = true;
+    sensorFusion.setTareRequested();
 }
 
 extern "C" void reset_tare(void) {
-    calibration_offset.x = 0;
-    calibration_offset.y = 0;
-    calibration_offset.z = 0;
-    auto_tare_x = 0.0f;
-    auto_tare_y = 0.0f;
-    auto_tare_z = 0.0f;
+    sensorFusion.resetTare();
 }
 
 // Initial setup to configure sensor settings using Hardware I2C
@@ -413,238 +402,43 @@ void task_sensor_read(void *pvParameters) {
             int32_t ref_raw_y = ref.y;
             int32_t ref_raw_z = ref.z;
             
-            // Apply Hard/Soft Iron Calibration to Tip
-            float tx = (float)tip.x - cal_config.tip_hard[0];
-            float ty = (float)tip.y - cal_config.tip_hard[1];
-            float tz = (float)tip.z - cal_config.tip_hard[2];
+            Vector3Int tip_vec = {tip.x, tip.y, tip.z};
+            Vector3Int ref_vec = {ref.x, ref.y, ref.z};
             
-            tip.x = (int32_t)(tx * cal_config.tip_soft[0][0] + ty * cal_config.tip_soft[0][1] + tz * cal_config.tip_soft[0][2]);
-            tip.y = (int32_t)(tx * cal_config.tip_soft[1][0] + ty * cal_config.tip_soft[1][1] + tz * cal_config.tip_soft[1][2]);
-            tip.z = (int32_t)(tx * cal_config.tip_soft[2][0] + ty * cal_config.tip_soft[2][1] + tz * cal_config.tip_soft[2][2]);
-
-            // Apply Hard/Soft Iron Calibration to Ref
-            float rx = (float)ref.x - cal_config.ref_hard[0];
-            float ry = (float)ref.y - cal_config.ref_hard[1];
-            float rz = (float)ref.z - cal_config.ref_hard[2];
-
-            ref.x = (int32_t)(rx * cal_config.ref_soft[0][0] + ry * cal_config.ref_soft[0][1] + rz * cal_config.ref_soft[0][2]);
-            ref.y = (int32_t)(rx * cal_config.ref_soft[1][0] + ry * cal_config.ref_soft[1][1] + rz * cal_config.ref_soft[1][2]);
-            ref.z = (int32_t)(rx * cal_config.ref_soft[2][0] + ry * cal_config.ref_soft[2][1] + rz * cal_config.ref_soft[2][2]);
-            // Handle active manual calibration (tare) request
-            int32_t raw_gradX = tip.x - ref.x;
-            int32_t raw_gradY = tip.y - ref.y;
-            int32_t raw_gradZ = tip.z - ref.z;
-
-            if (tare_requested) {
-                calibration_offset.x = raw_gradX;
-                calibration_offset.y = raw_gradY;
-                calibration_offset.z = raw_gradZ;
-                auto_tare_x = 0.0f;
-                auto_tare_y = 0.0f;
-                auto_tare_z = 0.0f;
-                tare_requested = false;
-                Serial.println("Manual Tare complete! Baseline zeroed.");
+            SensorFusionOutput out = sensorFusion.processUpdate(tip_vec, ref_vec, raw_acc, raw_gyr, current_cycle_count);
+            
+            // If manual tare was just completed, processUpdate returns empty output. Skip this frame.
+            if (out.magnitude == 0 && out.nt_value == 0 && out.true_Z == 0) {
                 vTaskDelay(pdMS_TO_TICKS(10));
-                continue; 
+                continue;
             }
 
-            // Auto-Tare logic
-            if (auto_tare_enabled) {
-                float dx = (float)raw_gradX - (float)calibration_offset.x - auto_tare_x;
-                float dy = (float)raw_gradY - (float)calibration_offset.y - auto_tare_y;
-                float dz = (float)raw_gradZ - (float)calibration_offset.z - auto_tare_z;
-                float current_mag = sqrtf(dx*dx + dy*dy + dz*dz);
-                
-                // If it's a slow drift (magnitude < ~50 counts jump), smoothly update the auto-tare
-                if (current_mag < MFS_AUTO_TARE_THRESHOLD) {
-                    float base_x = (float)raw_gradX - (float)calibration_offset.x;
-                    float base_y = (float)raw_gradY - (float)calibration_offset.y;
-                    float base_z = (float)raw_gradZ - (float)calibration_offset.z;
-                    // Low pass filter
-                    auto_tare_x = (auto_tare_x * MFS_EMA_ALPHA) + (base_x * (1.0f - MFS_EMA_ALPHA));
-                    auto_tare_y = (auto_tare_y * MFS_EMA_ALPHA) + (base_y * (1.0f - MFS_EMA_ALPHA));
-                    auto_tare_z = (auto_tare_z * MFS_EMA_ALPHA) + (base_z * (1.0f - MFS_EMA_ALPHA));
-                }
-            }
+            // Update the structs for logging and UI
+            tip.x = tip_vec.x; tip.y = tip_vec.y; tip.z = tip_vec.z; // Though we don't strictly use the calibrated tip/ref again outside this, keeping it for logging
+            ref.x = ref_vec.x; ref.y = ref_vec.y; ref.z = ref_vec.z;
             
-            // Calculate the physical delta gradient across all axes, minus calibration offsets
-            int32_t gradX = raw_gradX - calibration_offset.x - (int32_t)auto_tare_x;
-            int32_t gradY = raw_gradY - calibration_offset.y - (int32_t)auto_tare_y;
-            int32_t gradZ = raw_gradZ - calibration_offset.z - (int32_t)auto_tare_z;
-            
-            // Calculate gradient vector magnitude
-            float magnitude = sqrt((float)gradX * gradX + (float)gradY * gradY + (float)gradZ * gradZ);
-            
-            // Calculate absolute nT value
-            float nt_value = (magnitude * 1000.0f) / (MFS_NT_CONVERSION_FACTOR * (float)current_cycle_count);
-            
-            float acc[3], gyr[3];
-            imu_read(acc, gyr);
-            
-            // Save pure raw hardware values for CSV logging and Python FOC extraction
-            float raw_acc[3] = {acc[0], acc[1], acc[2]};
-            float raw_gyr[3] = {gyr[0], gyr[1], gyr[2]};
-            
-            // --- DYNAMIC GYRO AUTO-ZERO (TARE) ---
-            // If the accelerometer is extremely stable (variance < threshold) for 1 second, 
-            // recalculate the Gyroscope hardware bias on the fly to eliminate thermal/mechanical drift!
-            static float acc_history[50][3] = {0};
-            static float gyr_history[50][3] = {0};
-            static int history_idx = 0;
-            static int stable_ticks = 0;
-            static bool has_printed_tare = false;
-            
-            acc_history[history_idx][0] = acc[0];
-            acc_history[history_idx][1] = acc[1];
-            acc_history[history_idx][2] = acc[2];
-            gyr_history[history_idx][0] = gyr[0];
-            gyr_history[history_idx][1] = gyr[1];
-            gyr_history[history_idx][2] = gyr[2];
-            history_idx = (history_idx + 1) % 50; // ~1 second rolling buffer at 50Hz
-            
-            if (current_cycle_count > 100) { // Let it boot up first
-                float mx=0, my=0, mz=0;
-                for (int i=0; i<50; i++) {
-                    mx += acc_history[i][0];
-                    my += acc_history[i][1];
-                    mz += acc_history[i][2];
-                }
-                mx /= 50.0f; my /= 50.0f; mz /= 50.0f;
-                
-                float var = 0;
-                for (int i=0; i<50; i++) {
-                    var += (acc_history[i][0]-mx)*(acc_history[i][0]-mx) + 
-                           (acc_history[i][1]-my)*(acc_history[i][1]-my) + 
-                           (acc_history[i][2]-mz)*(acc_history[i][2]-mz);
-                }
-                var /= 50.0f;
-                
-                // If Accel variance is extremely low, the wand is sitting on a table!
-                if (var < 0.001f) {
-                    stable_ticks++;
-                    if (stable_ticks == 50) { // Been perfectly stable for 1 full second
-                        // Recalculate Gyro Bias!
-                        float g_mx=0, g_my=0, g_mz=0;
-                        for (int i=0; i<50; i++) {
-                            g_mx += gyr_history[i][0];
-                            g_my += gyr_history[i][1];
-                            g_mz += gyr_history[i][2];
-                        }
-                        cal_config.gyr_offset[0] = g_mx / 50.0f;
-                        cal_config.gyr_offset[1] = g_my / 50.0f;
-                        cal_config.gyr_offset[2] = g_mz / 50.0f;
-                        if (!has_printed_tare) {
-                            Serial.println("DYNAMIC AUTO-ZERO: Gyro bias updated!");
-                            has_printed_tare = true;
-                        }
-                        stable_ticks = 40; 
-                    }
-                } else {
-                    stable_ticks = 0;
-                    has_printed_tare = false;
-                }
-            }
-            
-            // 2. Map raw axes to strict Right-Handed North-East-Down (NED) BEFORE rotating.
-            // DISCOVERY: The BMI270 is ALREADY mounted in a perfect Right-Handed NED frame!
-            // (+X = Forward, +Y = Right, +Z = Down). No axis mirroring is required!
-            float ned_ax = acc[0];
-            float ned_ay = acc[1];
-            float ned_az = acc[2];
-            
-            float ned_gx = (gyr[0] - cal_config.gyr_offset[0]) * (float)M_PI / 180.0f;
-            float ned_gy = (gyr[1] - cal_config.gyr_offset[1]) * (float)M_PI / 180.0f;
-            float ned_gz = (gyr[2] - cal_config.gyr_offset[2]) * (float)M_PI / 180.0f;
-            
-            // 3. Un-rotate the physical display tilt in the Right-Handed NED Frame!
-            if (cal_config.imu_rotation_deg != 0.0f) {
-                // To un-pitch a 60 deg UP tilt, we apply a -60 deg rotation around Y.
-                float angle_rad = -cal_config.imu_rotation_deg * (float)M_PI / 180.0f; 
-                float cosA = cosf(angle_rad);
-                float sinA = sinf(angle_rad);
-                
-                // Standard 3D Rotation Matrix for Y-Axis (Pitch):
-                // X' = X*cos(A) + Z*sin(A)
-                // Z' = -X*sin(A) + Z*cos(A)
-                float temp_ax = ned_ax * cosA + ned_az * sinA;
-                float temp_az = -ned_ax * sinA + ned_az * cosA;
-                ned_ax = temp_ax;
-                ned_az = temp_az;
-                
-                float temp_gx = ned_gx * cosA + ned_gz * sinA;
-                float temp_gz = -ned_gx * sinA + ned_gz * cosA;
-                ned_gx = temp_gx;
-                ned_gz = temp_gz;
-            }
-            
-            float ned_mx =  (float)ref.y;
-            float ned_my = -(float)ref.x;
-            float ned_mz = -(float)ref.z;
-            
-            MadgwickAHRSupdate(ned_gx, ned_gy, ned_gz, ned_ax, ned_ay, ned_az, ned_mx, ned_my, ned_mz);
-            
-            // 3. Extract the Gravity Vector directly from the Quaternions (Buttery Smooth!)
-            // Standard AHRS Gravity formula from unit quaternion (q0=w, q1=x, q2=y, q3=z)
-            float norm_ax = 2.0f * (q1 * q3 - q0 * q2);
-            float norm_ay = 2.0f * (q0 * q1 + q2 * q3);
-            float norm_az = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
-            
-            // 4. Vector Projection for True Down
-            // Dot product of Gradient Vector and the new smooth Gravity Vector
-            float true_Z = ((float)gradX * norm_ax) + ((float)gradY * norm_ay) + ((float)gradZ * norm_az);
-
-            bool is_pin = false;
-            // Negative threshold for True Z depends on sensor polarity and hemisphere
-            if (true_Z < -30.0f || true_Z > 30.0f) { // Will refine polarity threshold later
-                is_pin = true;
-            }
-
-            // Calculate mathematically isolated horizontal planar gradient for the Radar Dot
-            // Subtract the vertical component from the 3D gradient vector
-            float Hx = (float)gradX - true_Z * norm_ax;
-            float Hy = (float)gradY - true_Z * norm_ay;
-            float Hz = (float)gradZ - true_Z * norm_az;
-            
-            // X-axis is generally Right/Left.
-            float right_grad = Hx;
-            
-            // Forward vector is orthogonal to Gravity (UP) and X-axis (RIGHT). 
-            // Forward = UP x RIGHT = (0, norm_az, -norm_ay)
-            float mag_F = sqrt(norm_az*norm_az + norm_ay*norm_ay);
-            float fwd_grad = 0.0f;
-            if (mag_F > 0.01f) {
-                fwd_grad = (Hy * norm_az - Hz * norm_ay) / mag_F;
-            }
+            int32_t gradX = out.gradX;
+            int32_t gradY = out.gradY;
+            int32_t gradZ = out.gradZ;
+            float magnitude = out.magnitude;
+            float nt_value = out.nt_value;
 
             UIData ui_data;
             ui_data.cal_progress = 0;
-            ui_data.mag = magnitude;
-            ui_data.nt = nt_value;
-            ui_data.gradX = right_grad;
-            ui_data.gradY = fwd_grad;
-            ui_data.trueZ = true_Z;
+            ui_data.mag = out.magnitude;
+            ui_data.nt = out.nt_value;
+            ui_data.gradX = out.right_grad;
+            ui_data.gradY = out.fwd_grad;
+            ui_data.trueZ = out.true_Z;
+            ui_data.azimuth = out.azimuth;
+            ui_data.elevation = out.elevation;
+            ui_data.is_pin = out.is_pin;
             
-            // Extract absolute Azimuth (Yaw) and Elevation (Pitch)
-            float siny_cosp = 2.0f * (q0 * q3 + q1 * q2);
-            float cosy_cosp = 1.0f - 2.0f * (q2 * q2 + q3 * q3);
-            float azimuth = atan2(siny_cosp, cosy_cosp) * 180.0f / PI;
-            
-            float sinp = 2.0f * (q0 * q2 - q3 * q1);
-            if (sinp > 1.0f) sinp = 1.0f;
-            if (sinp < -1.0f) sinp = -1.0f;
-            float elevation = asin(sinp) * 180.0f / PI;
-            
-            // Apply magnetic declination to Azimuth
-            azimuth += current_settings.mag_declination_deg;
-            if (azimuth < 0.0f) azimuth += 360.0f;
-            if (azimuth >= 360.0f) azimuth -= 360.0f;
-            
-            ui_data.azimuth = azimuth;
-            ui_data.elevation = elevation;
-            ui_data.is_pin = is_pin;
-            ui_data.tare_active = (calibration_offset.x != 0 || calibration_offset.y != 0 || calibration_offset.z != 0);
-            ui_data.auto_tare_on = auto_tare_enabled;
+            ui_data.tare_active = sensorFusion.isTareActive();
+            ui_data.auto_tare_on = sensorFusion.isAutoTareEnabled();
             ui_data.battery_voltage = current_battery_voltage;
+            
+            Vector3Int calibration_offset = sensorFusion.getCalibrationOffset();
 
             xQueueOverwrite(audioQueue, &magnitude);
             
@@ -930,6 +724,7 @@ void setup() {
     init_wifi_logger();
     load_settings();
     load_calibration();
+    sensorFusion.init(&cal_config, &current_settings);
     lvgl_port_init();  // LCD and LVGL init (creates lvgl_mux)
     start_wifi(); // Auto-start Wi-Fi on boot (uses lvgl_mux)
     
