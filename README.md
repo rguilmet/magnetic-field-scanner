@@ -71,7 +71,28 @@ The device hosts a captive-portal-capable Web Server allowing the user to seamle
 
 ---
 
+## Real-World Capabilities & Detection Depth
 
+The Magnetic Field Scanner is designed as a spatial gradiometer. Because it relies on an empirical RMS noise floor of **±0.33 µT**, it is highly sensitive to buried ferromagnetic objects.
+
+### Use Case: Locating Property Pins (5/8" Rebar)
+A standard 5/8" steel property pin driven vertically into the earth acts as a magnetic monopole, concentrating the Earth's magnetic flux at its tip. 
+
+**Estimated Detection Depth:**
+- A vertical 5/8" property pin generates a surface anomaly of roughly `500 µT` at 1 inch.
+- Because the wand is a gradiometer with a long handle (the sensors are spaced far apart), the near-field signal decays according to the inverse-square law (`1/r²`).
+- To be reliably detected above the wand's `0.33 µT` noise floor, the signal needs a Signal-to-Noise Ratio (SNR) of at least 3 (approx. `1.0 µT`).
+- **Calculation:** `1.0 µT = 500 µT * (1 / r²)` → `r = ~22 inches`.
+
+**Conclusion:**
+In a magnetically quiet environment (RAW mode), you can expect to reliably detect a standard vertical property pin buried under **1.5 to 2 feet (18 to 24 inches)** of dirt or concrete.
+
+### Practical Tips for Pin Locating
+- **Sweep Low:** Keep the tip sensor as close to the ground as possible. Every inch of air gap costs you an inch of dirt penetration.
+- **Use Audio:** Rely on the dynamic FOC audio feedback. The human ear is incredibly adept at picking up the slow frequency rise of a deep anomaly long before the UI screen indicates a massive spike.
+- **Vertical vs Horizontal:** Property pins driven vertically are *much* easier to detect than pipes lying horizontally, because the vertical rod concentrates the Earth's magnetic field directly into a concentrated point (a monopole) at the surface.
+
+---
 
 ## Future Expansion Roadmap
 
