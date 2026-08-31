@@ -9,18 +9,19 @@
 The Magnetic Field Scanner (MFS) Wand is a high-precision spatial magnetic field mapping instrument. Powered by an ESP32-S3, it features dual RM3100 geomagnetic sensors, a 6-axis IMU, an RTOS-driven architecture, and a full LVGL-based touchscreen user interface.
 
 ## Key Features
-* **Zero-Latency ISR Architecture**: Sensor polling is driven by FreeRTOS Event Groups triggered directly by the RM3100 `DRDY` hardware interrupts.
+* **Zero-Latency ISR Architecture**: Sensor acquisition is event-driven by FreeRTOS Event Groups triggered directly by RM3100 `DRDY` hardware interrupts (sleeping at 0% CPU until data is ready).
 * **Aggressive TMRC Hardware Tuning**: Capable of reading at blistering 150Hz speeds (200 Cycle Count), with a robust 75Hz default (400 Cycle Count).
 * **Extreme Depth Settings**: Supports Cycle Counts up to 3200 (running at 9Hz) for maximum physical depth penetration.
-* **Dynamic Madgwick Integration**: Time-dilation issues at slower speeds are solved via dynamic `dt` tracking in the Sensor Fusion loop.
+* **Dynamic Madgwick Integration**: Time-dilation distortion across varying sampling rates is completely eliminated via dynamic `dt` timestamping (`micros()`) in the Sensor Fusion loop.
 * **SD Logging Decimation**: Intelligently decimates 150Hz readings to 75Hz during SD Card writes to prevent SD-bus latency from dropping sensor frames.
+* **Physical nanoTesla (nT) Math & Calibration Pipeline**: Magnetic gradient calculations and calibration matrices operate natively in physical field units (nT), completely decoupling sensor accuracy and zero baseline from hardware Cycle Count changes.
 
 ## Hardware Configuration
 
 ### Core Components
 * **Base Platform:** Waveshare ESP32-S3-Touch-LCD-3.49 v3 (PCBA v1.1 silkscreen). This highly integrated device provides the MCU, display, audio, and power management core.
 * **MCU:** ESP32-S3 (16MB Flash, OPI PSRAM) embedded on the Waveshare board.
-* **Magnetometers:** 2x RM3100 (TIP and REF sensors), with hardware reserved for a 3rd (MID).
+* **Magnetometers:** 2x RM3100 (TIP (at 0") and REF (at 24") sensors), with hardware reserved for a 3rd (NEAR at 8").
 * **IMU:** QMI8658 (6-axis Accelerometer & Gyroscope) offset mechanically by 60° relative to the wand axis.
 * **Display:** 172x640 QSPI LCD with capacitive touch.
 * **Audio Codec:** ES8311 / ES7210 via I2S for audio feedback.
@@ -36,7 +37,7 @@ To support this many peripherals on a single ESP32-S3, strict pin management and
 
 | Feature | GPIO / Pin | Protocol / Type | Rationale |
 | :--- | :--- | :--- | :--- |
-| **I2C Bus** | SDA: 47, SCL: 48 | I2C | Shared bus for RM3100s, IMU, RTC, and TCA9554 IO Expander. |
+| **I2C Bus** | SDA: 47, SCL: 48 | I2C | Shared bus for RM3100s, IMU, RTC, and TCA9554 IO Expander (capped at 200kHz for cable capacitance). |
 | **I2S Audio** | MCLK: 7, BCLK: 15, WS: 46, DIN: 6, DOUT: 45 | I2S | Full duplex audio codec interface. |
 | **SD Card** | CS: 38, MOSI: 39, MISO: 40, SCLK: 41 | SPI | Dedicated high-speed SPI bus for high-bandwidth data logging. |
 | **LCD Display** | CS: 9, PCLK: 10, D0-D3: 11, 12, 13, 14, TE: 21 | QSPI / 8080 | High-speed bus dedicated to driving the 172x640 LVGL display. |
@@ -60,10 +61,10 @@ Used to handle low-speed/static signals to conserve MCU pins:
 
 The software is built on the Arduino ESP32 Core but heavily utilizes ESP-IDF native features and FreeRTOS for professional-grade isolation and performance.
 
-### 1. FreeRTOS Task Isolation
-The architecture strictly separates deterministic sensor polling from UI rendering:
-* **Sensor Polling Task:** Pinned to Core 0 (or Core 1 depending on load). Runs a tight loop polling the RM3100 sensors synced to the hardware DRDY pins (Capped at 50Hz via software). 
-* **LVGL UI Task:** Pinned to the opposing core. Handles the display rendering, touch inputs, and UI updates without interrupting the I2C sensor bus.
+### 1. FreeRTOS Task & ISR Isolation
+The architecture strictly separates deterministic hardware interrupt handling from UI rendering:
+* **Sensor Acquisition Task (Core 0):** Operates on FreeRTOS Event Groups (`drdy_event_group`), sleeping at 0% CPU until hardware `DRDY` GPIO interrupts assert. Sensor update rates dynamically scale from 150Hz (200 CC) down to 9Hz (3200 CC).
+* **LVGL UI Task (Core 1):** Handles display rendering, capacitive touch input, and real-time radar / minimap animations without interrupting the I2C sensor pipeline.
 
 ### 2. Dual-Drive Filesystem & Smart Fallback
 The scanner features a robust storage abstraction (`get_active_fs()`) that dynamically routes file I/O to the SD Card if present, or falls back to Internal FFat if the card is missing or corrupted. 
@@ -74,7 +75,8 @@ The device hosts a captive-portal-capable Web Server allowing the user to seamle
 
 ### 4. Calibration & Spatial Geometry (SensorFusion)
 All intensive 3D mathematics have been encapsulated into a stateful `SensorFusion` C++ class to maintain strict Single Responsibility Principle (SRP) and keep the I2C polling loop clean.
-* **Hard/Soft Iron Correction:** The system applies 3x3 rotational/scaling matrices and 3D offset vectors to the raw magnetic data to correct for local distortions caused by the battery and LCD.
+* **Hard/Soft Iron Correction:** The system applies 3x3 rotational/scaling matrices and 3D offset vectors in native nanoTesla (`nT`) units to correct for local distortions caused by the battery and LCD.
+* **Dynamic `dt` Sensor Fusion:** Dynamic delta-time tracking (`micros()`) feeds the Madgwick AHRS filter to maintain flawless pitch/roll estimation regardless of the active hardware sampling frequency.
 * **IMU Mechanical Offset (`imu_rotation_deg`):** A fixed `60.0` degree rotation is mathematically applied to the IMU to account for the physical bend between the wand handle and the sensor shaft, allowing accurate radar projection mapping.
 * **Dynamic Auto-Zero:** Eliminates Gyroscope thermal drift by silently recalculating FOC bias during periods of extreme stillness.
 

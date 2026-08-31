@@ -1,6 +1,6 @@
 # Magnetic Field Scanner - Project Overview
 
-**Document Version:** `v1.2.0`
+**Document Version:** `v1.2.1`
 **Last Updated:** August 30, 2026
 **Firmware Target:** `v4.0.0`
 **Python Ecosystem Target:** `v1.1.1`
@@ -198,13 +198,13 @@ The BMI270 IMU is located inside the display head, which is physically pitched U
 ### C. Gyroscope FOC & Dynamic Auto-Zero (Tare)
 MEMS Gyroscopes (like the BMI270) suffer from thermal drift and high "g-sensitivity" (where laying the wand on its side causes gravity to pull the silicon mass differently, altering the zero-rate offset by up to 4 dps). A static calibration file is completely insufficient to cancel this.
 * **The Solution:** The `SensorFusion` class implements a real-time **Dynamic Auto-Zero** algorithm.
-* It maintains a silent 1-second rolling buffer (50 ticks at 50Hz) of the Accelerometer and Gyroscope.
+* It maintains a silent 1-second rolling buffer of the Accelerometer and Gyroscope.
 * If the variance of the Accelerometer drops below 0.001g (meaning the wand was set down on a desk/ground), it instantly recalculates the Gyroscope FOC from the buffer and updates the RAM seamlessly.
 * This completely eliminates Elevation and Azimuth drift regardless of temperature or resting orientation.
 
 ### D. The Madgwick Math Quirks
 * **Degrees vs Radians:** The C implementation of MadgwickAHRS strictly expects the Gyroscope input in **Radians per second**. Feeding it Degrees per second will amplify gyroscope noise by 57.3x, causing violent continuous wobble (hunting for equilibrium) as the filter wrestles with the Accelerometer.
-* **Sample Frequency Lag:** The sampleFreq define inside MadgwickAHRS.c must perfectly match the FreeRTOS Task frequency (50Hz). If it is left at the default 400Hz, the Quaternions will process in extreme slow-motion, causing a 30-second "initialization bulge" where Elevation and Azimuth slowly crawl towards magnetic north on boot.
+* **Dynamic Time Delta (`dt`):** Rather than relying on a static `sampleFreq` define (which creates time-dilation distortion when hardware cycle counts alter update rates from 150Hz down to 9Hz), `SensorFusion` dynamically measures elapsed microseconds (`micros()`) between frames and passes `float dt` directly into `MadgwickAHRSupdate`. This guarantees rapid, rock-solid attitude convergence across all cycle count settings.
 
 ---
 
