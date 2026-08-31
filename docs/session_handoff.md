@@ -1,20 +1,20 @@
 # Session Handoff & Context
 
-## Current Phase: Phase 9 - True RTOS ISR Architecture (v4.0.0)
-We performed a massive architectural overhaul of the RTOS runtime, elevating the firmware to **v4.0.0**. The system no longer uses a software polling loop capped at 50Hz.
+## Current Phase: Phase 10 - Unified nanoTesla (nT) Architecture Planning (v5.0.0)
+We successfully completed testing of the **v4.0.0** RTOS ISR architecture. However, during testing, the user discovered two critical physical/mathematical flaws in the old raw-count architecture:
 
-1. **Zero-Latency ISRs:** We implemented FreeRTOS Event Groups (`drdy_event_group`) triggered directly by the RM3100 `DRDY` hardware interrupts (`drdy_tip_isr` and `drdy_ref_isr`). The sensor task now sleeps at 0% CPU and wakes instantly when hardware is ready.
-2. **Aggressive TMRC Mapping:** We optimized the RM3100 `TMRC` register mapping to run the hardware at its true mathematical limits: 200 CC now runs at 150Hz, and 400 CC runs at 75Hz.
-3. **Dynamic Madgwick `dt`:** Because the sensor speed is no longer static (varying from 150Hz down to 9Hz depending on Cycle Count), we removed the hardcoded `sampleFreq` from the Madgwick filter. `SensorFusion.cpp` now dynamically calculates the time delta (`dt`) using `micros()` and passes it into `MadgwickAHRSupdate`, mathematically protecting the filter from time-dilation distortion regardless of hardware speed.
-4. **Log Decimation:** To prevent slow SD Card SPI flushes from dropping hardware frames at 150Hz, we added a decimation counter to `log_data()`. 200 CC logs every 2nd frame (yielding 75Hz on the SD card), while the math and UI run at the full 150Hz.
-5. **UI Color Palette:** The Cycle Count button now dynamically changes color based on the depth setting (Cyan -> Blue -> Purple -> Orange -> Red).
+1. **The nT Consistency Bug:** The original firmware processes all magnetic data in raw integer counts and relies on dynamic scaling when the user changes Cycle Counts. Because the RM3100 hardware's Zero-Field Offset (ZFO) is non-linear, and because `calibrate_wand.py` didn't save the Cycle Count it was recorded at, changing the Cycle Count in the UI caused the physical `nT` output to drift (or wildly swing) instead of remaining perfectly constant for a static magnetic field.
+2. **The ISR Lockup / Lapping Bug:** The user discovered that the random "dead wand" lockups requiring a power cycle are caused by the SD card SPI flush blocking for 20ms. The sensor runs at 6.7ms and laps the blocked ESP32 twice, leaving the `DRDY` pin permanently `HIGH`. Because the firmware waits for a `RISING` edge interrupt, the ISR never fires again, and the watchdog's blind I2C rewrite fails to pull the `DRDY` pin back to `LOW`.
 
 ## Where We Left Off
-The v4.0.0 architecture is fully implemented. The system operates entirely on hardware interrupts, maximizing performance, drastically lowering CPU usage, and unlocking ultra-deep 1600 and 3200 Cycle Counts.
+We have completely diagnosed the physical mechanisms behind these bugs and formulated a comprehensive, mathematically sound plan to rewrite the architecture to natively use physical `nT`. This will decouple the calibration matrix from the hardware gain.
 
-## Next Steps for the User
-The user needs to compile and flash `v4.0.0`. They should test the new Cycle Count rotation on the display (and verify the new color palette), then run a motion test at 3200cc (9Hz) to verify the dynamic `dt` perfectly preserves the pitch/roll geometry. Finally, they should record a log at 400cc and 200cc to verify the decimation and 75Hz logging.
+The detailed, approved execution plan is saved in the Antigravity workspace artifact `implementation_plan.md`. 
+**The `v4.0.0` code has been fully committed to Git, leaving a perfectly clean working directory.**
+
+## Next Steps for the Next Agent
+1. **Execute the Plan:** The user is ready to pull the trigger on `v5.0.0`. Follow the `implementation_plan.md` artifact to refactor `SensorFusion.cpp`, `Magnetic_Field_Scanner.ino`, `lvgl_port.c`, and all Python scripts in `/scripts` to the new `nT` architecture.
+2. **Update Documentation:** Per the user's specific request, once the code is refactored, you MUST update `project_overview.md` and `user_manual.md` to reflect the `v5.0.0` architecture, and commit those documentation changes to Git.
+
 ### 1. Battery Power Keep-Alive Latch (SYS_EN)
-When powering on the ESP32 via the physical battery button, the hardware PMIC requires the ESP32 to quickly assert the \SYS_EN\ pin HIGH (via the TCA9554 IO Expander on I2C) to latch the power circuit on.
-* **The Pitfall:** If the firmware waits for a Serial connection or performs long blocking tasks before initializing the IO Expander, the user will be forced to physically hold the power button down for several seconds. If they let go early, power is cut instantly.
-* **The Solution:** The I2C bus (\i2c_master_Init()\) and the IO Expander (\esp_io_expander_set_level(io_expander, MFS_EXIO_PIN_SYS_EN, 1)\) must be executed as the absolute very first commands in \setup()\, BEFORE any \while(!Serial)\ delay loops.
+When powering on the ESP32 via the physical battery button, the PMIC requires the ESP32 to assert the `SYS_EN` pin HIGH via the TCA9554 IO Expander to latch power. (Already implemented in firmware, leaving this note as a reminder not to move I2C init below Serial waits).
