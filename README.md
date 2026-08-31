@@ -1,12 +1,19 @@
 # Magnetic Field Scanner (MFS) Wand
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Firmware](https://img.shields.io/badge/Firmware-v3.6.27-green.svg)]()
+[![Firmware](https://img.shields.io/badge/Firmware-v4.0.0-green.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-ESP32--S3-orange.svg)]()
 [![Build](https://img.shields.io/badge/Build-Arduino%20|%20PlatformIO-lightgrey.svg)]()
 
 
 The Magnetic Field Scanner (MFS) Wand is a high-precision spatial magnetic field mapping instrument. Powered by an ESP32-S3, it features dual RM3100 geomagnetic sensors, a 6-axis IMU, an RTOS-driven architecture, and a full LVGL-based touchscreen user interface.
+
+## Key Features
+* **Zero-Latency ISR Architecture**: Sensor polling is driven by FreeRTOS Event Groups triggered directly by the RM3100 `DRDY` hardware interrupts.
+* **Aggressive TMRC Hardware Tuning**: Capable of reading at blistering 150Hz speeds (200 Cycle Count), with a robust 75Hz default (400 Cycle Count).
+* **Extreme Depth Settings**: Supports Cycle Counts up to 3200 (running at 9Hz) for maximum physical depth penetration.
+* **Dynamic Madgwick Integration**: Time-dilation issues at slower speeds are solved via dynamic `dt` tracking in the Sensor Fusion loop.
+* **SD Logging Decimation**: Intelligently decimates 150Hz readings to 75Hz during SD Card writes to prevent SD-bus latency from dropping sensor frames.
 
 ## Hardware Configuration
 

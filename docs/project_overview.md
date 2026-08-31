@@ -1,8 +1,8 @@
 # Magnetic Field Scanner - Project Overview
 
-**Document Version:** `v1.1.4`
+**Document Version:** `v1.2.0`
 **Last Updated:** August 30, 2026
-**Firmware Target:** `v3.6.27`
+**Firmware Target:** `v4.0.0`
 **Python Ecosystem Target:** `v1.1.1`
 
 This document serves as the master source of truth for the Magnetic Field Scanner project. It details the mechanical assembly, electrical wiring, pinouts, firmware architecture, critical pitfalls to avoid in future development, and the roadmap for upcoming features.
@@ -236,14 +236,14 @@ When powering on the ESP32 via the physical battery button, the hardware PMIC re
 * **The Pitfall:** If the firmware waits for a Serial connection or performs long blocking tasks before initializing the IO Expander, the user will be forced to physically hold the power button down for several seconds. If they let go early, power is cut instantly.
 * **The Solution:** The I2C bus (\i2c_master_Init()\) and the IO Expander (\esp_io_expander_set_level(io_expander, MFS_EXIO_PIN_SYS_EN, 1)\) must be executed as the absolute very first commands in \setup()\, BEFORE any \while(!Serial)\ delay loops.
 
-### 2. The 400Hz Myth & True Polling Rates
-The documentation previously falsely stated the wand polled at 400Hz. This is a hardware and software impossibility given the current architecture.
+### 2. True Polling Rates (v4.0.0 ISR Architecture)
+The firmware utilizes a true zero-latency ISR architecture driven by FreeRTOS Event Groups. The sensor task sleeps at 0% CPU until the RM3100 hardware asserts the DRDY interrupts, at which point it wakes and reads instantly. 
 
-**The Hardware Limit (TMRC Register):** The RM3100 hardware data-ready (DRDY) rate is dynamically controlled by the Cycle Count (CC) via the \TMRC\ register. Higher cycle counts take longer to measure:
-* **CC 50:** ~150 Hz
-* **CC 100:** ~75 Hz
-* **CC 200:** ~37 Hz
-* **CC 400:** ~18 Hz
-* **CC 800:** ~9 Hz
+The polling rate is exclusively governed by the RM3100 `TMRC` hardware register, which is dynamically mapped to the Cycle Count (CC):
+* **CC 200:** 150 Hz
+* **CC 400:** 75 Hz (Default)
+* **CC 800:** 37 Hz
+* **CC 1600:** 18 Hz
+* **CC 3200:** 9 Hz
 
-**The Software Limit:** Even at CC 50 (150Hz hardware speed), the software will NOT poll at 150Hz. The \	ask_sensor_read\ loop contains a hardcoded \TaskDelay(pdMS_TO_TICKS(20))\ which acts as a 50Hz throttle to prevent the ESP32 from locking up the UI task. This means the firmware's absolute maximum polling speed is **~50Hz**, and for CC >= 100, the polling speed is bottlenecked purely by the hardware (e.g. 18Hz at CC 400, 9Hz at CC 800).
+**Logging Decimation:** To prevent SD Card SPI latency from dropping frames at 150Hz, the data logger decimates 200 CC readings by half (logging at 75Hz) while keeping the math and UI running at the full 150Hz.

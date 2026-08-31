@@ -202,7 +202,15 @@ SensorFusionOutput SensorFusion::processUpdate(Vector3Int& tip, Vector3Int& ref,
     float ned_my = -(float)ref.x;
     float ned_mz = -(float)ref.z;
     
-    MadgwickAHRSupdate(ned_gx, ned_gy, ned_gz, ned_ax, ned_ay, ned_az, ned_mx, ned_my, ned_mz);
+    static uint32_t last_micros = 0;
+    uint32_t now_micros = micros();
+    float dt = 0.02f; // Default to 50Hz for first frame
+    if (last_micros != 0) {
+        dt = (float)(now_micros - last_micros) / 1000000.0f;
+    }
+    last_micros = now_micros;
+    
+    MadgwickAHRSupdate(ned_gx, ned_gy, ned_gz, ned_ax, ned_ay, ned_az, ned_mx, ned_my, ned_mz, dt);
     
     float norm_ax = 2.0f * (q1 * q3 - q0 * q2);
     float norm_ay = 2.0f * (q0 * q1 + q2 * q3);

@@ -433,19 +433,32 @@ static void mute_btn_event_cb(lv_event_t * e) {
 static lv_obj_t * cc_label;
 static lv_obj_t * batt_label;
 
+static void update_cc_btn_color(lv_obj_t* btn, uint16_t cc) {
+    lv_color_t color;
+    if (cc <= 200) color = lv_color_hex(0x00FFFF); // Cyan
+    else if (cc <= 400) color = lv_palette_main(LV_PALETTE_BLUE); // Default Blue
+    else if (cc <= 800) color = lv_palette_main(LV_PALETTE_PURPLE); // Purple
+    else if (cc <= 1600) color = lv_palette_main(LV_PALETTE_ORANGE); // Orange
+    else color = lv_palette_main(LV_PALETTE_RED); // Red
+    
+    lv_obj_set_style_bg_color(btn, color, 0);
+}
+
 static void cycle_count_event_cb(lv_event_t * e) {
     uint16_t c = current_settings.cycle_count;
-    if (c == 50) c = 100;
-    else if (c == 100) c = 200;
+    // Map existing invalid values safely, and set rotation
+    if (c < 200) c = 200;
     else if (c == 200) c = 400;
     else if (c == 400) c = 800;
-    else c = 50;
+    else if (c == 800) c = 1600;
+    else if (c == 1600) c = 3200;
+    else c = 200;
     
     current_settings.cycle_count = c;
     if (cc_label) lv_label_set_text_fmt(cc_label, "%d", c);
+    update_cc_btn_color(lv_event_get_target(e), c);
     mark_settings_dirty();
     set_rm3100_cycle_count(c);
-    // if (reset_cal_btn) lv_obj_add_state(reset_cal_btn, LV_STATE_DISABLED);
 }
 
 
@@ -914,6 +927,7 @@ void create_detector_ui(void) {
     cc_label = lv_label_create(cc_btn);
     lv_label_set_text_fmt(cc_label, "%d", current_settings.cycle_count);
     lv_obj_center(cc_label);
+    update_cc_btn_color(cc_btn, current_settings.cycle_count);
 
     lv_obj_t * log_btn = lv_button_create(tile3);
     lv_obj_set_size(log_btn, 140, 40);

@@ -114,6 +114,11 @@ void audio_init(void) {
 QueueHandle_t gradientQueue;
 QueueHandle_t audioQueue;
 
+// DRDY Event Group for hardware interrupt synchronization
+EventGroupHandle_t drdy_event_group;
+#define DRDY_TIP_BIT (1 << 0)
+#define DRDY_REF_BIT (1 << 1)
+
 
 
 // Core state variables for settings
@@ -149,10 +154,10 @@ void initRM3100(i2c_master_dev_handle_t handle) {
 
     // 2. Set the proper TMRC (Update Rate) so measurements aren't truncated!
     uint8_t tmrc_val = 0x96; // 37Hz default
-    if (current_cycle_count <= 50) tmrc_val = 0x94; // 150Hz
-    else if (current_cycle_count <= 100) tmrc_val = 0x95; // 75Hz
-    else if (current_cycle_count <= 200) tmrc_val = 0x96; // 37Hz
-    else if (current_cycle_count <= 400) tmrc_val = 0x97; // 18Hz
+    if (current_cycle_count <= 200) tmrc_val = 0x94; // 150Hz
+    else if (current_cycle_count <= 400) tmrc_val = 0x95; // 75Hz
+    else if (current_cycle_count <= 800) tmrc_val = 0x96; // 37Hz
+    else if (current_cycle_count <= 1600) tmrc_val = 0x97; // 18Hz
     else tmrc_val = 0x98; // 9Hz
     uint8_t tmrc_data[] = {REG_TMRC, tmrc_val};
     i2c_write_buff(handle, -1, tmrc_data, sizeof(tmrc_data));
@@ -292,12 +297,10 @@ void task_sensor_read(void *pvParameters) {
             initRM3100(rm3100_ref_handle);
 
             // 5. Discard the first 3 measurements to let the sensor stabilize at the new Cycle Count!
+            // 5. Discard the first 3 measurements to let the sensor stabilize at the new Cycle Count!
+            xEventGroupClearBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT);
             for (int i = 0; i < 3; i++) {
-                uint32_t flush_start = millis();
-                // Wait for DRDY
-                while ((digitalRead(MFS_PIN_RM3100_TIP_DRDY) == LOW || digitalRead(MFS_PIN_RM3100_REF_DRDY) == LOW) && (millis() - flush_start < 200)) {
-                    vTaskDelay(pdMS_TO_TICKS(5));
-                }
+                xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(200));
                 uint8_t dummy[9];
                 i2c_read_buff(rm3100_tip_handle, REG_RESULTS, dummy, 9);
                 i2c_read_buff(rm3100_ref_handle, REG_RESULTS, dummy, 9);
@@ -322,12 +325,15 @@ void task_sensor_read(void *pvParameters) {
         if (!is_scanning) {
             vTaskDelay(pdMS_TO_TICKS(100));
             // Keep resetting timeout so watchdog doesn't trip while paused
+            xEventGroupClearBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT);
             last_read_time = xTaskGetTickCount();
             continue;
         }
 
-        // Wait for both sensors to be ready
-        if (digitalRead(MFS_PIN_RM3100_TIP_DRDY) == HIGH && digitalRead(MFS_PIN_RM3100_REF_DRDY) == HIGH) {
+        // True ISR-driven wait (max 500ms timeout for watchdog)
+        EventBits_t bits = xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(500));
+        
+        if ((bits & (DRDY_TIP_BIT | DRDY_REF_BIT)) == (DRDY_TIP_BIT | DRDY_REF_BIT)) {
             MagData tip = readSensor(rm3100_tip_handle);
             MagData ref = readSensor(rm3100_ref_handle);
             
@@ -485,19 +491,14 @@ void task_sensor_read(void *pvParameters) {
             
             // Note: log_data now handles writing the CSV string to the Serial port for live monitoring.
             
-            // Wait to lower CPU load (cap at ~50Hz max)
             xQueueOverwrite(gradientQueue, &ui_data);
-            vTaskDelay(pdMS_TO_TICKS(20)); 
         }
         else {
             // Watchdog: Check for timeout lockup (no DRDY for 500ms)
-            if ((xTaskGetTickCount() - last_read_time) > pdMS_TO_TICKS(500)) {
-                Serial.println("Sensor lockup detected (DRDY timeout)! Resetting...");
-                initRM3100(rm3100_tip_handle);
-                initRM3100(rm3100_ref_handle);
-                last_read_time = xTaskGetTickCount(); // Reset timeout
-            }
-            vTaskDelay(pdMS_TO_TICKS(5));
+            Serial.println("Sensor lockup detected (DRDY timeout)! Resetting...");
+            initRM3100(rm3100_tip_handle);
+            initRM3100(rm3100_ref_handle);
+            last_read_time = xTaskGetTickCount(); // Reset timeout
         }
     }
 }
@@ -652,6 +653,19 @@ void power_Test(void *arg)
     vTaskDelete(NULL); 
 }
 
+// Hardware Interrupt Handlers for DRDY
+void IRAM_ATTR drdy_tip_isr() {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xEventGroupSetBitsFromISR(drdy_event_group, DRDY_TIP_BIT, &xHigherPriorityTaskWoken);
+    if (xHigherPriorityTaskWoken) portYIELD_FROM_ISR();
+}
+
+void IRAM_ATTR drdy_ref_isr() {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xEventGroupSetBitsFromISR(drdy_event_group, DRDY_REF_BIT, &xHigherPriorityTaskWoken);
+    if (xHigherPriorityTaskWoken) portYIELD_FROM_ISR();
+}
+
 void setup() {
     Serial.begin(921600);
     pinMode(0, INPUT_PULLUP); // BOOT button for screenshots
@@ -682,6 +696,10 @@ void setup() {
     pinMode(MFS_PIN_RM3100_TIP_DRDY, INPUT);
     pinMode(MFS_PIN_RM3100_REF_DRDY, INPUT);
     pinMode(MFS_PIN_RM3100_MID_DRDY, INPUT);
+
+    drdy_event_group = xEventGroupCreate();
+    attachInterrupt(digitalPinToInterrupt(MFS_PIN_RM3100_TIP_DRDY), drdy_tip_isr, RISING);
+    attachInterrupt(digitalPinToInterrupt(MFS_PIN_RM3100_REF_DRDY), drdy_ref_isr, RISING);
 
     Serial.printf("\n--- Magnetic Field Scanner %s ---\n", FIRMWARE_VERSION);
 
