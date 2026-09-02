@@ -1168,7 +1168,7 @@ void update_detector_ui(const UIData *data) {
                     lv_label_set_text(polarity_label, " "); // Blank
                 }
             }
-        }
+        
         mfs_lvgl_unlock();
     }
 }
