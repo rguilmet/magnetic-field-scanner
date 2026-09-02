@@ -158,7 +158,7 @@ void initRM3100(i2c_master_dev_handle_t handle) {
     else if (current_cycle_count <= 400) tmrc_val = 0x95; // 75Hz
     else if (current_cycle_count <= 800) tmrc_val = 0x96; // 37Hz
     else if (current_cycle_count <= 1600) tmrc_val = 0x97; // 18Hz
-    else tmrc_val = 0x98; // 9Hz
+    else tmrc_val = 0x99; // 4.5Hz (0x98/9Hz is too fast for CC=3200)
     uint8_t tmrc_data[] = {REG_TMRC, tmrc_val};
     i2c_write_buff(handle, -1, tmrc_data, sizeof(tmrc_data));
 
