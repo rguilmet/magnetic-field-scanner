@@ -438,7 +438,7 @@ void task_sensor_read(void *pvParameters) {
             ui_data.auto_tare_on = sensorFusion.isAutoTareEnabled();
             ui_data.battery_voltage = current_battery_voltage;
             
-            Vector3Int calibration_offset = sensorFusion.getCalibrationOffset();
+            Vector3Float calibration_offset = sensorFusion.getCalibrationOffset();
 
             xQueueOverwrite(audioQueue, &magnitude);
             
