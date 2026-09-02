@@ -1037,11 +1037,11 @@ void update_detector_ui(const UIData *data) {
                 last_color_state = current_color_state;
             }
 
-            lv_label_set_text_fmt(mag_label, "%ld nT", (int32_t)data->nt);
+            lv_label_set_text_fmt(mag_label, "%ld", (int32_t)data->nt);
             
             if (nt_label != NULL) {
                 char buf[32];
-                snprintf(buf, sizeof(buf), "RAW: %ld", (int32_t)data->mag);
+                snprintf(buf, sizeof(buf), "%ld", (int32_t)data->mag);
                 lv_label_set_text(nt_label, buf);
             }
         }
