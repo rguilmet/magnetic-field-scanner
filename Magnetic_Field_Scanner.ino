@@ -298,7 +298,7 @@ void task_sensor_read(void *pvParameters) {
             // 5. Discard the first 3 measurements to let the sensor stabilize at the new Cycle Count!
             xEventGroupClearBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT);
             for (int i = 0; i < 3; i++) {
-                EventBits_t dummy_bits = xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(500));
+                EventBits_t dummy_bits = xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(1000));
                 if ((dummy_bits & (DRDY_TIP_BIT | DRDY_REF_BIT)) == (DRDY_TIP_BIT | DRDY_REF_BIT)) {
                     uint8_t dummy[9];
                     i2c_read_buff(rm3100_tip_handle, REG_RESULTS, dummy, 9);
@@ -329,8 +329,8 @@ void task_sensor_read(void *pvParameters) {
             xEventGroupSetBits(drdy_event_group, DRDY_REF_BIT);
         }
 
-        // True ISR-driven wait (max 500ms timeout for watchdog)
-        EventBits_t bits = xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(500));
+        // True ISR-driven wait (max 1000ms timeout for watchdog)
+        EventBits_t bits = xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(1000));
         
         if ((bits & (DRDY_TIP_BIT | DRDY_REF_BIT)) == (DRDY_TIP_BIT | DRDY_REF_BIT)) {
             MagData tip = readSensor(rm3100_tip_handle);
@@ -501,7 +501,7 @@ void task_sensor_read(void *pvParameters) {
             xQueueOverwrite(gradientQueue, &ui_data);
         }
         else {
-            // Watchdog: Check for timeout lockup (no DRDY for 500ms)
+            // Watchdog: Check for timeout lockup (no DRDY for 1000ms)
             Serial.println("Sensor lockup detected (DRDY timeout)! Resetting...");
             
             // ONLY perform dummy reads if the pin is physically stuck HIGH. 
