@@ -1044,6 +1044,8 @@ void update_detector_ui(const UIData *data) {
                 snprintf(buf, sizeof(buf), "RAW: %ld", (int32_t)data->mag);
                 lv_label_set_text(nt_label, buf);
             }
+        }
+        
         float batt_v = data->battery_voltage;
         
         // Fine-tune calibration factor if the ESP32 internal reference varies
@@ -1056,9 +1058,6 @@ void update_detector_ui(const UIData *data) {
             lv_label_set_text_fmt(batt_label, "Bat: %d.%02dV", b_volts, b_cents);
         }
 
-                snprintf(buf, sizeof(buf), "%.0f nT", data->nt);
-                lv_label_set_text(nt_label, buf);
-            }
 
             // Crosshair update
             if (crosshair_dot != NULL) {
