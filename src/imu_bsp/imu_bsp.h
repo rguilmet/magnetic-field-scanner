@@ -5,7 +5,7 @@ extern "C" {
 #endif
 
 void imu_init(void);
-void imu_read(float *acc, float *gyr);
+void imu_read(float *acc, float *gyr, int16_t *temp);
 
 #ifdef __cplusplus
 }

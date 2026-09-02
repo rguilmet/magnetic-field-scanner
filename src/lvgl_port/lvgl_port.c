@@ -655,7 +655,7 @@ void create_detector_ui(void) {
     lv_obj_set_size(mag_arc, 160, 160);
     lv_arc_set_rotation(mag_arc, 135);
     lv_arc_set_bg_angles(mag_arc, 0, 270);
-    lv_arc_set_range(mag_arc, 0, 10000); 
+    lv_arc_set_range(mag_arc, 0, 5000); 
     lv_arc_set_value(mag_arc, 0);
     lv_obj_align(mag_arc, LV_ALIGN_TOP_MID, 0, 110);
     lv_obj_remove_style(mag_arc, NULL, LV_PART_KNOB); 
@@ -1011,13 +1011,13 @@ void update_detector_ui(const UIData *data) {
         }
     
         if (mag_arc != NULL && mag_label != NULL) {
-            lv_arc_set_value(mag_arc, (int32_t)data->mag);
+            lv_arc_set_value(mag_arc, (int32_t)data->nt);
             
             static int last_color_state = -1;
             int current_color_state = 0;
             
-            if (data->mag > 5000) current_color_state = 2; // Red
-            else if (data->mag > 2000) current_color_state = 1; // Yellow
+            if (data->nt > 500) current_color_state = 2; // Red
+            else if (data->nt > 150) current_color_state = 1; // Yellow
             else current_color_state = 0; // Green
             
             if (current_color_state != last_color_state) {
@@ -1037,10 +1037,13 @@ void update_detector_ui(const UIData *data) {
                 last_color_state = current_color_state;
             }
 
-            lv_label_set_text_fmt(mag_label, "%ld", (int32_t)data->mag);
+            lv_label_set_text_fmt(mag_label, "%.0f", data->nt);
             
             if (nt_label != NULL) {
                 char buf[32];
+                snprintf(buf, sizeof(buf), "RAW: %ld", (int32_t)data->mag);
+                lv_label_set_text(nt_label, buf);
+            }
         float batt_v = data->battery_voltage;
         
         // Fine-tune calibration factor if the ESP32 internal reference varies

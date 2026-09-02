@@ -93,7 +93,7 @@ extern "C" void start_logging(void) {
         return;
     }
     
-    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ,Azimuth,Elevation,Declination");
+    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,imu_temp,freq,is_muted,QW,QX,QY,QZ,Azimuth,Elevation,Declination");
     log_sample_count = 0;
     is_logging = true;
     if (log_mux) xSemaphoreGive(log_mux);
@@ -114,7 +114,7 @@ extern "C" void start_calibration_logging(void) {
         return;
     }
     
-    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,freq,is_muted,QW,QX,QY,QZ,Azimuth,Elevation,Declination");
+    logFile.println("time_ms,timestamp,version,voltage,audio_gain,cc,refX_raw,refY_raw,refZ_raw,tipX_raw,tipY_raw,tipZ_raw,refX_cal,refY_cal,refZ_cal,tipX_cal,tipY_cal,tipZ_cal,calOffsetX,calOffsetY,calOffsetZ,gradX,gradY,gradZ,mag,nT,accX,accY,accZ,gyrX,gyrY,gyrZ,imu_temp,freq,is_muted,QW,QX,QY,QZ,Azimuth,Elevation,Declination");
     log_sample_count = 0;
     is_logging = true;
     if (log_mux) xSemaphoreGive(log_mux);
@@ -285,7 +285,7 @@ extern "C" bool process_calibration_file(void) {
 }
 
 
-extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, int cc, int32_t refX_raw, int32_t refY_raw, int32_t refZ_raw, int32_t tipX_raw, int32_t tipY_raw, int32_t tipZ_raw, int32_t refX_cal, int32_t refY_cal, int32_t refZ_cal, int32_t tipX_cal, int32_t tipY_cal, int32_t tipZ_cal, int32_t calOffsetX, int32_t calOffsetY, int32_t calOffsetZ, int32_t gradX, int32_t gradY, int32_t gradZ, float mag, float nT, float accX, float accY, float accZ, float gyrX, float gyrY, float gyrZ, float freq, bool is_muted, float qw, float qx, float qy, float qz, float azimuth, float elevation, float declination) {
+extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, int cc, int32_t refX_raw, int32_t refY_raw, int32_t refZ_raw, int32_t tipX_raw, int32_t tipY_raw, int32_t tipZ_raw, float refX_cal, float refY_cal, float refZ_cal, float tipX_cal, float tipY_cal, float tipZ_cal, float calOffsetX, float calOffsetY, float calOffsetZ, float gradX, float gradY, float gradZ, float mag, float nT, float accX, float accY, float accZ, float gyrX, float gyrY, float gyrZ, int16_t imu_temp, float freq, bool is_muted, float qw, float qx, float qy, float qz, float azimuth, float elevation, float declination) {
     // Logging Decimator to protect SD card bandwidth at 150Hz
     static uint32_t frame_counter = 0;
     frame_counter++;
@@ -298,7 +298,7 @@ extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, in
     
     char buffer[512];
     snprintf(buffer, sizeof(buffer), 
-             "%lu,%s,%s,%.2f,%.1f,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%.1f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%d,%.4f,%.4f,%.4f,%.4f,%.1f,%.1f,%.1f",
+             "%lu,%s,%s,%.2f,%.1f,%d,%ld,%ld,%ld,%ld,%ld,%ld,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%d,%.4f,%.4f,%.4f,%.4f,%.1f,%.1f,%.1f",
              timestamp, ts, FIRMWARE_VERSION, voltage, audio_gain, cc,
              refX_raw, refY_raw, refZ_raw,
              tipX_raw, tipY_raw, tipZ_raw,
@@ -309,6 +309,7 @@ extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, in
              mag, nT,
              accX, accY, accZ,
              gyrX, gyrY, gyrZ,
+             imu_temp,
              freq, is_muted ? 1 : 0, qw, qx, qy, qz, azimuth, elevation, declination);
 
     if (current_settings.enable_serial_logging) {

@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 __filename__ = os.path.basename(__file__)
-__version__ = "v1.0.0"
+__version__ = "v2.0.0"
 
 def get_calibration_matrices(x, y, z):
     x_mean, y_mean, z_mean = np.mean(x), np.mean(y), np.mean(z)
@@ -56,8 +56,8 @@ def calculate_coverage(x, y, z, ideal_radius):
 def plot_3d(ref_raw, tip_raw, ref_cal, tip_cal, out_path):
     fig = plt.figure(figsize=(12, 6))
     ax1 = fig.add_subplot(121, projection='3d')
-    ax1.scatter(ref_raw[:,0], ref_raw[:,1], ref_raw[:,2], s=2, c='r', alpha=0.5, label='Ref (Raw)')
-    ax1.scatter(tip_raw[:,0], tip_raw[:,1], tip_raw[:,2], s=2, c='b', alpha=0.5, label='Tip (Raw)')
+    ax1.scatter(ref_raw[:,0], ref_raw[:,1], ref_raw[:,2], s=2, c='r', alpha=0.5, label='Ref (Raw nT)')
+    ax1.scatter(tip_raw[:,0], tip_raw[:,1], tip_raw[:,2], s=2, c='b', alpha=0.5, label='Tip (Raw nT)')
     ax1.set_title("Raw Data")
     ax1.legend()
     
@@ -74,12 +74,12 @@ def plot_3d(ref_raw, tip_raw, ref_cal, tip_cal, out_path):
 def plot_timeseries(df, out_path_prefix):
     plots = []
     
-    if 'mag' in df.columns:
+    if 'nT' in df.columns:
         plt.figure(figsize=(10, 4))
-        plt.plot(df['time_ms'], df['mag'], color='purple')
+        plt.plot(df['time_ms'], df['nT'], color='purple')
         plt.title('Magnetic Magnitude over Time')
         plt.xlabel('Time (ms)')
-        plt.ylabel('Magnitude (uT)')
+        plt.ylabel('Magnitude (nT)')
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         p1 = f"{out_path_prefix}_mag.png"
@@ -94,7 +94,7 @@ def plot_timeseries(df, out_path_prefix):
         plt.plot(df['time_ms'], df['gradZ'], label='gradZ')
         plt.title('Spatial Gradient over Time')
         plt.xlabel('Time (ms)')
-        plt.ylabel('Gradient')
+        plt.ylabel('Gradient (nT)')
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
@@ -135,18 +135,32 @@ def main():
     df = pd.read_csv(input_file)
     
     try:
-        ref_x, ref_y, ref_z = df['refX_raw'].values, df['refY_raw'].values, df['refZ_raw'].values
-        tip_x, tip_y, tip_z = df['tipX_raw'].values, df['tipY_raw'].values, df['tipZ_raw'].values
+        ref_x_raw, ref_y_raw, ref_z_raw = df['refX_raw'].values, df['refY_raw'].values, df['refZ_raw'].values
+        tip_x_raw, tip_y_raw, tip_z_raw = df['tipX_raw'].values, df['tipY_raw'].values, df['tipZ_raw'].values
     except KeyError:
         print("Error: CSV missing required raw columns (refX_raw, tipX_raw, etc).")
         return
         
+    if 'cc' in df.columns:
+        cc = df['cc'].values
+    else:
+        cc = np.full_like(ref_x_raw, 400)
+        
     LIMIT = 50000
-    mask = (np.abs(ref_x) < LIMIT) & (np.abs(ref_y) < LIMIT) & (np.abs(ref_z) < LIMIT) & \
-           (np.abs(tip_x) < LIMIT) & (np.abs(tip_y) < LIMIT) & (np.abs(tip_z) < LIMIT)
+    mask = (np.abs(ref_x_raw) < LIMIT) & (np.abs(ref_y_raw) < LIMIT) & (np.abs(ref_z_raw) < LIMIT) & \
+           (np.abs(tip_x_raw) < LIMIT) & (np.abs(tip_y_raw) < LIMIT) & (np.abs(tip_z_raw) < LIMIT)
     
-    ref_x, ref_y, ref_z = ref_x[mask], ref_y[mask], ref_z[mask]
-    tip_x, tip_y, tip_z = tip_x[mask], tip_y[mask], tip_z[mask]
+    ref_x_raw, ref_y_raw, ref_z_raw = ref_x_raw[mask], ref_y_raw[mask], ref_z_raw[mask]
+    tip_x_raw, tip_y_raw, tip_z_raw = tip_x_raw[mask], tip_y_raw[mask], tip_z_raw[mask]
+    cc = cc[mask]
+    
+    ref_x = (ref_x_raw * 1000.0) / (0.38 * cc)
+    ref_y = (ref_y_raw * 1000.0) / (0.38 * cc)
+    ref_z = (ref_z_raw * 1000.0) / (0.38 * cc)
+    
+    tip_x = (tip_x_raw * 1000.0) / (0.38 * cc)
+    tip_y = (tip_y_raw * 1000.0) / (0.38 * cc)
+    tip_z = (tip_z_raw * 1000.0) / (0.38 * cc)
     
     base_name = os.path.splitext(os.path.basename(input_file))[0]
     report_path = os.path.join("reports", f"Report_{base_name}.md")
@@ -192,9 +206,9 @@ def main():
     except Exception as e:
         metrics["Fit Error"] = str(e)
     
-    if 'mag' in df.columns:
-        metrics["Magnitude Variance (Noise)"] = round(float(df['mag'].var()), 4)
-        metrics["Magnitude P2P (uT)"] = round(float(df['mag'].max() - df['mag'].min()), 4)
+    if 'nT' in df.columns:
+        metrics["Magnitude Variance (Noise)"] = round(float(df['nT'].var()), 4)
+        metrics["Magnitude P2P (nT)"] = round(float(df['nT'].max() - df['nT'].min()), 4)
         
         if 'gradX' in df.columns:
             grad_mag = np.sqrt(df['gradX']**2 + df['gradY']**2 + df['gradZ']**2)

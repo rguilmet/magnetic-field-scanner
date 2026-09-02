@@ -49,41 +49,40 @@ void SensorFusion::setAutoTareEnabled(bool enabled) {
     }
 }
 
-void SensorFusion::scaleTare(float scale) {
-    if (!tare_requested) {
-        calibration_offset.x = (int32_t)((float)calibration_offset.x * scale);
-        calibration_offset.y = (int32_t)((float)calibration_offset.y * scale);
-        calibration_offset.z = (int32_t)((float)calibration_offset.z * scale);
-    }
-    auto_tare_x *= scale;
-    auto_tare_y *= scale;
-    auto_tare_z *= scale;
-}
 
-SensorFusionOutput SensorFusion::processUpdate(Vector3Int& tip, Vector3Int& ref, float acc[3], float gyr[3], uint16_t cycle_count) {
+
+SensorFusionOutput SensorFusion::processUpdate(Vector3Float& tip, Vector3Float& ref, float acc[3], float gyr[3], uint16_t cycle_count) {
     SensorFusionOutput out = {0};
 
+    float t_x = raw_to_nT(tip.x, cycle_count);
+    float t_y = raw_to_nT(tip.y, cycle_count);
+    float t_z = raw_to_nT(tip.z, cycle_count);
+
+    float r_x = raw_to_nT(ref.x, cycle_count);
+    float r_y = raw_to_nT(ref.y, cycle_count);
+    float r_z = raw_to_nT(ref.z, cycle_count);
+
     // Apply Hard/Soft Iron Calibration to Tip
-    float tx = (float)tip.x - _cal_config->tip_hard[0];
-    float ty = (float)tip.y - _cal_config->tip_hard[1];
-    float tz = (float)tip.z - _cal_config->tip_hard[2];
+    float tx = t_x - _cal_config->tip_hard[0];
+    float ty = t_y - _cal_config->tip_hard[1];
+    float tz = t_z - _cal_config->tip_hard[2];
     
-    tip.x = (int32_t)(tx * _cal_config->tip_soft[0][0] + ty * _cal_config->tip_soft[0][1] + tz * _cal_config->tip_soft[0][2]);
-    tip.y = (int32_t)(tx * _cal_config->tip_soft[1][0] + ty * _cal_config->tip_soft[1][1] + tz * _cal_config->tip_soft[1][2]);
-    tip.z = (int32_t)(tx * _cal_config->tip_soft[2][0] + ty * _cal_config->tip_soft[2][1] + tz * _cal_config->tip_soft[2][2]);
+    tip.x = (tx * _cal_config->tip_soft[0][0] + ty * _cal_config->tip_soft[0][1] + tz * _cal_config->tip_soft[0][2]);
+    tip.y = (tx * _cal_config->tip_soft[1][0] + ty * _cal_config->tip_soft[1][1] + tz * _cal_config->tip_soft[1][2]);
+    tip.z = (tx * _cal_config->tip_soft[2][0] + ty * _cal_config->tip_soft[2][1] + tz * _cal_config->tip_soft[2][2]);
 
     // Apply Hard/Soft Iron Calibration to Ref
-    float rx = (float)ref.x - _cal_config->ref_hard[0];
-    float ry = (float)ref.y - _cal_config->ref_hard[1];
-    float rz = (float)ref.z - _cal_config->ref_hard[2];
+    float rx = r_x - _cal_config->ref_hard[0];
+    float ry = r_y - _cal_config->ref_hard[1];
+    float rz = r_z - _cal_config->ref_hard[2];
 
-    ref.x = (int32_t)(rx * _cal_config->ref_soft[0][0] + ry * _cal_config->ref_soft[0][1] + rz * _cal_config->ref_soft[0][2]);
-    ref.y = (int32_t)(rx * _cal_config->ref_soft[1][0] + ry * _cal_config->ref_soft[1][1] + rz * _cal_config->ref_soft[1][2]);
-    ref.z = (int32_t)(rx * _cal_config->ref_soft[2][0] + ry * _cal_config->ref_soft[2][1] + rz * _cal_config->ref_soft[2][2]);
+    ref.x = (rx * _cal_config->ref_soft[0][0] + ry * _cal_config->ref_soft[0][1] + rz * _cal_config->ref_soft[0][2]);
+    ref.y = (rx * _cal_config->ref_soft[1][0] + ry * _cal_config->ref_soft[1][1] + rz * _cal_config->ref_soft[1][2]);
+    ref.z = (rx * _cal_config->ref_soft[2][0] + ry * _cal_config->ref_soft[2][1] + rz * _cal_config->ref_soft[2][2]);
 
-    int32_t raw_gradX = tip.x - ref.x;
-    int32_t raw_gradY = tip.y - ref.y;
-    int32_t raw_gradZ = tip.z - ref.z;
+    float raw_gradX = tip.x - ref.x;
+    float raw_gradY = tip.y - ref.y;
+    float raw_gradZ = tip.z - ref.z;
 
     if (tare_requested) {
         calibration_offset.x = raw_gradX;
@@ -98,31 +97,31 @@ SensorFusionOutput SensorFusion::processUpdate(Vector3Int& tip, Vector3Int& ref,
     }
 
     if (auto_tare_enabled) {
-        float dx = (float)raw_gradX - (float)calibration_offset.x - auto_tare_x;
-        float dy = (float)raw_gradY - (float)calibration_offset.y - auto_tare_y;
-        float dz = (float)raw_gradZ - (float)calibration_offset.z - auto_tare_z;
+        float dx = raw_gradX - calibration_offset.x - auto_tare_x;
+        float dy = raw_gradY - calibration_offset.y - auto_tare_y;
+        float dz = raw_gradZ - calibration_offset.z - auto_tare_z;
         float current_mag = sqrtf(dx*dx + dy*dy + dz*dz);
         
         if (current_mag < MFS_AUTO_TARE_THRESHOLD) {
-            float base_x = (float)raw_gradX - (float)calibration_offset.x;
-            float base_y = (float)raw_gradY - (float)calibration_offset.y;
-            float base_z = (float)raw_gradZ - (float)calibration_offset.z;
+            float base_x = raw_gradX - calibration_offset.x;
+            float base_y = raw_gradY - calibration_offset.y;
+            float base_z = raw_gradZ - calibration_offset.z;
             auto_tare_x = (auto_tare_x * MFS_EMA_ALPHA) + (base_x * (1.0f - MFS_EMA_ALPHA));
             auto_tare_y = (auto_tare_y * MFS_EMA_ALPHA) + (base_y * (1.0f - MFS_EMA_ALPHA));
             auto_tare_z = (auto_tare_z * MFS_EMA_ALPHA) + (base_z * (1.0f - MFS_EMA_ALPHA));
         }
     }
 
-    int32_t gradX = raw_gradX - calibration_offset.x - (int32_t)auto_tare_x;
-    int32_t gradY = raw_gradY - calibration_offset.y - (int32_t)auto_tare_y;
-    int32_t gradZ = raw_gradZ - calibration_offset.z - (int32_t)auto_tare_z;
+    float gradX = raw_gradX - calibration_offset.x - auto_tare_x;
+    float gradY = raw_gradY - calibration_offset.y - auto_tare_y;
+    float gradZ = raw_gradZ - calibration_offset.z - auto_tare_z;
     
     out.gradX = gradX;
     out.gradY = gradY;
     out.gradZ = gradZ;
 
-    out.magnitude = sqrtf((float)gradX * gradX + (float)gradY * gradY + (float)gradZ * gradZ);
-    out.nt_value = (out.magnitude * 1000.0f) / (MFS_NT_CONVERSION_FACTOR * (float)cycle_count);
+    out.magnitude = sqrtf(gradX * gradX + gradY * gradY + gradZ * gradZ);
+    out.nt_value = out.magnitude;
 
     // --- DYNAMIC GYRO AUTO-ZERO (TARE) ---
     acc_history[history_idx][0] = acc[0];

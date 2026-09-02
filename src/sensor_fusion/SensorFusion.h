@@ -11,6 +11,16 @@ struct Vector3Int {
     int32_t z;
 };
 
+struct Vector3Float {
+    float x;
+    float y;
+    float z;
+};
+
+inline float raw_to_nT(int32_t raw, uint16_t cc) {
+    return (raw * 1000.0f) / (MFS_NT_CONVERSION_FACTOR * (float)cc);
+}
+
 struct SensorFusionOutput {
     float magnitude;
     float nt_value;
@@ -22,9 +32,9 @@ struct SensorFusionOutput {
     bool is_pin;
     
     // For logging:
-    int32_t gradX;
-    int32_t gradY;
-    int32_t gradZ;
+    float gradX;
+    float gradY;
+    float gradZ;
 };
 
 class SensorFusion {
@@ -38,11 +48,10 @@ public:
     bool isAutoTareEnabled() const { return auto_tare_enabled; }
     bool isTareActive() const { return (calibration_offset.x != 0 || calibration_offset.y != 0 || calibration_offset.z != 0); }
     bool isTareRequested() const { return tare_requested; }
-    void scaleTare(float scale);
     
-    Vector3Int getCalibrationOffset() const { return calibration_offset; }
+    Vector3Float getCalibrationOffset() const { return calibration_offset; }
 
-    SensorFusionOutput processUpdate(Vector3Int& tip, Vector3Int& ref, float acc[3], float gyr[3], uint16_t cycle_count);
+    SensorFusionOutput processUpdate(Vector3Float& tip, Vector3Float& ref, float acc[3], float gyr[3], uint16_t cycle_count);
 
 private:
     CalibrationConfig* _cal_config;
@@ -50,7 +59,7 @@ private:
 
     bool tare_requested;
     bool auto_tare_enabled;
-    Vector3Int calibration_offset;
+    Vector3Float calibration_offset;
     float auto_tare_x;
     float auto_tare_y;
     float auto_tare_z;

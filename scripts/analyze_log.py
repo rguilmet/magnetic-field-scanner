@@ -16,7 +16,7 @@ import os
 import sys
 
 __filename__ = os.path.basename(__file__)
-__version__ = "v1.1.1"
+__version__ = "v2.0.0"
 
 print(f"=== {__filename__} {__version__} ===")
 
@@ -36,14 +36,14 @@ def analyze_log(input_file, output_file, max_mag):
     df['time_sec'] = (df['time_ms'] - df['time_ms'].iloc[0]) / 1000.0
 
     # Filter out massive EMI glitches for visual clarity of real targets
-    clean_df = df[df['mag'] < max_mag]
+    clean_df = df[df['nT'] < max_mag]
 
     # Create 4 subplots
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(14, 12), sharex=True)
 
     # Plot 1: Gradient Magnitude
-    ax1.plot(clean_df['time_sec'], clean_df['mag'], color='b', linewidth=1)
-    ax1.set_ylabel("Gradient (counts)", fontsize=11)
+    ax1.plot(clean_df['time_sec'], clean_df['nT'], color='b', linewidth=1)
+    ax1.set_ylabel("Gradient (nT)", fontsize=11)
     ax1.set_title(f"Magnetic Gradient over Time ({os.path.basename(input_file)})", fontsize=14)
     ax1.grid(True, alpha=0.3)
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze and visualize Wand field logs.")
     parser.add_argument("-i", "--input", required=True, help="Input CSV log file (e.g., _log.csv)")
     parser.add_argument("-o", "--output", default=os.path.join("plots", "log_analysis_plot.png"), help="Output plot image file")
-    parser.add_argument("-m", "--max-mag", type=float, default=10000.0, help="Maximum gradient magnitude to display (filters EMI outliers, default: 10000)")
+    parser.add_argument("-m", "--max-mag", type=float, default=5000.0, help="Maximum gradient magnitude to display (filters EMI outliers, default: 5000 nT)")
     
     args = parser.parse_args()
     analyze_log(args.input, args.output, args.max_mag)

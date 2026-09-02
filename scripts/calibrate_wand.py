@@ -17,7 +17,7 @@ import time
 import matplotlib.pyplot as plt
 
 __filename__ = os.path.basename(__file__)
-__version__ = "v1.1.1"
+__version__ = "v2.0.0"
 
 print(f"=== {__filename__} {__version__} ===")
 
@@ -84,7 +84,7 @@ def assess_coverage(sensor_name, x, y, z, ideal_radius):
     z_cov = (np.max(z) - np.min(z)) / ideal_diameter * 100
     
     print(f"\n--- {sensor_name} Coverage Assessment ---")
-    print(f"Ideal Magnetic Radius: {ideal_radius:.0f} counts")
+    print(f"Ideal Magnetic Radius: {ideal_radius:.0f} nT")
     print(f"X-Axis Coverage: {x_cov:.1f}%")
     print(f"Y-Axis Coverage: {y_cov:.1f}%")
     print(f"Z-Axis Coverage: {z_cov:.1f}%")
@@ -100,8 +100,8 @@ def plot_calibration(ref_raw, tip_raw, ref_cal, tip_cal):
     fig = plt.figure(figsize=(12, 6))
     
     ax1 = fig.add_subplot(121, projection='3d')
-    ax1.scatter(ref_raw[:,0], ref_raw[:,1], ref_raw[:,2], s=2, c='r', alpha=0.5, label='Reference (Raw)')
-    ax1.scatter(tip_raw[:,0], tip_raw[:,1], tip_raw[:,2], s=2, c='b', alpha=0.5, label='Tip (Raw)')
+    ax1.scatter(ref_raw[:,0], ref_raw[:,1], ref_raw[:,2], s=2, c='r', alpha=0.5, label='Reference (Raw nT)')
+    ax1.scatter(tip_raw[:,0], tip_raw[:,1], tip_raw[:,2], s=2, c='b', alpha=0.5, label='Tip (Raw nT)')
     ax1.set_title("Before Calibration\n(Showing Hard-Iron Offsets)")
     ax1.legend()
     
@@ -115,7 +115,7 @@ def plot_calibration(ref_raw, tip_raw, ref_cal, tip_cal):
     plt.show()
 
 def main():
-    parser = argparse.ArgumentParser(description="Wand Magnetic Calibration Tool (v1.0.0)")
+    parser = argparse.ArgumentParser(description="Wand Magnetic Calibration Tool (v2.0.0)")
     parser.add_argument("-i", "--input", type=str, required=True, help="Path to input calibration.csv log file")
     parser.add_argument("-o", "--output", type=str, default="calibration.json", help="Path to output JSON file (default: calibration.json)")
     parser.add_argument("--plot", action="store_true", help="Display 3D point cloud visualization after processing")
@@ -133,19 +133,34 @@ def main():
     df = pd.read_csv(input_file)
     
     # 1. Extract Raw Data
-    ref_x, ref_y, ref_z = df['refX_raw'].values, df['refY_raw'].values, df['refZ_raw'].values
-    tip_x, tip_y, tip_z = df['tipX_raw'].values, df['tipY_raw'].values, df['tipZ_raw'].values
+    ref_x_raw, ref_y_raw, ref_z_raw = df['refX_raw'].values, df['refY_raw'].values, df['refZ_raw'].values
+    tip_x_raw, tip_y_raw, tip_z_raw = df['tipX_raw'].values, df['tipY_raw'].values, df['tipZ_raw'].values
+    
+    if 'cc' in df.columns:
+        cc = df['cc'].values
+    else:
+        cc = np.full_like(ref_x_raw, 400)
     
     # EMI / Glitch filter: drop any readings exceeding 50,000 counts
     LIMIT = 50000
-    mask = (np.abs(ref_x) < LIMIT) & (np.abs(ref_y) < LIMIT) & (np.abs(ref_z) < LIMIT) & \
-           (np.abs(tip_x) < LIMIT) & (np.abs(tip_y) < LIMIT) & (np.abs(tip_z) < LIMIT)
+    mask = (np.abs(ref_x_raw) < LIMIT) & (np.abs(ref_y_raw) < LIMIT) & (np.abs(ref_z_raw) < LIMIT) & \
+           (np.abs(tip_x_raw) < LIMIT) & (np.abs(tip_y_raw) < LIMIT) & (np.abs(tip_z_raw) < LIMIT)
            
     if not mask.all():
         dropped = len(mask) - mask.sum()
         print(f"Filtered out {dropped} EMI glitch points (>50,000 counts).")
-        ref_x, ref_y, ref_z = ref_x[mask], ref_y[mask], ref_z[mask]
-        tip_x, tip_y, tip_z = tip_x[mask], tip_y[mask], tip_z[mask]
+        ref_x_raw, ref_y_raw, ref_z_raw = ref_x_raw[mask], ref_y_raw[mask], ref_z_raw[mask]
+        tip_x_raw, tip_y_raw, tip_z_raw = tip_x_raw[mask], tip_y_raw[mask], tip_z_raw[mask]
+        cc = cc[mask]
+        
+    # Convert raw to nT BEFORE fitting
+    ref_x = (ref_x_raw * 1000.0) / (0.38 * cc)
+    ref_y = (ref_y_raw * 1000.0) / (0.38 * cc)
+    ref_z = (ref_z_raw * 1000.0) / (0.38 * cc)
+    
+    tip_x = (tip_x_raw * 1000.0) / (0.38 * cc)
+    tip_y = (tip_y_raw * 1000.0) / (0.38 * cc)
+    tip_z = (tip_z_raw * 1000.0) / (0.38 * cc)
     
     # 2. Calculate Offsets and Soft-Iron Matrices
     ref_center, ref_W, ref_radii, ref_rad_mean = get_calibration_matrices(ref_x, ref_y, ref_z)
@@ -222,7 +237,7 @@ def main():
         "calibration_type": "PC Python Calibration",
         "calibration_date_ms": int(time.time() * 1000),
         "calibration_date": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "matrix_version": "2.0",
+        "matrix_version": "3.0",
         "ref_hard": [round(x, 2) for x in ref_center],
         "ref_soft": [[round(x, 4) for x in row] for row in ref_soft_final],
         "tip_hard": [round(x, 2) for x in tip_center],

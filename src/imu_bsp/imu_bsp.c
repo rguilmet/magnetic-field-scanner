@@ -26,15 +26,18 @@ void imu_init(void) {
     i2c_write_buff(imu_dev_handle, 0x08, &ctrl_buf, 1);
 }
 
-void imu_read(float *acc, float *gyr) {
-    uint8_t raw[12];
-    if (i2c_read_buff(imu_dev_handle, 0x35, raw, 12) == ESP_OK) {
-        int16_t ax = (raw[1] << 8) | raw[0];
-        int16_t ay = (raw[3] << 8) | raw[2];
-        int16_t az = (raw[5] << 8) | raw[4];
-        int16_t gx = (raw[7] << 8) | raw[6];
-        int16_t gy = (raw[9] << 8) | raw[8];
-        int16_t gz = (raw[11] << 8) | raw[10];
+void imu_read(float *acc, float *gyr, int16_t *temp) {
+    uint8_t raw[14];
+    if (i2c_read_buff(imu_dev_handle, 0x33, raw, 14) == ESP_OK) {
+        int16_t t_raw = (raw[1] << 8) | raw[0];
+        int16_t ax = (raw[3] << 8) | raw[2];
+        int16_t ay = (raw[5] << 8) | raw[4];
+        int16_t az = (raw[7] << 8) | raw[6];
+        int16_t gx = (raw[9] << 8) | raw[8];
+        int16_t gy = (raw[11] << 8) | raw[10];
+        int16_t gz = (raw[13] << 8) | raw[12];
+        
+        *temp = t_raw;
         
         // 4g range -> 1g = 8192 LSB
         acc[0] = (float)ax / 8192.0f;
@@ -46,6 +49,7 @@ void imu_read(float *acc, float *gyr) {
         gyr[1] = (float)gy / 64.0f;
         gyr[2] = (float)gz / 64.0f;
     } else {
+        *temp = 0;
         acc[0] = acc[1] = acc[2] = 0.0f;
         gyr[0] = gyr[1] = gyr[2] = 0.0f;
     }

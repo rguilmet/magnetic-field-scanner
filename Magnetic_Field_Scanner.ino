@@ -306,18 +306,8 @@ void task_sensor_read(void *pvParameters) {
                 i2c_read_buff(rm3100_ref_handle, REG_RESULTS, dummy, 9);
             }
 
-            // 6. Scale calibration offsets to match the new gain!
-            // This prevents an automatic Tare and perfectly preserves the current baseline.
-            if (old_count > 0) {
-                float scale = (float)count / (float)old_count;
-                
-                // Auto-scale the Hard-Iron calibration matrix centers!
-                for(int i=0; i<3; i++) {
-                    cal_config.tip_hard[i] *= scale;
-                    cal_config.ref_hard[i] *= scale;
-                }
-                sensorFusion.scaleTare(scale);
-            }
+            // CC Scaling has been removed in v5.0.0. The calibration matrix is now completely unit-independent (nT).
+            // No need to touch cal_config or Tare offsets when cycle count changes!
             
             Serial.println("Cycle count update complete. CMM restarted.");
         }
@@ -328,6 +318,15 @@ void task_sensor_read(void *pvParameters) {
             xEventGroupClearBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT);
             last_read_time = xTaskGetTickCount();
             continue;
+        }
+
+        // FIX for Lapping Lockup:
+        // If DRDY is already HIGH because the SD card blocked and lapped the ISR, the RISING edge will never trigger!
+        if (digitalRead(MFS_PIN_RM3100_TIP_DRDY) == HIGH) {
+            xEventGroupSetBits(drdy_event_group, DRDY_TIP_BIT);
+        }
+        if (digitalRead(MFS_PIN_RM3100_REF_DRDY) == HIGH) {
+            xEventGroupSetBits(drdy_event_group, DRDY_REF_BIT);
         }
 
         // True ISR-driven wait (max 500ms timeout for watchdog)
@@ -368,6 +367,12 @@ void task_sensor_read(void *pvParameters) {
             // If stuck or failing I2C reads for 10 consecutive frames (true lockup)
             if (consecutive_same_reads > 10) {
                 Serial.println("Sensor lockup detected (stuck data or dead I2C)! Resetting...");
+                
+                // Perform dummy reads to forcefully clear stuck DRDY pins before re-initializing
+                uint8_t dummy[9];
+                i2c_read_buff(rm3100_tip_handle, REG_RESULTS, dummy, 9);
+                i2c_read_buff(rm3100_ref_handle, REG_RESULTS, dummy, 9);
+                
                 initRM3100(rm3100_tip_handle);
                 initRM3100(rm3100_ref_handle);
                 consecutive_same_reads = 0;
@@ -397,11 +402,12 @@ void task_sensor_read(void *pvParameters) {
             int32_t ref_raw_y = ref.y;
             int32_t ref_raw_z = ref.z;
             
-            Vector3Int tip_vec = {tip.x, tip.y, tip.z};
-            Vector3Int ref_vec = {ref.x, ref.y, ref.z};
+            Vector3Float tip_vec = { (float)tip.x, (float)tip.y, (float)tip.z };
+            Vector3Float ref_vec = { (float)ref.x, (float)ref.y, (float)ref.z };
 
             float raw_acc[3], raw_gyr[3];
-            imu_read(raw_acc, raw_gyr);
+            int16_t imu_temp = 0;
+            imu_read(raw_acc, raw_gyr, &imu_temp);
             
             SensorFusionOutput out = sensorFusion.processUpdate(tip_vec, ref_vec, raw_acc, raw_gyr, current_cycle_count);
             
@@ -411,13 +417,9 @@ void task_sensor_read(void *pvParameters) {
                 continue;
             }
 
-            // Update the structs for logging and UI
-            tip.x = tip_vec.x; tip.y = tip_vec.y; tip.z = tip_vec.z; // Though we don't strictly use the calibrated tip/ref again outside this, keeping it for logging
-            ref.x = ref_vec.x; ref.y = ref_vec.y; ref.z = ref_vec.z;
-            
-            int32_t gradX = out.gradX;
-            int32_t gradY = out.gradY;
-            int32_t gradZ = out.gradZ;
+            float gradX = out.gradX;
+            float gradY = out.gradY;
+            float gradZ = out.gradZ;
             float magnitude = out.magnitude;
             float nt_value = out.nt_value;
 
@@ -448,7 +450,7 @@ void task_sensor_read(void *pvParameters) {
             }
             if (target_freq > 3000.0f) target_freq = 3000.0f;
 
-            log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref.x, ref.y, ref.z, tip.x, tip.y, tip.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, gradX, gradY, gradZ, magnitude, nt_value, raw_acc[0], raw_acc[1], raw_acc[2], raw_gyr[0], raw_gyr[1], raw_gyr[2], target_freq, is_muted, q0, q1, q2, q3, ui_data.azimuth, ui_data.elevation, current_settings.mag_declination_deg);
+            log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref_vec.x, ref_vec.y, ref_vec.z, tip_vec.x, tip_vec.y, tip_vec.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, out.gradX, out.gradY, out.gradZ, magnitude, nt_value, raw_acc[0], raw_acc[1], raw_acc[2], raw_gyr[0], raw_gyr[1], raw_gyr[2], imu_temp, target_freq, is_muted, q0, q1, q2, q3, ui_data.azimuth, ui_data.elevation, current_settings.mag_declination_deg);
 
             // --- ON-WAND CALIBRATION LOGIC ---
             if (is_calibrating) {
@@ -496,6 +498,12 @@ void task_sensor_read(void *pvParameters) {
         else {
             // Watchdog: Check for timeout lockup (no DRDY for 500ms)
             Serial.println("Sensor lockup detected (DRDY timeout)! Resetting...");
+            
+            // Perform dummy reads to forcefully clear stuck DRDY pins before re-initializing
+            uint8_t dummy[9];
+            i2c_read_buff(rm3100_tip_handle, REG_RESULTS, dummy, 9);
+            i2c_read_buff(rm3100_ref_handle, REG_RESULTS, dummy, 9);
+            
             initRM3100(rm3100_tip_handle);
             initRM3100(rm3100_ref_handle);
             last_read_time = xTaskGetTickCount(); // Reset timeout
@@ -707,7 +715,7 @@ void setup() {
     i2c_device_config_t dev_cfg = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = ADDR_TIP,
-        .scl_speed_hz = 100000,
+        .scl_speed_hz = 200000,
     };
     ESP_ERROR_CHECK(i2c_master_bus_add_device(user_i2c_port0_handle, &dev_cfg, &rm3100_tip_handle));
     dev_cfg.device_address = ADDR_REF;

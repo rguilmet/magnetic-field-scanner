@@ -15,7 +15,7 @@ import json
 from datetime import datetime
 
 __filename__ = os.path.basename(__file__)
-__version__ = "v1.0.0"
+__version__ = "v2.0.0"
 
 def calculate_noise_floor(df):
     """Analyzes a stationary log to find the exact hardware noise floor."""
@@ -79,15 +79,8 @@ def calculate_gradiometer_isolation(df):
     max_grad = ut_values.max()
     
     # Earth baseline stability (The reference sensor)
-    # The raw counts for ref sensor need to be converted to uT as well
-    # (magnitude * 1000.0) / (75 * cc) => For CC=400, denominator is 75*400 = 30000
-    # So counts * 1000 / 30000 = counts / 30 = nT. 
-    # nT / 1000 = uT = counts / 30000
-    cc = df['cc'].iloc[0] if 'cc' in df.columns else 400
-    conversion = 75.0 * cc
-    
-    ref_mags_counts = np.sqrt(df['refX_cal']**2 + df['refY_cal']**2 + df['refZ_cal']**2)
-    ref_mags_ut = (ref_mags_counts * 1000.0 / conversion) / 1000.0
+    ref_mags_nt = np.sqrt(df['refX_cal']**2 + df['refY_cal']**2 + df['refZ_cal']**2)
+    ref_mags_ut = ref_mags_nt / 1000.0
     
     ref_std = ref_mags_ut.std()
     
