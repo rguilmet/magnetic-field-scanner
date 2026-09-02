@@ -153,11 +153,17 @@ void initRM3100(i2c_master_dev_handle_t handle) {
     i2c_write_buff(handle, -1, ccx_data, sizeof(ccx_data));
 
     // 2. Set the proper TMRC (Update Rate). 
-    // We set this to the MAXIMUM speed (0x92 = 600Hz) for ALL cycle counts! 
-    // The RM3100 hardware will automatically throttle the data rate down to whatever 
-    // the Cycle Count requires. If we try to manually match the TMRC to the Cycle Count,
-    // we risk truncating the internal measurement if TMRC ticks before CC finishes!
-    uint8_t tmrc_data[] = {REG_TMRC, 0x92};
+    // We map TMRC to be safely SLOWER than the physical measurement time of the Cycle Count.
+    // If TMRC ticks faster than the measurement completes, it causes internal silicon glitches 
+    // that eventually result in a DRDY timeout!
+    uint8_t tmrc_val = 0x96;
+    if (current_cycle_count <= 200) tmrc_val = 0x94;      // 150Hz (safe for ~6ms measurement)
+    else if (current_cycle_count <= 400) tmrc_val = 0x96; // 37Hz (safe for ~18ms measurement)
+    else if (current_cycle_count <= 800) tmrc_val = 0x97; // 18Hz (safe for ~33ms measurement)
+    else if (current_cycle_count <= 1600) tmrc_val = 0x98;// 9Hz (safe for ~62ms measurement)
+    else tmrc_val = 0x99;                                 // 4.5Hz (safe for ~120ms measurement)
+    
+    uint8_t tmrc_data[] = {REG_TMRC, tmrc_val};
     i2c_write_buff(handle, -1, tmrc_data, sizeof(tmrc_data));
 
     // 3. Enable Continuous Measurement Mode (CMM)
@@ -337,8 +343,7 @@ void task_sensor_read(void *pvParameters) {
             MagData ref = readSensor(rm3100_ref_handle);
             
             // Watchdog: Check for stuck sensor or I2C read failure
-            if ((tip.x == last_tip.x && tip.y == last_tip.y && tip.z == last_tip.z) || 
-                (tip.x == 0 && tip.y == 0 && tip.z == 0)) {
+            if ((tip.x == 0 && tip.y == 0 && tip.z == 0)) {
                 consecutive_same_reads++;
             } else {
                 consecutive_same_reads = 0;
