@@ -152,14 +152,12 @@ void initRM3100(i2c_master_dev_handle_t handle) {
     uint8_t ccx_data[] = {REG_CCX, msb, lsb, msb, lsb, msb, lsb};
     i2c_write_buff(handle, -1, ccx_data, sizeof(ccx_data));
 
-    // 2. Set the proper TMRC (Update Rate) so measurements aren't truncated!
-    uint8_t tmrc_val = 0x96; // 37Hz default
-    if (current_cycle_count <= 200) tmrc_val = 0x94; // 150Hz
-    else if (current_cycle_count <= 400) tmrc_val = 0x95; // 75Hz
-    else if (current_cycle_count <= 800) tmrc_val = 0x96; // 37Hz
-    else if (current_cycle_count <= 1600) tmrc_val = 0x97; // 18Hz
-    else tmrc_val = 0x99; // 4.5Hz (0x98/9Hz is too fast for CC=3200)
-    uint8_t tmrc_data[] = {REG_TMRC, tmrc_val};
+    // 2. Set the proper TMRC (Update Rate). 
+    // We set this to the MAXIMUM speed (0x92 = 600Hz) for ALL cycle counts! 
+    // The RM3100 hardware will automatically throttle the data rate down to whatever 
+    // the Cycle Count requires. If we try to manually match the TMRC to the Cycle Count,
+    // we risk truncating the internal measurement if TMRC ticks before CC finishes!
+    uint8_t tmrc_data[] = {REG_TMRC, 0x92};
     i2c_write_buff(handle, -1, tmrc_data, sizeof(tmrc_data));
 
     // 3. Enable Continuous Measurement Mode (CMM)
@@ -506,10 +504,15 @@ void task_sensor_read(void *pvParameters) {
             // Watchdog: Check for timeout lockup (no DRDY for 500ms)
             Serial.println("Sensor lockup detected (DRDY timeout)! Resetting...");
             
-            // Perform dummy reads to forcefully clear stuck DRDY pins before re-initializing
+            // ONLY perform dummy reads if the pin is physically stuck HIGH. 
+            // Reading while the pin is LOW (sensor busy) will hang the I2C bus!
             uint8_t dummy[9];
-            i2c_read_buff(rm3100_tip_handle, REG_RESULTS, dummy, 9);
-            i2c_read_buff(rm3100_ref_handle, REG_RESULTS, dummy, 9);
+            if (digitalRead(MFS_PIN_RM3100_TIP_DRDY) == HIGH) {
+                i2c_read_buff(rm3100_tip_handle, REG_RESULTS, dummy, 9);
+            }
+            if (digitalRead(MFS_PIN_RM3100_REF_DRDY) == HIGH) {
+                i2c_read_buff(rm3100_ref_handle, REG_RESULTS, dummy, 9);
+            }
             
             initRM3100(rm3100_tip_handle);
             initRM3100(rm3100_ref_handle);
