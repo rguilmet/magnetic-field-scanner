@@ -425,7 +425,12 @@ void task_sensor_read(void *pvParameters) {
 
             UIData ui_data;
             ui_data.cal_progress = 0;
-            ui_data.mag = out.magnitude;
+            
+            float raw_gx = (float)(tip_raw_x - ref_raw_x);
+            float raw_gy = (float)(tip_raw_y - ref_raw_y);
+            float raw_gz = (float)(tip_raw_z - ref_raw_z);
+            ui_data.mag = sqrtf(raw_gx*raw_gx + raw_gy*raw_gy + raw_gz*raw_gz);
+            
             ui_data.nt = out.nt_value;
             ui_data.gradX = out.right_grad;
             ui_data.gradY = out.fwd_grad;
