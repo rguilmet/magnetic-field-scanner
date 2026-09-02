@@ -22,7 +22,7 @@
 
 // Sensor Magic Numbers & Tuning
 #define MFS_SLEW_RATE_THRESHOLD     800     // Max LSB jump per 2.5ms frame (EMI filter)
-#define MFS_MAX_GLITCH_MAGNITUDE    50000   // Absolute max LSB allowed (EMI filter)
+#define MFS_MAX_GLITCH_MAGNITUDE    250000   // Absolute max LSB allowed (EMI filter). CC=3200 hits ~80k-120k LSB.
 #define MFS_AUTO_TARE_THRESHOLD     50.0f   // Max LSB jump for auto-tare to track
 #define MFS_EMA_ALPHA               0.995f  // Auto-tare EMA filter weight
 #define MFS_NT_CONVERSION_FACTOR    0.38f   // LSB/uT/CC constant for RM3100
@@ -78,7 +78,7 @@
 
 #define USER_DISP_ROT_90    1
 #define USER_DISP_ROT_NONO  0
-#define FIRMWARE_VERSION "v5.0.7"
+#define FIRMWARE_VERSION "v5.0.8"
 
 #define Rotated USER_DISP_ROT_NONO   
 
