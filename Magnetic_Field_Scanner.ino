@@ -300,10 +300,12 @@ void task_sensor_read(void *pvParameters) {
             // 5. Discard the first 3 measurements to let the sensor stabilize at the new Cycle Count!
             xEventGroupClearBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT);
             for (int i = 0; i < 3; i++) {
-                xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(200));
-                uint8_t dummy[9];
-                i2c_read_buff(rm3100_tip_handle, REG_RESULTS, dummy, 9);
-                i2c_read_buff(rm3100_ref_handle, REG_RESULTS, dummy, 9);
+                EventBits_t dummy_bits = xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(500));
+                if ((dummy_bits & (DRDY_TIP_BIT | DRDY_REF_BIT)) == (DRDY_TIP_BIT | DRDY_REF_BIT)) {
+                    uint8_t dummy[9];
+                    i2c_read_buff(rm3100_tip_handle, REG_RESULTS, dummy, 9);
+                    i2c_read_buff(rm3100_ref_handle, REG_RESULTS, dummy, 9);
+                }
             }
 
             // CC Scaling has been removed in v5.0.0. The calibration matrix is now completely unit-independent (nT).

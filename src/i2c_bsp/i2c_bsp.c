@@ -16,8 +16,8 @@ static uint32_t i2c_done_pdMS_TICKS = 0;
 
 void i2c_master_Init(void)
 {
-  i2c_data_pdMS_TICKS = pdMS_TO_TICKS(5000);
-  i2c_done_pdMS_TICKS = pdMS_TO_TICKS(1000);
+  i2c_data_pdMS_TICKS = pdMS_TO_TICKS(50);
+  i2c_done_pdMS_TICKS = pdMS_TO_TICKS(50);
   /*i2c_port 0 init*/
   i2c_master_bus_config_t i2c_bus_config = 
   {
