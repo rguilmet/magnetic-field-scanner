@@ -48,17 +48,16 @@ To characterize the system, a user must capture 5 distinct `.csv` log files, eac
 3. Very slowly bring a strong magnet (e.g., neodymium) closer to the Tip Sensor until the live values on the screen flatline or clip.
 4. Remove the magnet and stop logging.
 
-### 5. The Measurement Repeatability Log (`log_repeat.csv`)
-**Purpose:** Proves instrument repeatability—that the wand reports the exact same field strength when exposed to the exact same physical anomaly multiple times.
+### 5. The Measurement Precision Log (`log_repeat.csv`)
+**Purpose:** Proves instrument precision and repeatability—that the wand reports the exact same field strength when exposed to the exact same physical anomaly multiple times across all three spatial axes.
 **Execution:**
 1. Lock the wand physically on a table so it cannot move or vibrate.
 2. Place a target (screwdriver or magnet) on a sliding track or against a hard physical guide.
 3. Start logging.
-4. Slide the target up to the wand until it hits a physical stop block.
-5. Hold it there for 1 second.
-6. Slide the target away.
-7. Repeat this physical motion exactly 10 times in the same log file.
-8. Stop logging.
+4. **X-Axis:** Slide the target up to the wand along the X-axis until it hits a physical stop block. Hold for 1 second, then slide away. Repeat 10 times.
+5. **Y-Axis:** Reposition the guide. Slide the target up along the Y-axis to a stop block. Hold for 1 second, slide away. Repeat 10 times.
+6. **Z-Axis:** Reposition the guide. Slide the target down along the Z-axis to a stop block. Hold for 1 second, slide away. Repeat 10 times.
+7. Stop logging.
 
 *(Note: Human hands are too shaky for this test. The inverse-cube law of magnetic fields means a 1mm human error in placement will cause massive signal variance. A physical sliding stop-block is strictly required).*
 
