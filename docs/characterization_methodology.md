@@ -61,6 +61,17 @@ To characterize the system, a user must capture 5 distinct `.csv` log files, eac
 
 *(Note: Human hands are too shaky for this test. The inverse-cube law of magnetic fields means a 1mm human error in placement will cause massive signal variance. A physical sliding stop-block is strictly required).*
 
+### 6. The Calibration Consistency Logs (`cal_1.csv` to `cal_5.csv`)
+**Purpose:** Proves the mathematical repeatability of the figure-8 calibration routine by ensuring the Kabsch algorithm converges on statistically identical hard/soft iron matrices across multiple runs.
+**Execution:**
+1. Stand in a magnetically quiet area.
+2. Trigger the on-wand calibration routine.
+3. Perform the standard 3D figure-8 tumbling sequence until completion.
+4. Save the log as `cal_1.csv`.
+5. Repeat this exact process 4 more times to collect a total of 5 separate calibration logs (`cal_1.csv` through `cal_5.csv`).
+
+*(Note: As established above, calibration should exclusively be performed at `CC=400`)*
+
 ---
 
 ## Generating the Datasheet
