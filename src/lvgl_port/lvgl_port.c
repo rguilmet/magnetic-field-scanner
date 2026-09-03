@@ -1016,9 +1016,19 @@ void update_detector_ui(const UIData *data) {
             static int last_color_state = -1;
             int current_color_state = 0;
             
-            if (data->nt > 500) current_color_state = 2; // Red
-            else if (data->nt > 150) current_color_state = 1; // Yellow
-            else current_color_state = 0; // Green
+            if (data->tare_active || data->auto_tare_on) {
+                // TARE/AUTO Mode: Baseline is 0 nT. Tight bands for detecting small metal objects.
+                lv_arc_set_range(mag_arc, 0, 5000); 
+                if (data->nt > 500) current_color_state = 2; // Red
+                else if (data->nt > 150) current_color_state = 1; // Yellow
+                else current_color_state = 0; // Green
+            } else {
+                // RAW Mode: Baseline includes physical misalignment. Wide bands.
+                lv_arc_set_range(mag_arc, 0, 25000); 
+                if (data->nt > 15000) current_color_state = 2; // Red
+                else if (data->nt > 5000) current_color_state = 1; // Yellow
+                else current_color_state = 0; // Green
+            }
             
             if (current_color_state != last_color_state) {
                 if (current_color_state == 2) {

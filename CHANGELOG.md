@@ -1,5 +1,15 @@
 # Changelog
 
+## [v5.1.1] - 2026-09-03
+### Fixed
+- **Tip Sensor CC Initialization Failure:** Fixed the Tip sensor returning tiny incorrect values (e.g., `-28`) instead of valid physics. The previous `v5.0.9` firmware left the RM3100 running in Continuous Measurement Mode (CMM), causing I2C writes to the `REG_CCX` registers to silently fail on soft-reboot. `initRM3100` now strictly enforces `CMM = 0x00` (IDLE Mode) before writing to Cycle Count registers, ensuring hot-flashes never trigger a parasitic lockup state.
+### Changed
+- **UI Dynamic Scaling:** The UI Gradiometer gauge and color bands now dynamically scale based on whether `TARE` is active or not. When `TARE` is active, the baseline is exactly `0 nT`, so the gauge uses a highly sensitive `0 to 5,000 nT` range. When `RAW` is active, the baseline incorporates the physical misalignment offset of the sensors (e.g. `~3000 nT`), so the gauge widens to `0 to 25,000 nT`.
+
+## [v5.1.0] - 2026-09-03
+### Changed
+- **Single Measurement Polling (POLL) Architecture:** Completely abandoned the RM3100's internal Continuous Measurement Mode (CMM). The ESP32 now manually orchestrates synchronized measurements by broadcasting `REG_POLL` across the I2C bus. This forces both the Tip and Reference sensors to sample the physical world at the exact same microsecond, eliminating the false Gradiometer noise caused by internal silicon timer drift. 
+- **I2C Collision Fix:** By migrating to `POLL` mode, the ESP32 is mathematically guaranteed to only read the sensors when they are totally idle. This permanently eliminates the random lockups caused by the ESP32 attempting to read `REG_RESULTS` at the exact same moment the free-running CMM timer started a new measurement.
 ## [v5.0.9] - 2026-09-02
 ### Fixed
 - **Idle Watchdog False Positives:** Fixed the hardware watchdog triggering "stuck data" panics when the wand was sitting perfectly idle on a desk. The sensor's noise floor is so low that it occasionally outputs 10 identical valid frames in a row. The watchdog now only triggers if it reads exactly `0,0,0` (a true I2C read failure).

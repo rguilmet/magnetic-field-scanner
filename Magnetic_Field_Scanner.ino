@@ -144,6 +144,14 @@ extern "C" void reset_tare(void) {
 
 // Initial setup to configure sensor settings using Hardware I2C
 void initRM3100(i2c_master_dev_handle_t handle) {
+    if (handle == NULL) return;
+
+    // 0. Force Idle Mode (Disable CMM) so we can safely update Cycle Counts!
+    // If the sensor was left free-running from a previous boot or firmware flash, 
+    // the datasheet explicitly warns that writing to CC registers will fail or corrupt!
+    uint8_t cmm_data[] = {REG_CMM, 0x00};
+    i2c_write_buff(handle, -1, cmm_data, sizeof(cmm_data));
+
     // 1. Set the Cycle Counts (MSB first, then LSB)
     uint8_t msb = (current_cycle_count >> 8) & 0xFF;
     uint8_t lsb = current_cycle_count & 0xFF;
