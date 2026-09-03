@@ -1,0 +1,52 @@
+{
+    "calibration_type": "PC Python Calibration",
+    "calibration_date_ms": 1788125687111,
+    "calibration_date": "2026-08-30 17:34:47",
+    "matrix_version": "2.0",
+    "ref_hard": [
+        65.79,
+        -19.02,
+        -34.31
+    ],
+    "ref_soft": [
+        [
+            1.0036,
+            -0.0102,
+            0.0013
+        ],
+        [
+            -0.0102,
+            1.0052,
+            -0.0163
+        ],
+        [
+            0.0013,
+            -0.0163,
+            0.992
+        ]
+    ],
+    "tip_hard": [
+        124.1,
+        160.5,
+        -4.02
+    ],
+    "tip_soft_note": "Matrix includes Kabsch rotational alignment to match the Reference sensor.",
+    "tip_soft": [
+        [
+            1.0024,
+            -0.0238,
+            0.1722
+        ],
+        [
+            0.0082,
+            0.9933,
+            0.019
+        ],
+        [
+            -0.17,
+            -0.0074,
+            0.9751
+        ]
+    ],
+    "imu_rotation_deg": 60.0
+}

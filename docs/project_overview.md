@@ -2,7 +2,7 @@
 
 **Document Version:** `v1.2.1`
 **Last Updated:** August 30, 2026
-**Firmware Target:** `v4.0.0`
+**Firmware Target:** `v5.0.0`
 **Python Ecosystem Target:** `v1.1.1`
 
 This document serves as the master source of truth for the Magnetic Field Scanner project. It details the mechanical assembly, electrical wiring, pinouts, firmware architecture, critical pitfalls to avoid in future development, and the roadmap for upcoming features.
@@ -117,22 +117,30 @@ The wand utilizes two completely separate hardware I2C buses to isolate the sens
 
 ## 4. Critical Engineering Decisions & Pitfalls to Avoid
 
-### A. I2C Bus Speed (DO NOT EXCEED 100kHz)
-* **The Mistake:** Attempting to run the hardware I2C bus at 400kHz ("Fast Mode").
-* **The Consequence:** The physical capacitance of 3 feet of unshielded wire inside the wand caused mushy square waves. The ESP32 missed ACK bits, resulting in `0,0,0` readings, massive 140,000-count garbage spikes, and frequent "Sensor Lockup" reboots.
-* **The Fix:** The I2C speed (`scl_speed_hz`) in `Magnetic_Field_Scanner.ino` is hardcoded to `100,000` (Standard Mode). This is electrically bulletproof for this cable length. 
+### A. I2C Bus Speed & Time Constants
+* **The Mistake:** Attempting to run the hardware I2C bus at 400kHz ("Fast Mode") over a 60-inch unshielded CAT6 cable. The physical capacitance caused mushy square waves. The ESP32 missed ACK bits, resulting in `0,0,0` readings, massive garbage spikes, and frequent "Sensor Lockup" panics. 100kHz was extremely stable but too slow for high-speed logging.
+* **The Fix:** The I2C speed (`scl_speed_hz`) in `i2c_bsp.c` is hardcoded to `200,000` Hz. This is the "Goldilocks" zone that perfectly balances RC time constant degradation against the bandwidth needed to poll both sensors at 150Hz. 
 
-### B. EMI "Meteors" & Slew Rate Filtering
-* **The Problem:** Even at 100kHz, the long I2C wires act as antennas. Microscopic bit-flips (EMI glitches) occasionally jump the raw reading by 2,000 to 5,000 counts in a single frame. Because the gradiometer math expects near-zero differences, this causes the audio UI to emit a massive, terrifying shriek ("cosmic meteors").
-* **The Fix:** We implemented a **Slew Rate Filter (Derivative Filter)** in `task_sensor_read`. If any single axis on either sensor jumps by more than **800 counts** in a single 2.5-millisecond frame, it is mathematically deemed physical EMI. The frame is silently dropped, averting the audio shriek. Do not use an absolute threshold (like `>50,000`) because total magnitude scales with the Cycle Count!
+### B. EMI "Meteors", Slew Rate, & Absolute Filters
+* **The Problem:** Even at 200kHz, the long I2C wires act as antennas. Microscopic bit-flips (EMI glitches) occasionally jump the raw reading by 2,000 to 5,000 counts in a single frame, causing the audio UI to emit a terrifying shriek ("cosmic meteors").
+* **Slew Rate Filter:** If any single axis on either sensor jumps by more than **800 counts** in a single frame, it is mathematically deemed physical EMI and the frame is dropped.
+* **Absolute Magnitude Glitch Filter (MFS_MAX_GLITCH_MAGNITUDE):** Protects against catastrophic I2C garbage data (e.g. 140,000 counts). *CRITICAL PITFALL:* This threshold MUST be set >250,000. At CC=3200, the raw sensor gain is so massive that perfectly valid measurements hit ~120,000 LSB. Setting this threshold too low (e.g. 50,000) will cause the software to silently reject every single CC=3200 frame, freezing the display and log entirely!
 
 ### C. Watchdog Timer (TWDT) Panics
 * **The Problem:** Processing a 3,000-line `calibration.csv` file from the SD card using `String` operations in `wifi_logger.cpp` takes more than 5 seconds. The ESP32 FreeRTOS Task Watchdog Timer assumed the system was frozen and triggered a hard panic reboot right at 99% completion.
 * **The Fix:** Ensure heavy processing loops (like file parsing) contain a `vTaskDelay(pdMS_TO_TICKS(10));` every 100 iterations to "pet the watchdog" and yield to the OS.
 
-### D. Sensor Lockup Logic
-* **The Problem:** Aggressively hard-resetting the RM3100 sensors `initRM3100()` on a single `0,0,0` read failure.
-* **The Fix:** Occasional missed frames are normal. The watchdog now only triggers a hard sensor reset after **10 consecutive identical or failed frames**. Single glitch frames are silently ignored via `continue`.
+### D. Sensor Lockup Logic & Hardware Watchdog
+* **The Problem:** The I2C bus will occasionally hang due to environmental EMI. Previously, a 5000ms I2C driver timeout would starve the `IDLE0` task and trigger a fatal ESP32 Task Watchdog Panic reboot. 
+* **The Fix:** The I2C driver timeouts (`i2c_data_pdMS_TICKS`) are clamped to `50ms`. If the bus hangs, it fails gracefully. The main `SensorTask` implements a robust software watchdog that resets the RM3100s via `initRM3100()` under three conditions:
+  1. **Stuck Data:** If the sensor returns exactly `0,0,0` for 10 consecutive frames (I2C read failure). *CRITICAL PITFALL:* Do not trigger on identical valid values (e.g. `tip.x == last_tip.x`)! The RM3100 noise floor is so low that a perfectly still sensor will trigger false-positive lockups!
+  2. **DRDY Timeout:** If the `DRDY` event group times out after **1000ms**. *CRITICAL PITFALL:* CC=3200 physics takes ~480ms to measure. If the timeout is set to 500ms, the ESP32 will panic and reset the sensor *before it finishes*, causing an infinite freeze loop!
+  3. **Blind Recovery I2C Reads:** When recovering from a timeout, NEVER issue a blind `i2c_read_buff` to the RM3100 unless you have verified via `digitalRead()` that the DRDY pin is physically stuck HIGH. Reading a busy RM3100 will crash its internal silicon and permanently hang the I2C bus!
+
+### D2. RM3100 TMRC Internal Glitching
+* **The Physics:** `TMRC` defines the update rate in Continuous Measurement Mode. The datasheet claims that if `TMRC` is set faster than the Cycle Count allows, it will "automatically override" and run at max speed.
+* **The Reality:** While true, constantly bombarding the RM3100's internal state machine with 600Hz `TMRC` ticks while it is busy calculating a slow 400 CC measurement causes random silicon glitches, resulting in the sensor missing beats and dropping `DRDY` (triggering the watchdog). 
+* **The Fix:** `initRM3100()` must use a rigorous mapping table to ensure the `TMRC` value is always safely **slower** than the physical Cycle Count math execution time.
 
 ### E. Cycle Count Scaling
 * **The Physics:** When the user changes the Cycle Count (CC) on the fly, the RM3100's raw readings scale linearly. (e.g., CC=200 gives a radius of ~3,800, CC=400 gives ~7,600, CC=800 gives ~15,400).
@@ -236,14 +244,14 @@ When powering on the ESP32 via the physical battery button, the hardware PMIC re
 * **The Pitfall:** If the firmware waits for a Serial connection or performs long blocking tasks before initializing the IO Expander, the user will be forced to physically hold the power button down for several seconds. If they let go early, power is cut instantly.
 * **The Solution:** The I2C bus (\i2c_master_Init()\) and the IO Expander (\esp_io_expander_set_level(io_expander, MFS_EXIO_PIN_SYS_EN, 1)\) must be executed as the absolute very first commands in \setup()\, BEFORE any \while(!Serial)\ delay loops.
 
-### 2. True Polling Rates (v4.0.0 ISR Architecture)
+### 2. True Polling Rates (v5.0.0 ISR Architecture)
 The firmware utilizes a true zero-latency ISR architecture driven by FreeRTOS Event Groups. The sensor task sleeps at 0% CPU until the RM3100 hardware asserts the DRDY interrupts, at which point it wakes and reads instantly. 
 
-The polling rate is exclusively governed by the RM3100 `TMRC` hardware register, which is dynamically mapped to the Cycle Count (CC):
-* **CC 200:** 150 Hz
-* **CC 400:** 75 Hz (Default)
-* **CC 800:** 37 Hz
-* **CC 1600:** 18 Hz
-* **CC 3200:** 9 Hz
+The polling rate is exclusively governed by the RM3100 `TMRC` hardware register, which is dynamically mapped to be safely slower than the physics of the Cycle Count (CC):
+* **CC 200:** 150 Hz (`0x94`)
+* **CC 400:** 37 Hz (`0x96`) - Default
+* **CC 800:** 18 Hz (`0x97`)
+* **CC 1600:** 9 Hz (`0x98`)
+* **CC 3200:** 4.5 Hz (`0x99`)
 
 **Logging Decimation:** To prevent SD Card SPI latency from dropping frames at 150Hz, the data logger decimates 200 CC readings by half (logging at 75Hz) while keeping the math and UI running at the full 150Hz.

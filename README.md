@@ -1,7 +1,7 @@
 # Magnetic Field Scanner (MFS) Wand
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Firmware](https://img.shields.io/badge/Firmware-v4.0.0-green.svg)]()
+[![Firmware](https://img.shields.io/badge/Firmware-v5.0.9-green.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-ESP32--S3-orange.svg)]()
 [![Build](https://img.shields.io/badge/Build-Arduino%20|%20PlatformIO-lightgrey.svg)]()
 
@@ -10,8 +10,8 @@ The Magnetic Field Scanner (MFS) Wand is a high-precision spatial magnetic field
 
 ## Key Features
 * **Zero-Latency ISR Architecture**: Sensor acquisition is event-driven by FreeRTOS Event Groups triggered directly by RM3100 `DRDY` hardware interrupts (sleeping at 0% CPU until data is ready).
-* **Aggressive TMRC Hardware Tuning**: Capable of reading at blistering 150Hz speeds (200 Cycle Count), with a robust 75Hz default (400 Cycle Count).
-* **Extreme Depth Settings**: Supports Cycle Counts up to 3200 (running at 9Hz) for maximum physical depth penetration.
+* **Intelligent TMRC Hardware Tuning**: Capable of reading at blistering 150Hz speeds (200 Cycle Count), with a robust 37Hz default (400 Cycle Count).
+* **Extreme Depth Settings**: Supports Cycle Counts up to 3200 (running at 4.5Hz) for maximum physical depth penetration, backed by a dynamic I2C hardware watchdog.
 * **Dynamic Madgwick Integration**: Time-dilation distortion across varying sampling rates is completely eliminated via dynamic `dt` timestamping (`micros()`) in the Sensor Fusion loop.
 * **SD Logging Decimation**: Intelligently decimates 150Hz readings to 75Hz during SD Card writes to prevent SD-bus latency from dropping sensor frames.
 * **Physical nanoTesla (nT) Math & Calibration Pipeline**: Magnetic gradient calculations and calibration matrices operate natively in physical field units (nT), completely decoupling sensor accuracy and zero baseline from hardware Cycle Count changes.

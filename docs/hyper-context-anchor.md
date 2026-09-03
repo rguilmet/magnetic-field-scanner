@@ -25,12 +25,10 @@
 
 ## 4. LOGISTICAL STATE & COMPLETED MILESTONES
 * **Completed:** 
-  - Overhauled firmware to v4.0.0 (True Zero-Latency ISR EventGroups, High-Speed Log Decimation, Dynamic Madgwick `dt`).
-  - Diagnosed critical hardware bugs: `DRDY` lapping lockup loops and the `nT` cycle-count consistency drift.
-  - Fully mapped out the next major architectural leap in `implementation_plan.md`.
-* **Current Step:** We are parked at the threshold of Phase 10 (Execution of the v5.0.0 Unified `nT` Architecture). 
+  - Overhauled firmware to v5.0.0 (Unified `nT` Architecture). 
+  - Rewrote `scripts/calibrate_wand.py` to calculate the Kabsch ellipsoid in physical `nT` units.
+  - Refactored `SensorFusion.cpp` to instantly convert raw counts to `float nT`, decoupled calibration from cycle count gain, and deleted the legacy `scaleTare()` logic.
+  - Slayed the CC=3200 lockup dragon by mapping safe TMRC limits, bumping the Absolute EMI Glitch threshold to 250,000 LSB, and implementing a rigorous hardware I2C watchdog that ignores false-positive stillness.
+* **Current Step:** Stability achieved at `v5.0.9`.
 * **Next Target Milestone:** 
-  1. Parse `implementation_plan.md`. 
-  2. Rewrite `scripts/calibrate_wand.py` (bump to v2.0.0) to parse `cc` from CSV logs, convert raw counts to `nT`, fit the Kabsch ellipsoid in `nT`, and output a v3.0 `calibration.json`. 
-  3. Refactor `SensorFusion.cpp` to ingest raw counts, instantly convert to `float nT`, apply the new `nT`-native `calibration.json` matrix, and completely delete the legacy `scaleTare()` logic.
-  4. Implement the `digitalRead()` DRDY lapping-lockup fix in the FreeRTOS loop, and append IMU `TEMP_L` logging to the SD Card CSV.
+  - To be determined by the user. Potential exploration of future ideas (e.g. 3rd sensor integration, GPS).
