@@ -144,31 +144,15 @@ extern "C" void reset_tare(void) {
 
 // Initial setup to configure sensor settings using Hardware I2C
 void initRM3100(i2c_master_dev_handle_t handle) {
-    if (handle == NULL) return;
-
-    // 1. Set the internal Cycle Counts based on the current setting
+    // 1. Set the Cycle Counts (MSB first, then LSB)
     uint8_t msb = (current_cycle_count >> 8) & 0xFF;
     uint8_t lsb = current_cycle_count & 0xFF;
+    
     uint8_t ccx_data[] = {REG_CCX, msb, lsb, msb, lsb, msb, lsb};
     i2c_write_buff(handle, -1, ccx_data, sizeof(ccx_data));
 
-    // 2. Set the proper TMRC (Update Rate). 
-    // We map TMRC to be safely SLOWER than the physical measurement time of the Cycle Count.
-    // If TMRC ticks faster than the measurement completes, it causes internal silicon glitches 
-    // that eventually result in a DRDY timeout!
-    uint8_t tmrc_val = 0x96;
-    if (current_cycle_count <= 200) tmrc_val = 0x94;      // 150Hz (safe for ~6ms measurement)
-    else if (current_cycle_count <= 400) tmrc_val = 0x96; // 37Hz (safe for ~18ms measurement)
-    else if (current_cycle_count <= 800) tmrc_val = 0x97; // 18Hz (safe for ~33ms measurement)
-    else if (current_cycle_count <= 1600) tmrc_val = 0x98;// 9Hz (safe for ~62ms measurement)
-    else tmrc_val = 0x99;                                 // 4.5Hz (safe for ~120ms measurement)
-    
-    uint8_t tmrc_data[] = {REG_TMRC, tmrc_val};
-    i2c_write_buff(handle, -1, tmrc_data, sizeof(tmrc_data));
-
-    // 3. Enable Continuous Measurement Mode (CMM)
-    uint8_t cmm_data[] = {REG_CMM, 0x7D};
-    i2c_write_buff(handle, -1, cmm_data, sizeof(cmm_data));
+    // Notice: We intentionally do NOT write to TMRC or CMM. 
+    // The sensor remains entirely idle, waiting for the ESP32 to manually send a POLL command.
 }
 
 // Dynamically change cycle count from Settings screen
@@ -276,34 +260,23 @@ void task_sensor_read(void *pvParameters) {
     for (;;) {
         // Handle deferred cycle count updates
         if (pending_cycle_count != 0) {
-            uint16_t old_count = current_cycle_count;
             uint16_t count = pending_cycle_count;
             pending_cycle_count = 0;
             current_cycle_count = count;
 
-            Serial.printf("Stopping CMM to update cycle count to %d...\n", count);
+            Serial.printf("Updating cycle count to %d...\n", count);
             
-            // 1. Fully Disable CMM
-            uint8_t cmm_disable[] = {REG_CMM, 0x00}; 
-            i2c_write_buff(rm3100_tip_handle, -1, cmm_disable, sizeof(cmm_disable));
-            i2c_write_buff(rm3100_ref_handle, -1, cmm_disable, sizeof(cmm_disable));
-
-            // 2. Wait 150ms to ensure any internal operations completely cease
-            vTaskDelay(pdMS_TO_TICKS(150));
-
-            // 3. Perform a dummy read to clear any stale DRDY on both sensors!
-            uint8_t measure_data[9];
-            i2c_read_buff(rm3100_tip_handle, REG_RESULTS, measure_data, 9);
-            i2c_read_buff(rm3100_ref_handle, REG_RESULTS, measure_data, 9);
-
-            // 4. Fully re-initialize both sensors using the boot sequence logic!
+            // 1. Re-initialize both sensors (Writes CC registers, leaves in IDLE)
             initRM3100(rm3100_tip_handle);
             initRM3100(rm3100_ref_handle);
 
-            // 5. Discard the first 3 measurements to let the sensor stabilize at the new Cycle Count!
-            // 5. Discard the first 3 measurements to let the sensor stabilize at the new Cycle Count!
+            // 2. Discard the first 3 measurements to let the sensor's LR oscillator stabilize at the new gain!
             xEventGroupClearBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT);
             for (int i = 0; i < 3; i++) {
+                uint8_t poll_data[] = {REG_POLL, 0x70}; // Request X, Y, and Z
+                i2c_write_buff(rm3100_tip_handle, -1, poll_data, sizeof(poll_data));
+                i2c_write_buff(rm3100_ref_handle, -1, poll_data, sizeof(poll_data));
+                
                 EventBits_t dummy_bits = xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(1000));
                 if ((dummy_bits & (DRDY_TIP_BIT | DRDY_REF_BIT)) == (DRDY_TIP_BIT | DRDY_REF_BIT)) {
                     uint8_t dummy[9];
@@ -311,11 +284,8 @@ void task_sensor_read(void *pvParameters) {
                     i2c_read_buff(rm3100_ref_handle, REG_RESULTS, dummy, 9);
                 }
             }
-
-            // CC Scaling has been removed in v5.0.0. The calibration matrix is now completely unit-independent (nT).
-            // No need to touch cal_config or Tare offsets when cycle count changes!
             
-            Serial.println("Cycle count update complete. CMM restarted.");
+            Serial.println("Cycle count update complete.");
         }
 
         if (!is_scanning) {
@@ -326,8 +296,19 @@ void task_sensor_read(void *pvParameters) {
             continue;
         }
 
-        // FIX for Lapping Lockup:
-        // If DRDY is already HIGH because the SD card blocked and lapped the ISR, the RISING edge will never trigger!
+        // --- SINGLE MEASUREMENT POLLING ORCHESTRATOR ---
+        // We explicitly trigger both sensors to start measuring at the exact same microsecond.
+        // This permanently eliminates phase-drift, Gradiometer timestamp mismatches, and CMM/I2C collisions.
+        
+        xEventGroupClearBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT);
+        
+        uint8_t poll_data[] = {REG_POLL, 0x70}; // 0x70 = Measure X, Y, and Z
+        i2c_write_buff(rm3100_tip_handle, -1, poll_data, sizeof(poll_data));
+        i2c_write_buff(rm3100_ref_handle, -1, poll_data, sizeof(poll_data));
+
+        // The DRDY Lapping Lockup fix (digitalRead) is theoretically obsolete in POLL mode 
+        // because the sensors cannot autonomously lap the CPU during an SD flush.
+        // But we leave it as a safe fallback just in case of weird hardware states.
         if (digitalRead(MFS_PIN_RM3100_TIP_DRDY) == HIGH) {
             xEventGroupSetBits(drdy_event_group, DRDY_TIP_BIT);
         }
@@ -335,7 +316,7 @@ void task_sensor_read(void *pvParameters) {
             xEventGroupSetBits(drdy_event_group, DRDY_REF_BIT);
         }
 
-        // True ISR-driven wait (max 1000ms timeout for watchdog)
+        // True ISR-driven wait for the POLL measurement to finish (max 1000ms timeout for watchdog)
         EventBits_t bits = xEventGroupWaitBits(drdy_event_group, DRDY_TIP_BIT | DRDY_REF_BIT, pdTRUE, pdTRUE, pdMS_TO_TICKS(1000));
         
         if ((bits & (DRDY_TIP_BIT | DRDY_REF_BIT)) == (DRDY_TIP_BIT | DRDY_REF_BIT)) {
