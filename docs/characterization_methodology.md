@@ -80,10 +80,11 @@ Once all 5 benchmark logs are collected in the workspace, run the following Pyth
 
 ```bash
 python scripts/characterize_system.py \
-  --noise "log_noise.csv" \
-  --target "log_target.csv" \
-  --ahrs "log_ahrs.csv" \
-  --repeatability "log_repeat.csv" \
-  --saturation "log_saturation.csv"
+  --noise "log_noise_200.csv" "log_noise_400.csv" "log_noise_3200.csv" \
+  --target "log_target_200.csv" "log_target_400.csv" "log_target_3200.csv" \
+  --ahrs "log_ahrs_200.csv" "log_ahrs_400.csv" "log_ahrs_3200.csv" \
+  --repeatability "log_repeat_200.csv" "log_repeat_400.csv" "log_repeat_3200.csv" \
+  --saturation "log_saturation_200.csv" "log_saturation_400.csv" "log_saturation_3200.csv" \
+  --calibration "cal_1.csv" "cal_2.csv" "cal_3.csv" "cal_4.csv" "cal_5.csv"
 ```
 The resulting `CHARACTERIZATION.md` will be placed in the `docs/` folder.
