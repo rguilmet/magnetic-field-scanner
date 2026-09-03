@@ -48,8 +48,8 @@ To characterize the system, a user must capture 5 distinct `.csv` log files, eac
 3. Very slowly bring a strong magnet (e.g., neodymium) closer to the Tip Sensor until the live values on the screen flatline or clip.
 4. Remove the magnet and stop logging.
 
-### 5. The Measurement Precision Log (`log_repeat.csv`)
-**Purpose:** Proves instrument repeatability—that the wand reports the exact same field strength when exposed to the exact same physical anomaly.
+### 5. The Measurement Repeatability Log (`log_repeat.csv`)
+**Purpose:** Proves instrument repeatability—that the wand reports the exact same field strength when exposed to the exact same physical anomaly multiple times.
 **Execution:**
 1. Lock the wand physically on a table so it cannot move or vibrate.
 2. Place a target (screwdriver or magnet) on a sliding track or against a hard physical guide.
