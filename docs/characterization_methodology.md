@@ -5,9 +5,10 @@ This document outlines the strict empirical methodology required to benchmark an
 The resulting data from these physical tests is processed by `scripts/characterize_system.py` to generate the official `CHARACTERIZATION.md` datasheet.
 
 ## Testing Environment & Configuration
-To ensure statistically valid and reproducible results, the wand must be configured to its absolute baseline state:
-- **Cycle Count:** RM3100 Cycle Count (CC) must be set to the default of `400` (yielding a ~50Hz hardware update rate).
-- **Mode:** The wand UI must be set to **RAW Mode**. This disables the software-based Exponential Moving Average (EMA) low-pass filter (Auto-Tare) and exposes the naked noise floor and mathematical stability of the hardware.
+To ensure statistically valid and reproducible results across the entire architectural range, the wand must be benchmarked across multiple Cycle Counts.
+- **Cycle Count Sweeps:** The system dynamically normalizes all readings to nanoTeslas (nT) regardless of the Cycle Count (CC). However, changing the CC fundamentally alters the hardware's update speed, physical saturation limit, and RMS noise floor. Therefore, benchmark sets should be collected at `CC=200` (Fast/Noisy/High-Saturation), `CC=400` (Baseline), and `CC=3200` (Slow/Quiet/Low-Saturation) to fully characterize the hardware envelope.
+- **Calibration Context:** Because the `v5.x.x` architecture normalizes all raw sensor counts to `nT` *before* the calibration matrix is applied, a single calibration profile is mathematically universal across all Cycle Counts. Calibration should exclusively be performed at `CC=400`. (Performing calibration at `CC=3200` is not recommended because the 5Hz update rate is too slow to capture a smooth 3D rotational sphere, while `CC=400` at ~50Hz is perfect).
+- **Mode:** The wand UI must be set to **RAW Mode** (TARE and AUTO-TARE disabled). This exposes the naked noise floor and raw mathematical stability of the hardware, unimpeded by software UI filters or zeroing logic.
 - **Environment:** All baseline tests must be conducted in a magnetically quiet area, free of moving ferrous objects or active EMI sources.
 
 ---
