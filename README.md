@@ -67,10 +67,11 @@ The system applies an advanced 9-parameter Least-Squares Ellipsoid Fit (via the 
 * **Pre-Normalization:** The `v5.0.0+` architecture converts raw sensor LSBs into normalized nanoTeslas (nT) *before* the calibration matrix is applied.
 * **Universal Application:** Because the matrix is mathematically dimensionless, a single calibration profile works universally across ALL Cycle Counts (12 to 3200). You calibrate once at 400 CC, and the matrix remains perfectly valid even if you switch the wand to 3200 CC.
 
-### 3. Dynamic UI Scaling (TARE vs RAW)
+### 3. Dynamic UI Scaling (RAW, TARE, and AUTO)
 The LVGL Gradiometer UI dynamically scales its physical range and color bands based on the active mode:
 * **RAW Mode (0 - 25,000 nT):** Wide dynamic range to absorb the baseline physical misalignment of the sensors (typically ~4,900 nT) without pinning the needle in the red.
-* **TARE Mode (0 - 5,000 nT):** When active, the software zeroes the baseline, tightening the visual arc (Green: 0-150, Yellow: 150-500, Red: >500) for extreme sensitivity to tiny localized anomalies.
+* **TARE Mode (0 - 5,000 nT):** Manual zeroing of the baseline, tightening the visual arc (Green: 0-150, Yellow: 150-500, Red: >500) for extreme sensitivity to tiny localized anomalies.
+* **AUTO Mode (0 - 5,000 nT):** Engages an invisible low-pass filter (triggered under `150 nT`) that acts as an aggressive Auto-Tare to slowly eat away temperature drift and background anomalies while ignoring the sharp gradients of a real target.
 
 ### 4. Dual-Drive Filesystem & Integrated Web Server
 * **Smart Fallback:** Dynamically routes file I/O to the high-speed SD Card, or falls back to Internal FFat if the card is missing or corrupted.
