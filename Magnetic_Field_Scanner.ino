@@ -35,7 +35,7 @@ static bool is_vbatpowerflag = false;
 // Valid Hardwired 7-bit Addresses
 #define ADDR_TIP        0x23
 #define ADDR_REF        0x21
-#define ADDR_MID        0x22
+#define ADDR_NEAR        0x22
 
 // ESP-IDF Hardware I2C Handles for RM3100s
 i2c_master_dev_handle_t rm3100_tip_handle = NULL;
@@ -707,7 +707,7 @@ void setup() {
     
     pinMode(MFS_PIN_RM3100_TIP_DRDY, INPUT);
     pinMode(MFS_PIN_RM3100_REF_DRDY, INPUT);
-    pinMode(MFS_PIN_RM3100_MID_DRDY, INPUT);
+    pinMode(MFS_PIN_RM3100_NEAR_DRDY, INPUT);
 
     drdy_event_group = xEventGroupCreate();
     attachInterrupt(digitalPinToInterrupt(MFS_PIN_RM3100_TIP_DRDY), drdy_tip_isr, RISING);
@@ -724,7 +724,7 @@ void setup() {
     ESP_ERROR_CHECK(i2c_master_bus_add_device(user_i2c_port0_handle, &dev_cfg, &rm3100_tip_handle));
     dev_cfg.device_address = ADDR_REF;
     ESP_ERROR_CHECK(i2c_master_bus_add_device(user_i2c_port0_handle, &dev_cfg, &rm3100_ref_handle));
-    dev_cfg.device_address = ADDR_MID;
+    dev_cfg.device_address = ADDR_NEAR;
     ESP_ERROR_CHECK(i2c_master_bus_add_device(user_i2c_port0_handle, &dev_cfg, &rm3100_mid_handle));
 
     rtc_init(); // Uses hardware I2C

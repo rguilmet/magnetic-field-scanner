@@ -31,7 +31,7 @@
 // RM3100 Data Ready Interrupts
 #define MFS_PIN_RM3100_TIP_DRDY 1
 #define MFS_PIN_RM3100_REF_DRDY 2
-#define MFS_PIN_RM3100_MID_DRDY 5
+#define MFS_PIN_RM3100_NEAR_DRDY 5
 
 
 //  DISP

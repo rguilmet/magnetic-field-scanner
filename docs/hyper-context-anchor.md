@@ -19,7 +19,7 @@
 ## 3. HARD ROADBLOCKS & COMPULSIVE HALTS (WHAT NOT TO DO)
 * **NEVER** apply hardcoded wait times or `delay()` in the main FreeRTOS sensor loop; rely strictly on ISR EventGroups and hardware-driven asynchronous logic.
 * **NEVER** move the PMIC `SYS_EN` I2C latch initialization below `while(!Serial)` or any blocking delays in `setup()`, otherwise the wand will power-cycle itself if the user releases the physical battery button too quickly.
-* **NEVER** write a loop that assumes the RM3100 `DRDY` pin acts exclusively as a RISING edge. If the ESP32 is blocked by an SD card flush, the sensor will lap the CPU, leaving `DRDY` permanently `HIGH`. Always perform a manual `digitalRead()` poll or a dummy `REG_RESULTS` read to break the lockup.
+* **NEVER** place the RM3100 in Continuous Measurement Mode (CMM). If the ESP32 is blocked by an SD card flush or UI rendering, the sensor will lap the CPU, causing an I2C phase collision and a permanent `DRDY` lockup. Always operate exclusively in POLL mode via `REG_POLL` to guarantee deterministic phase synchronization.
 * **NEVER** process calibration ellipsoid math (Kabsch) using raw integer counts. Raw counts scale non-linearly with hardware gain (Cycle Counts) and ZFO. Always convert to physical nanoTeslas (`nT`) *before* applying calibration matrices.
 * **NEVER** bump the main firmware version for documentation-only changes. Documents maintain their own independent history.
 

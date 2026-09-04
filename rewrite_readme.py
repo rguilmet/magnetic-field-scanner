@@ -1,9 +1,6 @@
-# Magnetic Field Scanner (MFS) Wand
+import sys
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Firmware](https://img.shields.io/badge/Firmware-v5.1.1-green.svg)]()
-[![Platform](https://img.shields.io/badge/Platform-ESP32--S3-orange.svg)]()
-[![Build](https://img.shields.io/badge/Build-Arduino%20|%20PlatformIO-lightgrey.svg)]()
+content = """# Magnetic Field Scanner (ESP32-S3 + Dual RM3100)
 
 A professional-grade, open-source spatial magnetic gradiometer designed to detect buried ferromagnetic anomalies (property pins, pipes, UXO) by isolating highly localized magnetic gradients from the Earth's background magnetic field.
 
@@ -11,15 +8,12 @@ Powered by an ESP32-S3 and utilizing dual PNI RM3100 magneto-inductive sensors, 
 
 ---
 
-## Hardware Configuration
+## Hardware Specifications
 
-### Core Components
-* **Base Platform:** Waveshare ESP32-S3-Touch-LCD-3.49 v3 (PCBA v1.1 silkscreen). This highly integrated device provides the MCU, display, audio, and power management core.
-* **MCU:** ESP32-S3 (16MB Flash, OPI PSRAM) embedded on the Waveshare board.
-* **Magnetometers:** 2x RM3100 (TIP (at 0") and REF (at 24") sensors), with hardware reserved for a 3rd (NEAR at 8").
-* **IMU:** QMI8658 (6-axis Accelerometer & Gyroscope) offset mechanically by 60° relative to the wand axis.
-* **Display:** 172x640 QSPI LCD with capacitive touch.
-* **Audio Codec:** ES8311 / ES7210 via I2S for audio feedback.
+* **MCU:** Espressif ESP32-S3 (Dual Core 240MHz, OPI PSRAM).
+* **Magnetic Sensors:** Dual PNI RM3100 (TIP and REF) in a spatial gradiometer configuration.
+* **IMU:** 6-DoF or 9-DoF IMU (for AHRS attitude tracking and radar projection).
+* **Display:** 172x640 QSPI/8080 LCD driven by LVGL.
 * **Storage:** External SPI SD Card + Internal FFat (Flash).
 * **RTC:** PCF85063 for precise timestamping.
 * **I/O Expander:** TCA9554 to offload static control pins (Backlight, Resets) and free up high-speed GPIO.
@@ -37,7 +31,7 @@ To support this many peripherals on a single ESP32-S3, strict pin management and
 | **SD Card** | CS: 38, MOSI: 39, MISO: 40, SCLK: 41 | SPI | Dedicated high-speed SPI bus for high-bandwidth data logging. |
 | **LCD Display** | CS: 9, PCLK: 10, D0-D3: 11, 12, 13, 14, TE: 21 | QSPI / 8080 | High-speed bus dedicated to driving the 172x640 LVGL display. |
 | **Battery ADC** | 4 | Analog (ADC1) | Dedicated for battery voltage monitoring. |
-| **RM3100 DRDY** | TIP: 3, REF: 2, NEAR: 5 | Interrupt | Direct hardware interrupts for DRDY synchronization. |
+| **RM3100 DRDY** | TIP: 3, REF: 2, MID: 5 | Interrupt | Direct hardware interrupts for DRDY synchronization. |
 | **Future GPS** | TX: 43, RX: 44 | UART | Reserved. Freed up by migrating static control pins to the IO Expander. |
 
 ### TCA9554 I/O Expander (Address 0x20)
@@ -104,7 +98,13 @@ The wand features a rigid characterization methodology to empirically validate i
 To test your hardware, use the included Python script on your generated `.csv` logs:
 
 ```bash
-python scripts/characterize_system.py   --noise "log_noise_200.csv" "log_noise_400.csv" "log_noise_3200.csv"   --target "log_target_200.csv" "log_target_400.csv" "log_target_3200.csv"   --ahrs "log_ahrs_200.csv" "log_ahrs_400.csv" "log_ahrs_3200.csv"   --repeatability "log_repeat_200.csv" "log_repeat_400.csv" "log_repeat_3200.csv"   --saturation "log_saturation_200.csv" "log_saturation_400.csv" "log_saturation_3200.csv"   --calibration "cal_1.csv" "cal_2.csv" "cal_3.csv" "cal_4.csv" "cal_5.csv"
+python scripts/characterize_system.py \
+  --noise "log_noise_200.csv" "log_noise_400.csv" "log_noise_3200.csv" \
+  --target "log_target_200.csv" "log_target_400.csv" "log_target_3200.csv" \
+  --ahrs "log_ahrs_200.csv" "log_ahrs_400.csv" "log_ahrs_3200.csv" \
+  --repeatability "log_repeat_200.csv" "log_repeat_400.csv" "log_repeat_3200.csv" \
+  --saturation "log_saturation_200.csv" "log_saturation_400.csv" "log_saturation_3200.csv" \
+  --calibration "cal_1.csv" "cal_2.csv" "cal_3.csv" "cal_4.csv" "cal_5.csv"
 ```
 See `docs/characterization_methodology.md` for full instructions.
 
@@ -115,7 +115,7 @@ See `docs/characterization_methodology.md` for full instructions.
 The hardware architecture has been deliberately designed to accommodate future capabilities without requiring a PCB spin:
 
 ### 1. 3D Depth Sensing (3rd RM3100)
-A dedicated interrupt pin (GPIO 5) and I2C address (0x22) have been reserved for a 3rd RM3100 sensor (NEAR). 
+A dedicated interrupt pin (GPIO 5) and I2C address (0x22) have been reserved for a 3rd RM3100 sensor (MID). 
 * **Purpose:** Enables 2nd-order magnetic gradiometry, allowing the wand to calculate the exact depth of a magnetic anomaly (e.g., a buried pipe) rather than just its presence.
 
 ### 2. Spatial Mapping (GPS / RTK)
@@ -142,3 +142,7 @@ All code files adhere to a strict Semantic Versioning (`vX.Y.Z`) rule enforced a
 ## Open Source & Contributing
 This project is open-sourced under the **GPLv3 License**. See [LICENSE](LICENSE) for details.
 We welcome community contributions! Please review our [Contribution Guidelines](CONTRIBUTING.md) before submitting pull requests.
+"""
+
+with open('c:/Users/rguilmet/Documents/Arduino/Magnetic_Field_Scanner/README.md', 'w', encoding='utf-8') as f:
+    f.write(content)

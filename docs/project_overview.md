@@ -75,8 +75,8 @@ For the full visual diagram, reference the spreadsheet: docs/electrical/Cable_Co
 
 | Component / Function | ESP32 Pin | CAT6 Color | Twisted Pair Strategy (Signal Integrity) |
 | :--- | :--- | :--- | :--- |
-| **3.3V Power** | 3V3 | Orange | **Power & Sync:** Twisted with DRDY_MID. DC power acts as an AC ground, shielding the digital pulse. |
-| **DRDY_MID** | IO05 | Orange/White | *(Future 3rd Sensor)* |
+| **3.3V Power** | 3V3 | Orange | **Power & Sync:** Twisted with DRDY_NEAR. DC power acts as an AC ground, shielding the digital pulse. |
+| **DRDY_NEAR** | IO05 | Orange/White | *(Future 3rd Sensor)* |
 | **SDA (Data)** | IO47 | Green | **I2C Data Shield:** Twisted directly with GND to prevent capacitive crosstalk against SCL. |
 | **GND** | GND | Green/White | |
 | **SCL (Clock)** | IO48 | Blue | **I2C Clock Shield:** Twisted directly with GND to prevent signal degradation. |
@@ -142,13 +142,14 @@ The wand utilizes two completely separate hardware I2C buses to isolate the sens
 * **The Reality:** While true, constantly bombarding the RM3100's internal state machine with 600Hz `TMRC` ticks while it is busy calculating a slow 400 CC measurement causes random silicon glitches, resulting in the sensor missing beats and dropping `DRDY` (triggering the watchdog). 
 * **The Fix:** `initRM3100()` must use a rigorous mapping table to ensure the `TMRC` value is always safely **slower** than the physical Cycle Count math execution time.
 
-### E. Cycle Count Scaling
-* **The Physics:** When the user changes the Cycle Count (CC) on the fly, the RM3100's raw readings scale linearly. (e.g., CC=200 gives a radius of ~3,800, CC=400 gives ~7,600, CC=800 gives ~15,400).
-* **The Code:** The `cal_config.tip_hard` and `ref_hard` matrices (Center Offsets) MUST be scaled linearly in code when CC changes. The Soft-Iron matrices (W) DO NOT scale, as they represent dimensional shape ratios.
+### E. Universal Cycle Count Scaling (v5.x.x)
+* **The Physics:** When the user changes the Cycle Count (CC) on the fly, the RM3100's raw output scales non-linearly due to Zero-Field Offsets (ZFO).
+* **The Code (Pre-Normalization):** To eliminate drift and scaling errors, the `v5.0.0+` architecture intercepts raw LSB counts and immediately normalizes them to physical nanoTeslas (`nT`) using the exact `CC` gain scalar *before* any calibration is applied.
+* **Universal Matrices:** Because the Kabsch calibration algorithm now operates entirely in the physical `nT` domain, the resulting Hard and Soft Iron matrices are mathematically dimensionless. You can calibrate the wand at 400 CC, and perfectly seamlessly jump to 3200 CC without re-calibrating or scaling the matrices!
 
 ### F. Auto-Tare vs Manual Tare
 * **Manual Tare:** Memorizes the current environmental gradient shadow (e.g., standing near a car) and subtracts it from all future readings. Should only be performed in a magnetically "clean" area.
-* **Auto-Tare:** Implements a low-pass filter (multiplier `0.005`) that slowly and invisibly pulls the baseline back to zero over time. Crucially, it **only engages if the gradient jumps by less than 50 counts**. This eats away slow temperature/geology drift while completely ignoring the sharp spikes of a buried utility pipe!
+* **Auto-Tare:** Implements a low-pass filter (multiplier `0.005`) that slowly and invisibly pulls the baseline back to zero over time. Crucially, it **only engages if the gradient jumps by less than 150 nT**. This eats away slow temperature/geology drift while completely ignoring the sharp spikes of a buried utility pipe!
 
 ### G. Windows CLI Path Handling (Python)
 * **The Problem:** When dragging and dropping files into Windows PowerShell or Command Prompt to pass arguments to Python scripts, Windows automatically wraps the filepath in literal double-quotes (e.g., `"C:\path\to\file.csv"`). Python's `argparse` absorbs these literal quotes as part of the string, causing `os.path.exists()` to fail and crash the script. 
@@ -174,8 +175,8 @@ The repository includes a suite of offline Python processing scripts located in 
 ---
 
 ## 7. Planned Future State (Roadmap)
-1. **Third Sensor Integration (Mid):** 
-   * A third RM3100 sensor will be mounted in the middle of the wand.
+1. **Third Sensor Integration (Near):** 
+   * A third RM3100 sensor will be mounted at 8 inches from the TIP.
    * I2C Address: `0x22`
    * DRDY Pin: `GPIO 5`
    * Purpose: To allow quadratic gradient tracking and depth-estimation of buried targets.

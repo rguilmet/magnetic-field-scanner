@@ -112,8 +112,8 @@ C:\USERS\RGUILMET\DOCUMENTS\ARDUINO\MAGNETIC_FIELD_SCANNER
 │       │       Magnetic Wand.rev1.dwg
 │       │
 │       ├───SolidEdge
-│       │       Board_Holder_REF&MID_Part1_(1.75).par
-│       │       Board_Holder_REF&MID_Part2_(0.75).par
+│       │       Board_Holder_REF&NEAR_Part1_(1.75).par
+│       │       Board_Holder_REF&NEAR_Part2_(0.75).par
 │       │       Board_Holder_TIP_(0.75).par
 │       │       Display_Holder_rev01.par
 │       │       End Cap (ID 25.5 x OD 30mm x L 30mm).par
@@ -123,8 +123,8 @@ C:\USERS\RGUILMET\DOCUMENTS\ARDUINO\MAGNETIC_FIELD_SCANNER
 │       │       Wand_Top_Cap.par
 │       │
 │       └───stl
-│               Board_Holder_REF&MID_Part1_(1.75).stl
-│               Board_Holder_REF&MID_Part2_(0.75).stl
+│               Board_Holder_REF&NEAR_Part1_(1.75).stl
+│               Board_Holder_REF&NEAR_Part2_(0.75).stl
 │               Board_Holder_TIP_(0.75).stl
 │               Display_Holder_rev01.stl
 │               End Cap (ID 25.5 x OD 30mm x L 30mm).stl
