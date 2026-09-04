@@ -5,7 +5,7 @@ Version: v2.1.0
 
 Analyzes benchmark log files across multiple Cycle Counts to calculate 
 the absolute performance specs (Noise Floor, AHRS Stability, Latency) 
-and generates the SYSTEM_CHARACTERIZATION.md datasheet.
+and generates the characterization.md datasheet.
 """
 
 import numpy as np
@@ -80,7 +80,7 @@ def main():
     parser.add_argument("--repeatability", nargs='+', help="Path to precision/repeatability logs")
     parser.add_argument("--saturation", nargs='+', help="Path to saturation logs")
     parser.add_argument("--calibration", nargs='+', help="Path to calibration consistency logs")
-    parser.add_argument("--out", type=str, default="docs/CHARACTERIZATION.md", help="Output Markdown path")
+    parser.add_argument("--out", type=str, default="docs/characterization.md", help="Output Markdown path")
     args = parser.parse_args()
     
     os.makedirs(os.path.dirname(args.out), exist_ok=True)

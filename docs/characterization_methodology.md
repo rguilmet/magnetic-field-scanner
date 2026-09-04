@@ -2,7 +2,7 @@
 
 This document outlines the strict empirical methodology required to benchmark and characterize the performance limits of the Magnetic Field Scanner. 
 
-The resulting data from these physical tests is processed by `scripts/characterize_system.py` to generate the official `CHARACTERIZATION.md` datasheet.
+The resulting data from these physical tests is processed by `scripts/characterize_system.py` to generate the official `characterization.md` datasheet.
 
 ## Testing Environment & Configuration
 To ensure statistically valid and reproducible results across the entire architectural range, the wand must be benchmarked across multiple Cycle Counts.
@@ -87,4 +87,4 @@ python scripts/characterize_system.py \
   --saturation "log_saturation_200.csv" "log_saturation_400.csv" "log_saturation_3200.csv" \
   --calibration "cal_1.csv" "cal_2.csv" "cal_3.csv" "cal_4.csv" "cal_5.csv"
 ```
-The resulting `CHARACTERIZATION.md` will be placed in the `docs/` folder.
+The resulting `characterization.md` will be placed in the `docs/` folder.
