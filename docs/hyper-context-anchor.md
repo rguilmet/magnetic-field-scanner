@@ -28,7 +28,7 @@
   - Overhauled firmware to v5.0.0 (Unified `nT` Architecture). 
   - Rewrote `scripts/calibrate_wand.py` to calculate the Kabsch ellipsoid in physical `nT` units.
   - Refactored `SensorFusion.cpp` to instantly convert raw counts to `float nT`, decoupled calibration from cycle count gain, and deleted the legacy `scaleTare()` logic.
-  - Slayed the CC=3200 lockup dragon by mapping safe TMRC limits, bumping the Absolute EMI Glitch threshold to 250,000 LSB, and implementing a rigorous hardware I2C watchdog that ignores false-positive stillness.
-* **Current Step:** Stability achieved at `v5.0.9`.
+  - Slayed the hardware lockup dragon by completely abandoning Continuous Measurement Mode (CMM) and moving exclusively to deterministic `POLL` mode.
+* **Current Step:** Stability achieved at `v5.1.2`.
 * **Next Target Milestone:** 
   - To be determined by the user. Potential exploration of future ideas (e.g. 3rd sensor integration, GPS).
