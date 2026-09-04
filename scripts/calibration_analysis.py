@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Magnetic Field Scanner - Golden Calibration Analyzer
+Magnetic Field Scanner - Calibration Analyzer
 Generates 3D plots of raw vs calibrated magnetometer data,
 plus IMU and Euler angle time-series.
 """
@@ -18,8 +18,8 @@ __version__ = "v1.0.1"
 print(f"=== {__filename__} {__version__} ===")
 
 def main():
-    parser = argparse.ArgumentParser(description="Golden Calibration Plot Generator")
-    parser.add_argument("-i", "--input", required=True, help="Input golden calibration CSV file")
+    parser = argparse.ArgumentParser(description="Calibration Plot Generator")
+    parser.add_argument("-i", "--input", required=True, help="Input calibration CSV file")
     parser.add_argument("-o", "--outdir", default="plots", help="Output directory for generated plots")
     args = parser.parse_args()
 
