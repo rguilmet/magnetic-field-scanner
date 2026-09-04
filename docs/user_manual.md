@@ -1,8 +1,8 @@
 # Magnetic Field Scanner (MFS) - User Manual
 
-**Document Version:** `v1.1.0`
+**Document Version:** `v5.1.x`
 **Last Updated:** August 28, 2026
-**Firmware Target:** `v3.1.1`
+**Firmware Target:** `v5.1.2`
 **Python Ecosystem Target:** `v1.0.0`
 
 Welcome to the User Manual for the Magnetic Field Scanner (MFS). This guide will walk you through the user interface, calibration process, data logging capabilities, and web server connectivity.
@@ -16,8 +16,8 @@ The MFS features a touchscreen interface driven by LVGL. The interface is design
 ### Main Dashboard
 ![Main Dashboard](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen.png)
 
-* **Live Telemetry:** Displays real-time magnetic field strength in NanoTeslas (nT) for both the TIP and REF sensors.
-* **Spatial Gradient:** Shows the delta (difference) between the TIP and REF sensors, isolating localized magnetic anomalies from Earth's background field.
+* **Live Telemetry:** Displays real-time magnetic field strength in NanoTeslas (nT) for the TIP, NEAR (8" offset), and REF sensors.
+* **Spatial Gradient:** Shows the delta between sensors (e.g., TIP-REF), isolating localized magnetic anomalies from Earth's background field.
 * **Battery & Storage:** Status icons in the header show battery voltage and whether the SD Card / FFat is actively mounted.
 
 ### Calibration & Tracking (Tare Operations)
@@ -25,13 +25,13 @@ The MFS features a touchscreen interface driven by LVGL. The interface is design
 
 The Wand employs a dual-strategy for zeroing out environmental magnetic interference:
 * **Manual Tare:** Memorizes the current environmental gradient shadow (e.g., standing near a car) and subtracts it from all future readings. Tap the Tare button on the screen when standing in a magnetically "clean" area before beginning your sweep.
-* **Auto-Tare:** Implements an invisible low-pass filter (multiplier `0.005`) that slowly pulls the baseline back to zero over time to combat temperature drift. Crucially, it **only engages if the gradient jumps by less than 50 counts**. This eats away slow drift while completely ignoring the sharp spikes of a buried utility pipe!
+* **Auto-Tare:** Implements an invisible low-pass filter (multiplier `0.005`) that slowly pulls the baseline back to zero over time to combat temperature drift. Crucially, it **only engages if the gradient jumps by less than 150 nT**. This eats away slow drift while completely ignoring the sharp spikes of a buried utility pipe!
 
 ### System & Hardware (Settings Menu)
 ![System & Hardware](images/Magnetic%20Field%20Scanner%20-%20System%26Hardware.png)
 
 * **Audio Toggle:** Mutes or enables the variable-pitch audio feedback. The PWM audio frequency dynamically scales with the spatial gradient magnitude, allowing eyes-free locating.
-* **Cycle Count (CC):** Allows you to adjust the internal RM3100 Cycle Count (default `400`). Note: The firmware will automatically scale your calibration offsets if you change this in the field.
+* **Cycle Count (CC):** Allows you to adjust the internal RM3100 Cycle Count (default `400`). Note: Because the `v5.x` architecture normalizes all raw measurements to physical nanoTeslas (`nT`), the calibration matrix is dimensionless and truly universal. You can change CC seamlessly in the field without drifting!
 * **Logging Toggle:** Starts or stops CSV data logging to the active filesystem.
 * **Wi-Fi Settings:** Displays the current IP address for Web Server access.
 
@@ -63,7 +63,7 @@ When logging is active (polling at 400Hz), the MFS generates a `.csv` file (`_lo
 | :--- | :--- |
 | `time_ms` | CPU uptime in milliseconds |
 | `timestamp` | Human-readable date and time |
-| `version` | Firmware version (e.g., v3.0.32) |
+| `version` | Firmware version (e.g., v5.1.x) |
 | `voltage` | Battery voltage level (float) |
 | `audio_gain` | UI audio gain multiplier setting |
 | `cc` | RM3100 Cycle Count (e.g., 400) |
@@ -86,7 +86,7 @@ When logging is active (polling at 400Hz), the MFS generates a `.csv` file (`_lo
 Magnetometers are highly sensitive to local ferromagnetic interference (such as the LCD shield, battery, and screws). To achieve precision gradiometry, the device must perfectly align the magnetic spheres of the Tip and Reference sensors.
 
 **On-Device DSP Calibration:**
-Unlike earlier prototypes, **v3.0.32 does not require a PC for calibration.** The ESP32-S3 performs all mathematics locally. With calibrate_wand.py as a backup to create calibration.json file.
+Unlike earlier prototypes, **v5.1.x does not require a PC for calibration.** The ESP32-S3 performs all mathematics locally. With calibrate_wand.py as a backup to create calibration.json file.
 1. Tap the "Calibrate" button in the UI.
 2. Tumbel the wand smoothly in a "Figure-8" pattern through all 3D axes (Pitch, Roll, Yaw) for approximately 30-45 seconds.
 3. The device will run a native 9x9 Jacobi Eigenvalue solver to extract the Hard Iron center offsets and Soft Iron 3x3 scaling matrices.
