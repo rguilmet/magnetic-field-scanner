@@ -713,7 +713,7 @@ void setup() {
     attachInterrupt(digitalPinToInterrupt(MFS_PIN_RM3100_TIP_DRDY), drdy_tip_isr, RISING);
     attachInterrupt(digitalPinToInterrupt(MFS_PIN_RM3100_REF_DRDY), drdy_ref_isr, RISING);
 
-    Serial.printf("\n--- Magnetic Field Scanner %s ---\n", FIRMWARE_VERSION);
+    Serial.printf("\n--- Magnetic Field Scanner %s ---\n", MFS_FIRMWARE_VERSION);
 
     // Register RM3100s on the shared hardware I2C bus (user_i2c_port0_handle)
     i2c_device_config_t dev_cfg = {

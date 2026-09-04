@@ -645,7 +645,7 @@ void create_detector_ui(void) {
     lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 20);
 
     lv_obj_t * fw_label = lv_label_create(tile1);
-    lv_label_set_text(fw_label, "FW: " FIRMWARE_VERSION);
+    lv_label_set_text(fw_label, "FW: " MFS_FIRMWARE_VERSION);
     lv_obj_set_style_text_color(fw_label, lv_color_hex(0xaaaaaa), LV_PART_MAIN);
     lv_obj_set_style_text_font(fw_label, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_align(fw_label, LV_ALIGN_TOP_MID, 0, 60);
@@ -823,7 +823,7 @@ void create_detector_ui(void) {
     lv_obj_align(cal_title, LV_ALIGN_TOP_MID, 0, 20);
 
     lv_obj_t * fw_label2 = lv_label_create(tile2);
-    lv_label_set_text(fw_label2, "FW: " FIRMWARE_VERSION);
+    lv_label_set_text(fw_label2, "FW: " MFS_FIRMWARE_VERSION);
     lv_obj_set_style_text_color(fw_label2, lv_color_hex(0xaaaaaa), LV_PART_MAIN);
     lv_obj_set_style_text_font(fw_label2, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_align(fw_label2, LV_ALIGN_TOP_MID, 0, 60);
@@ -874,7 +874,7 @@ void create_detector_ui(void) {
     lv_obj_align(sys_title, LV_ALIGN_TOP_MID, 0, 20);
 
     lv_obj_t * fw_label3 = lv_label_create(tile3);
-    lv_label_set_text(fw_label3, "FW: " FIRMWARE_VERSION);
+    lv_label_set_text(fw_label3, "FW: " MFS_FIRMWARE_VERSION);
     lv_obj_set_style_text_color(fw_label3, lv_color_hex(0xaaaaaa), LV_PART_MAIN);
     lv_obj_set_style_text_font(fw_label3, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_align(fw_label3, LV_ALIGN_TOP_MID, 0, 60);

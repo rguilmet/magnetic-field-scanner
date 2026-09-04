@@ -299,7 +299,7 @@ extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, in
     char buffer[512];
     snprintf(buffer, sizeof(buffer), 
              "%lu,%s,%s,%.2f,%.1f,%d,%ld,%ld,%ld,%ld,%ld,%ld,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%d,%.4f,%.4f,%.4f,%.4f,%.1f,%.1f,%.1f",
-             timestamp, ts, FIRMWARE_VERSION, voltage, audio_gain, cc,
+             timestamp, ts, MFS_FIRMWARE_VERSION, voltage, audio_gain, cc,
              refX_raw, refY_raw, refZ_raw,
              tipX_raw, tipY_raw, tipZ_raw,
              refX_cal, refY_cal, refZ_cal,

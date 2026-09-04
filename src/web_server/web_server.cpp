@@ -13,7 +13,7 @@ bool wifi_active = false;
 WebServer server(80);
 extern "C" void update_wifi_ip_label(const char* ip);
 static void handleRoot() {
-    String html = "<html><head><title>Magnetic Field Scanner Portal " + String(FIRMWARE_VERSION) + "</title><style>body{font-family:sans-serif;margin:20px;} li{margin:10px 0;} .up{margin-bottom:20px;padding:10px;background:#eee;}</style></head><body><h1>Magnetic Field Scanner Portal " + String(FIRMWARE_VERSION) + "</h1>";
+    String html = "<html><head><title>Magnetic Field Scanner Portal " + String(MFS_FIRMWARE_VERSION) + "</title><style>body{font-family:sans-serif;margin:20px;} li{margin:10px 0;} .up{margin-bottom:20px;padding:10px;background:#eee;}</style></head><body><h1>Magnetic Field Scanner Portal " + String(MFS_FIRMWARE_VERSION) + "</h1>";
     
     // HTML for Upload Form
     auto upload_html = [](const char* fs_param, const char* title) -> String {
