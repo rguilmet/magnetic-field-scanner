@@ -78,6 +78,8 @@ When logging is active (polling at 400Hz), the MFS generates a `.csv` file (`_lo
 | `freq` | The PWM Audio frequency being output to the speaker (Hz) |
 | `is_muted` | Boolean flag indicating if the UI speaker is muted |
 | `QW, QX, QY, QZ` | Madgwick 9-DOF Sensor Fusion Quaternions (True 3D Spatial Orientation, Anchored to Magnetic North) |
+| `Azimuth, Elevation, Declination` | Real-world Euler angles derived from the quaternions |
+| `imu_temp` | Internal temperature reading from the IMU (°C) |
 
 ---
 
