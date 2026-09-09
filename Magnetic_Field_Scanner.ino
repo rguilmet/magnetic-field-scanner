@@ -547,9 +547,7 @@ void task_audio_alert(void *pvParameters) {
     for (;;) {
         // Non-blocking read of the latest magnetic magnitude
         if (xQueueReceive(audioQueue, &currentMagnitude, 0) == pdPASS) {
-            if (current_cycle_count > 0) {
-                current_audio_nt = (currentMagnitude * 1000.0f) / (0.38f * (float)current_cycle_count);
-            }
+            current_audio_nt = currentMagnitude; // BUGFIX: currentMagnitude is already pure nT
         }
         
         float target_freq = 40.0f;
