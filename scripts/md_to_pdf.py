@@ -1,10 +1,30 @@
 import markdown
 from xhtml2pdf import pisa
 import sys
+import re
+
+def preprocess_markdown(text):
+    lines = text.split('\n')
+    processed_lines = []
+    
+    list_pattern = re.compile(r'^\s*([-*]|\d+\.)\s')
+    
+    for i, line in enumerate(lines):
+        # If this line is a list item
+        if list_pattern.match(line):
+            # If the previous line has text and is NOT a list item, insert a blank line
+            if i > 0 and lines[i-1].strip() != '' and not list_pattern.match(lines[i-1]) and not lines[i-1].startswith('#'):
+                processed_lines.append('')
+        processed_lines.append(line)
+        
+    return '\n'.join(processed_lines)
 
 def convert_md_to_pdf(md_file, pdf_file):
     with open(md_file, 'r', encoding='utf-8') as f:
         text = f.read()
+        
+    # Fix lists that don't have blank lines before them
+    text = preprocess_markdown(text)
     
     html_content = markdown.markdown(text, extensions=['tables', 'fenced_code', 'sane_lists'])
     
@@ -24,6 +44,7 @@ def convert_md_to_pdf(md_file, pdf_file):
         pre {{ background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 9pt; border: 1px solid #e9ecef; white-space: pre-wrap; }}
         blockquote {{ border-left: 4px solid #3498db; margin: 0; padding-left: 15px; color: #555; background-color: #f4f6f7; padding: 10px; }}
         li {{ margin-bottom: 5px; }}
+        ul, ol {{ margin-top: 5px; margin-bottom: 5px; }}
     </style>
     </head>
     <body>
