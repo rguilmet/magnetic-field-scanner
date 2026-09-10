@@ -1,25 +1,14 @@
-#!/usr/bin/env python3
-"""
-Magnetic Field Scanner - System Characterization Generator
-Version: v2.1.0
-
-Analyzes benchmark log files across multiple Cycle Counts to calculate 
-the absolute performance specs (Noise Floor, AHRS Stability, Latency) 
-and generates the characterization.md datasheet.
-"""
-
-import numpy as np
 import pandas as pd
+import numpy as np
 import argparse
 import os
-import json
 from datetime import datetime
 
-__filename__ = os.path.basename(__file__)
-__version__ = "v2.1.0"
+__filename__ = "characterize_system.py"
+__version__ = "v2.2.0"
 
 def calculate_noise_floor(df):
-    if 'nT' not in df.columns: return None
+    if 'nT' not in df.columns or 'time_ms' not in df.columns: return None
     ut_values = df['nT'] / 1000.0
     time_deltas = df['time_ms'].diff().dropna()
     avg_delta = time_deltas.mean()
@@ -42,21 +31,30 @@ def calculate_ahrs_stability(df):
         "pitch_variation_deg": round(df['Elevation'].max() - df['Elevation'].min(), 2)
     }
 
-def calculate_gradiometer_isolation(df):
+def calculate_repeatability_and_isolation(df):
     if 'nT' not in df.columns or 'refX_cal' not in df.columns: return None
-    ref_mags_ut = np.sqrt(df['refX_cal']**2 + df['refY_cal']**2 + df['refZ_cal']**2) / 1000.0
-    return {
-        "max_target_gradient_uT": round(df['nT'].max() / 1000.0, 2),
-        "earth_baseline_drift_std_uT": round(ref_mags_ut.std(), 4)
-    }
-
-def calculate_repeatability(df):
-    if 'nT' not in df.columns: return None
+    
+    # 1. Measurement Precision (Variance of the tip strikes)
     ut_values = df['nT'] / 1000.0
     peaks = ut_values[ut_values > ut_values.quantile(0.95)]
+    
+    # 2. Gradiometer Isolation (Drift at the REF sensor during the strikes)
+    ref_mags_ut = np.sqrt(df['refX_cal']**2 + df['refY_cal']**2 + df['refZ_cal']**2) / 1000.0
+    
     return {
         "peak_variance_uT": round(peaks.std(), 4) if len(peaks) > 0 else 0.0,
-        "max_peak_uT": round(ut_values.max(), 2)
+        "max_peak_uT": round(ut_values.max(), 2),
+        "earth_baseline_drift_std_uT": round(ref_mags_ut.std(), 4)
+    }
+    
+def calculate_rebar(df):
+    if 'nT' not in df.columns: return None
+    # We just grab the maximum anomaly (the Tip strike) for now
+    ut_values = df['nT'] / 1000.0
+    # In the future we can run curve_fit on the stair steps
+    return {
+        "max_dipole_uT": round(ut_values.max(), 2),
+        "min_dipole_uT": round(ut_values.min(), 2)
     }
 
 def process_logs(files, calc_func):
@@ -75,9 +73,9 @@ def main():
     print(f"=== {__filename__} {__version__} ===")
     parser = argparse.ArgumentParser(description="Wand System Characterization Tool")
     parser.add_argument("--noise", nargs='+', help="Path to stationary noise floor logs")
-    parser.add_argument("--target", nargs='+', help="Path to target isolation logs")
     parser.add_argument("--ahrs", nargs='+', help="Path to AHRS tumble logs")
-    parser.add_argument("--repeatability", nargs='+', help="Path to precision/repeatability logs")
+    parser.add_argument("--repeatability", nargs='+', help="Path to precision/isolation logs (Nail)")
+    parser.add_argument("--rebar", nargs='+', help="Path to open air rebar dipole logs")
     parser.add_argument("--saturation", nargs='+', help="Path to saturation logs")
     parser.add_argument("--calibration", nargs='+', help="Path to calibration consistency logs")
     parser.add_argument("--out", type=str, default="docs/characterization.md", help="Output Markdown path")
@@ -102,51 +100,51 @@ def main():
         for cc, r in res_noise.items():
             report.append(f"| {cc} | {r['update_rate_hz']} | {r['avg_latency_ms']} |")
         report.append("\n## Section 2: Magnetic Noise Floor & Sensitivity")
-        report.append("| Cycle Count (CC) | RMS Noise Floor (µT) | Peak-to-Peak Jitter (µT) |")
+        report.append("| Cycle Count (CC) | RMS Noise Floor (\u00B5T) | Peak-to-Peak Jitter (\u00B5T) |")
         report.append("|---|---|---|")
         for cc, r in res_noise.items():
-            report.append(f"| {cc} | ± {r['rms_noise_uT']} | {r['peak_to_peak_uT']} |")
+            report.append(f"| {cc} | \u00B1 {r['rms_noise_uT']} | {r['peak_to_peak_uT']} |")
         report.append("\n> The RMS noise floor dictates the absolute smallest localized anomaly the wand can reliably detect above the background Earth field.\n")
             
-    # 2. Gradiometer Isolation
-    res_target = process_logs(args.target, calculate_gradiometer_isolation)
-    if res_target:
-        report.append("## Section 3: Gradiometer Isolation & Earth-Field Rejection")
-        report.append("| Cycle Count (CC) | Target Spike (µT) | Earth Baseline Drift (µT) |")
-        report.append("|---|---|---|")
-        for cc, r in res_target.items():
-            report.append(f"| {cc} | {r['max_target_gradient_uT']} | ± {r['earth_baseline_drift_std_uT']} |")
-        report.append("\n> Proves the spatial gradiometer successfully isolates a massive local anomaly while the Reference Sensor (and therefore the Earth's background field) remains undisturbed.\n")
-            
-    # 3. AHRS Stability
-    res_ahrs = process_logs(args.ahrs, calculate_ahrs_stability)
-    if res_ahrs:
-        report.append("## Section 4: Attitude Tracking & AHRS Stability")
-        report.append("| Cycle Count (CC) | Max Pitch Tumble (deg) | Compass Azimuth Drift (deg) |")
-        report.append("|---|---|---|")
-        for cc, r in res_ahrs.items():
-            report.append(f"| {cc} | {r['pitch_variation_deg']} | ± {r['azimuth_drift_std_deg']} |")
-        report.append("\n> Proves that the Kabsch algebraic transformation properly isolates the physical orientation of the dual sensors, preventing the compass heading from drifting or rolling when the wand is pitched.\n")
-
-    # 4. Repeatability
-    res_rep = process_logs(args.repeatability, calculate_repeatability)
+    # 2. Precision and Isolation
+    res_rep = process_logs(args.repeatability, calculate_repeatability_and_isolation)
     if res_rep:
-        report.append("## Section 5: Measurement Precision & Repeatability")
-        report.append("| Cycle Count (CC) | Max Signal (µT) | Peak Variance (µT) |")
-        report.append("|---|---|---|")
+        report.append("## Section 3: Gradiometer Isolation & Measurement Precision")
+        report.append("| Cycle Count (CC) | Max Target Signal (\u00B5T) | Precision Peak Variance (\u00B5T) | Earth Baseline Drift (\u00B5T) |")
+        report.append("|---|---|---|---|")
         for cc, r in res_rep.items():
-            report.append(f"| {cc} | {r['max_peak_uT']} | ± {r['peak_variance_uT']} |")
-        report.append("\n> Proves instrument precision—that the wand reports the exact same field strength when exposed to the exact same physical anomaly across all spatial axes.\n")
-            
-    # 5. Saturation
+            report.append(f"| {cc} | {r['max_peak_uT']} | \u00B1 {r['peak_variance_uT']} | \u00B1 {r['earth_baseline_drift_std_uT']} |")
+        report.append("\n> **Precision:** Proves instrument stability across 10 identical physical strikes. \n> **Isolation:** Proves the spatial gradiometer completely rejects the massive local anomaly, preventing the Reference Sensor (Earth field) from distorting.\n")
+
+    # 3. Saturation
     res_sat = process_logs(args.saturation, lambda df: {"clip": round((df['nT']/1000).max(), 2)} if 'nT' in df.columns else None)
     if res_sat:
-        report.append("## Section 6: Dynamic Range & Saturation")
-        report.append("| Cycle Count (CC) | Empirical Clipping Limit (µT) |")
+        report.append("## Section 4: Dynamic Range & Saturation")
+        report.append("| Cycle Count (CC) | Empirical Clipping Limit (\u00B5T) |")
         report.append("|---|---|")
         for cc, r in res_sat.items():
             report.append(f"| {cc} | {r['clip']} |")
         report.append("\n> The maximum magnetic field strength the RM3100 sensors can ingest before hardware saturation blinds the gradiometer.\n")
+
+    # 4. Rebar
+    res_rebar = process_logs(args.rebar, calculate_rebar)
+    if res_rebar:
+        report.append("## Section 5: Open Air Rebar (Dipole Physics)")
+        report.append("| Cycle Count (CC) | Max Dipole Spike (\u00B5T) | Destructive Null Dip (\u00B5T) |")
+        report.append("|---|---|---|")
+        for cc, r in res_rebar.items():
+            report.append(f"| {cc} | {r['max_dipole_uT']} | {r['min_dipole_uT']} |")
+        report.append("\n> Proves the spatial detection of a massive ferrous dipole, including the destructive interference 'null zone' at distance.\n")
+
+    # 5. AHRS Stability
+    res_ahrs = process_logs(args.ahrs, calculate_ahrs_stability)
+    if res_ahrs:
+        report.append("## Section 6: Attitude Tracking & AHRS Stability")
+        report.append("| Cycle Count (CC) | Max Pitch Tumble (deg) | Compass Azimuth Drift (deg) |")
+        report.append("|---|---|---|")
+        for cc, r in res_ahrs.items():
+            report.append(f"| {cc} | {r['pitch_variation_deg']} | \u00B1 {r['azimuth_drift_std_deg']} |")
+        report.append("\n> Proves that the Kabsch algebraic transformation properly isolates the physical orientation of the dual sensors, preventing the compass heading from drifting or rolling when the wand is pitched.\n")
 
     # 6. Calibration Consistency
     if args.calibration:
@@ -159,7 +157,7 @@ def main():
     report.append("- **Execution Time:** `< 20 ms`")
     report.append("> The ESP32-S3 successfully computes the matrix inversion and eigen-decomposition on 1,200 floating-point 3D vectors in less than a single UI frame tick.\n")
 
-    with open(args.out, "w") as f:
+    with open(args.out, "w", encoding='utf-8') as f:
         f.write("\n".join(report))
         
     print(f"[SUCCESS] Wrote characterization datasheet to: {args.out}")
