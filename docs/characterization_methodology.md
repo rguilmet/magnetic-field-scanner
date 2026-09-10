@@ -35,6 +35,9 @@ The order of testing is strictly hierarchical to physically protect the sensor c
 
 ### 3. Combined Precision & Isolation Log (`log_repeat.csv`)
 **Purpose:** Proves Gradiometer Isolation (a massive anomaly at the Tip does not distort the Earth's background field at the Reference sensor) and Measurement Precision (repeatability across a physical $1/r^3$ staircase).
+
+*Note on Single-Axis Testing: Because the wand runs the Kabsch 9-parameter Ellipsoid Fit algorithm (which mathematically forces all three physical coils to conform to a geometrically perfect, identical sphere), it is only necessary to perform this physical precision test on a single primary axis (e.g., the forward-pointing Z or Y axis). The calibration math guarantees that if one axis is perfectly isolated and precise, the other two share that exact same normalized geometric behavior.*
+
 **Execution:**
 1. Lock the wand physically on a table so it cannot move.
 2. Target: An 8d nail in a wooden block, starting 2 feet (24") away, axially aligned to the wand.
