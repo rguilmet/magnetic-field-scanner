@@ -49,14 +49,17 @@ The order of testing is strictly hierarchical to physically protect the sensor c
 8. Repeat for `CC=200`, `400`, and `3200`.
 
 ### 4. The Saturation Limit Log (`log_saturation.csv`)
-**Purpose:** Empirically proves the maximum magnetic field strength the RM3100 sensors can ingest before hardware clipping blinds the gradiometer.
+**Purpose:** Empirically proves the maximum magnetic field strength the RM3100 sensors can ingest before hardware clipping blinds the gradiometer, while capturing the steep $1/r^3$ dipole curve of a rare-earth magnet.
 **Warning:** This test uses a massive magnet and risks permanently magnetizing the wand's soft iron components (hysteresis).
 **Execution:**
-1. Place the wand on a non-magnetic surface.
-2. Start logging.
-3. Very slowly bring a strong magnet (e.g., neodymium) closer to the Tip Sensor until the live values on the screen flatline or clip.
-4. Remove the magnet.
-5. Repeat for `CC=200`, `400`, and `3200`.
+1. Wand is fixed on the ground. Magnet is staged at ~10 feet.
+2. Start logging. Walk to the 10' mark and pick up the magnet.
+3. Approach the 4-foot (48") mark.
+4. Slide the magnet toward the tip in **6-inch increments**, pausing for **1 second** at each step.
+5. Stop at the tip (or as close as you can get before the UI values visually flatline/clip) and pause for **3 seconds**.
+6. Reverse direction in 6-inch increments back to 4 feet, pausing for 1 second at each step.
+7. Return the magnet to the 10-foot staging area and stop logging.
+8. Repeat for `CC=200`, `400`, and `3200`.
 
 ### 5. Open Air Rebar Test (`log_rebar.csv`)
 **Purpose:** Captures the magnetic dipole signature of a massive ferrous target (36" rebar) to automatically calculate the maximum Absolute Detection Range via an inverse-cube ($1/r^3$) curve fit.

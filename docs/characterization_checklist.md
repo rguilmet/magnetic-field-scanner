@@ -34,7 +34,8 @@ Protocol: Slide block in 6" increments (1s pause per step). At tip (0"), pause f
 ## 4. Saturation Limit (Capture at 200, 400, 3200 CC)
 
 *Warning: This test uses a massive magnet and risks permanently magnetizing the wand's soft iron components.*
-Slowly bring a strong magnet closer to the Tip Sensor until the live values flatline/clip.
+Target: Strong magnet staged 10' away. Wand fixed on ground.
+Protocol: Start at 4' mark. Slide in 6" increments (1s pause per step). At tip (or when UI clips), pause for 3s. Reverse direction in 6" increments (1s pause).
 - [ ] `log_saturation_200.csv`
 - [ ] `log_saturation_400.csv`
 - [ ] `log_saturation_3200.csv`
