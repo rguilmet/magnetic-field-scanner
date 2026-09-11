@@ -25,7 +25,7 @@ Set the wand on a non-magnetic surface. Do not touch it. Let it log perfectly st
 
 ## 3. Combined Precision & Isolation (Capture at 200, 400, 3200 CC)
 
-Target: An 8d nail starting 24" away. Lock the wand physically on a table. 
+Target: A 10d nail starting 24" away. Lock the wand physically on a table. 
 Protocol: Slide block in 6" increments (1s pause per step). At tip (0"), pause for 3s. Reverse direction in 6" increments (1s pause). Repeat 10x per log.
 - [ ] `log_repeat_200.csv`
 - [ ] `log_repeat_400.csv`

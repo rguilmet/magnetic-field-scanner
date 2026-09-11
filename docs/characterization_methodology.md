@@ -57,7 +57,7 @@ The order of testing is strictly hierarchical to physically protect the sensor c
 
 **Execution:**
 1. Lock the wand physically on a table so it cannot move.
-2. Target: An 8d nail in a wooden block, starting 2 feet (24") away, axially aligned to the wand.
+2. Target: A 10d nail in a wooden block, starting 2 feet (24") away, axially aligned to the wand.
 3. Start logging.
 4. Slide the block toward the tip in **6-inch increments**, pausing for **1 second** at each step (24", 18", 12", 6").
 5. Stop at the tip (0") and pause for **3 seconds**.
