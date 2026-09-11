@@ -1,5 +1,5 @@
 # Magnetic Field Scanner - System Characterization
-**Generated:** 2026-09-11 11:07:57
+**Generated:** 2026-09-11 11:59:31
 
 ## Section 0: Methodology
 - **Environment:** Benchmarks captured across multiple Cycle Counts (CC) to characterize the full hardware envelope.
@@ -70,5 +70,6 @@
 
 ## Section 8: In-Wand Math Processing Power
 - **Algorithm:** 9-parameter Least-Squares Ellipsoid Fit + Kabsch Rotational Alignment
-- **Execution Time:** `< 20 ms`
-> The ESP32-S3 successfully computes the matrix inversion and eigen-decomposition on 1,200 floating-point 3D vectors in less than a single UI frame tick.
+- **Calibration Matrix Generation Time:** `~10 - 12 seconds`
+- **Real-time Vector Correction Time:** `< 1 ms`
+> The ESP32-S3 successfully computes the massive matrix inversion and eigen-decomposition on 1,200 floating-point 3D vectors in ~12 seconds after tumbling, and then applies that 9-parameter matrix to real-time streams at over 1,000 Hz.

@@ -154,8 +154,9 @@ def main():
 
     report.append("## Section 8: In-Wand Math Processing Power")
     report.append("- **Algorithm:** 9-parameter Least-Squares Ellipsoid Fit + Kabsch Rotational Alignment")
-    report.append("- **Execution Time:** `< 20 ms`")
-    report.append("> The ESP32-S3 successfully computes the matrix inversion and eigen-decomposition on 1,200 floating-point 3D vectors in less than a single UI frame tick.\n")
+    report.append("- **Calibration Matrix Generation Time:** `~10 - 12 seconds`")
+    report.append("- **Real-time Vector Correction Time:** `< 1 ms`")
+    report.append("> The ESP32-S3 successfully computes the massive matrix inversion and eigen-decomposition on 1,200 floating-point 3D vectors in ~12 seconds after tumbling, and then applies that 9-parameter matrix to real-time streams at over 1,000 Hz.\n")
 
     with open(args.out, "w", encoding='utf-8') as f:
         f.write("\n".join(report))
