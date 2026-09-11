@@ -1,5 +1,5 @@
 # Magnetic Field Scanner - System Characterization
-**Generated:** 2026-09-11 11:59:31
+**Generated:** 2026-09-11 18:03:01
 
 ## Section 0: Methodology
 - **Environment:** Benchmarks captured across multiple Cycle Counts (CC) to characterize the full hardware envelope.
@@ -43,6 +43,8 @@
 |---|---|
 | 200 | 533.3 |
 | 400 | 532.03 |
+| 800 | 62.63 |
+| 1600 | 63.2 |
 | 3200 | 88.73 |
 
 > The maximum magnetic field strength the RM3100 sensors can ingest before hardware saturation blinds the gradiometer.
@@ -52,7 +54,9 @@
 |---|---|---|
 | 200 | 253.4 | 0.61 |
 | 400 | 296.89 | 0.74 |
-| 3200 | 17.71 | 0.92 |
+| 800 | 526.23 | 0.35 |
+| 1600 | 457.23 | 0.83 |
+| 3200 | 20.09 | 1.35 |
 
 > Proves the spatial detection of a massive ferrous dipole, including the destructive interference 'null zone' at distance.
 
