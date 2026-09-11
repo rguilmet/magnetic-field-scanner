@@ -1,0 +1,57 @@
+{
+	"calibration_type": "Magneto 1.2",
+	"calibration_date_ms": 710456,
+	"calibration_date": "2026-09-11_08-35-28-240",
+	"matrix_version": "2.0",
+	"ref_hard": [
+		73.04127,
+		-5.962618,
+		-25.17342
+	],
+	"ref_soft": [
+		[
+			1.005571,
+			-0.008147,
+			0.000105
+		],
+		[
+			-0.012182,
+			1.00393,
+			-0.021856
+		],
+		[
+			0.000075,
+			-0.010455,
+			0.990499
+		]
+	],
+	"tip_hard": [
+		166.0276,
+		309.2675,
+		89.91278
+	],
+	"tip_soft_note": "Matrix includes Kabsch rotational alignment to match the Reference sensor.",
+	"gyr_offset": [
+		-3.081563,
+		-0.02875,
+		-1.167187
+	],
+	"tip_soft": [
+		[
+			1.001207,
+			-0.032334,
+			0.16865
+		],
+		[
+			0.014903,
+			0.99247,
+			0.028657
+		],
+		[
+			-0.165942,
+			-0.015303,
+			0.977139
+		]
+	],
+	"imu_rotation_deg": 60
+}
