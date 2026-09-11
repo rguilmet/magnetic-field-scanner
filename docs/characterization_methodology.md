@@ -4,6 +4,23 @@ This document outlines the strict empirical methodology required to benchmark an
 
 The resulting data from these physical tests is processed by `scripts/characterize_system.py` to generate the official `characterization.md` datasheet.
 
+
+## Characterization Jig & Staging
+<p align="center">
+  <img src="images/Characterization%20Panaroma%20(20260911_092047).jpg" width="100%" />
+</p>
+<p align="center">
+  <img src="images/Characterization%20Jig%20with%20MFS%20Secured%20(20260911_092003).jpg" width="48%" />
+  <img src="images/Characterization%20Jig%20Closer%20(20260911_092211).jpg" width="48%" />
+</p>
+<p align="center">
+  <img src="images/Characterization%20Staging%20Area%20(20260911_092239).jpg" width="48%" />
+  <img src="images/Characterization%20Blocks%20(10d%20Nail,%20and%208d%20Nail%20with%20Magnet%20(20260911_092223).jpg" width="48%" />
+</p>
+<p align="center">
+  <img src="images/Characterization%200.5in%20x%2036in%20rebar%20(20260911_092205).jpg" width="48%" />
+</p>
+
 ## Testing Environment & Configuration
 To ensure statistically valid and reproducible results across the entire architectural range, the wand must be benchmarked across multiple Cycle Counts.
 - **Cycle Count Sweeps:** The system dynamically normalizes all readings to nanoTeslas (nT) regardless of the Cycle Count (CC). However, changing the CC fundamentally alters the hardware's update speed, physical saturation limit, and RMS noise floor. Therefore, benchmark sets should be collected at `CC=200` (Fast/Noisy/High-Saturation), `CC=400` (Baseline), and `CC=3200` (Slow/Quiet/Low-Saturation) to fully characterize the hardware envelope.

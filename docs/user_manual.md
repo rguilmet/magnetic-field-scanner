@@ -14,14 +14,22 @@ Welcome to the User Manual for the Magnetic Field Scanner (MFS). This guide will
 The MFS features a touchscreen interface driven by LVGL. The interface is designed for rapid field use and zero-latency feedback.
 
 ### Main Dashboard
-![Main Dashboard](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen.png)
+<p align="center">
+  <img src="images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.png" width="30%" />
+  <img src="images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20TARE.png" width="30%" />
+  <img src="images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20AUTO.png" width="30%" />
+</p>
 
 * **Live Telemetry:** Displays real-time magnetic field strength in NanoTeslas (nT) for the TIP, NEAR (8" offset), and REF sensors.
 * **Spatial Gradient:** Shows the delta between sensors (e.g., TIP-REF), isolating localized magnetic anomalies from Earth's background field.
 * **Battery & Storage:** Status icons in the header show battery voltage and whether the SD Card / FFat is actively mounted.
 
 ### Calibration & Tracking (Tare Operations)
-![Calibration & Tracking](images/Magnetic%20Field%20Scanner%20-%20Calibration%26Tracking.png)
+<p align="center">
+  <img src="images/Magnetic%20Field%20Scanner%20-%20Calibration%20Screen%20-%20Ready.png" width="30%" />
+  <img src="images/Magnetic%20Field%20Scanner%20-%20%20Calibration%20Screen%20-%20Capturing%20Data.png" width="30%" />
+  <img src="images/Magnetic%20Field%20Scanner%20-%20Calibration%20Screen%20-Stopped.png" width="30%" />
+</p>
 
 The Wand employs a dual-strategy for zeroing out environmental magnetic interference:
 * **Manual Tare:** Memorizes the current environmental gradient shadow (e.g., standing near a car) and subtracts it from all future readings. Tap the Tare button on the screen when standing in a magnetically "clean" area before beginning your sweep.
