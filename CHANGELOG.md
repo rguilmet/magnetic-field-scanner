@@ -1,5 +1,14 @@
 # Changelog
 
+## [v5.1.4] - 2026-09-13
+### Changed
+- **Logarithmic Audio Mapping:** Replaced the linear `nT` to frequency mapping with a mathematically correct `cbrtf()` (cube root) algorithm. Because magnetic dipole fields decay at 1/r^3, this cube root dynamically maps the audio pitch linearly to the physical 1/r distance of the anomaly. 
+- **Dynamic Audio Range:** The UI Audio Gain knob (0 to 100) now dynamically scales the `audio_max_range_nT` boundary instead of applying a raw multiplier. At Gain 0, the audio will only max out when passing a massive 500,000 nT field. At Gain 100, the audio will max out on a tiny 1,000 nT field.
+### Fixed
+- **Audio Settings Bug:** Fixed a bug where the audio algorithm hardcoded `40.0f` and `3000.0f` limits instead of correctly loading the `audio_base_freq` and `audio_max_freq` values from `settings.json`.
+- **Squelch Settings:** Replaced the hardcoded macro `MFS_AUDIO_SQUELCH_NT` with a user-configurable `audio_min_range_nT` in `settings.json` (Default: 20.0f).
+
+
 ## [v5.1.1] - 2026-09-03
 ### Fixed
 - **Tip Sensor CC Initialization Failure:** Fixed the Tip sensor returning tiny incorrect values (e.g., `-28`) instead of valid physics. The previous `v5.0.9` firmware left the RM3100 running in Continuous Measurement Mode (CMM), causing I2C writes to the `REG_CCX` registers to silently fail on soft-reboot. `initRM3100` now strictly enforces `CMM = 0x00` (IDLE Mode) before writing to Cycle Count registers, ensuring hot-flashes never trigger a parasitic lockup state.

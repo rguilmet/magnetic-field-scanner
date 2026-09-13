@@ -26,7 +26,7 @@
 #define MFS_AUTO_TARE_THRESHOLD     50.0f   // Max LSB jump for auto-tare to track
 #define MFS_EMA_ALPHA               0.995f  // Auto-tare EMA filter weight
 #define MFS_NT_CONVERSION_FACTOR    0.38f   // LSB/uT/CC constant for RM3100
-#define MFS_AUDIO_SQUELCH_NT        20.0f   // nT threshold before audio kicks in
+
 
 // RM3100 Data Ready Interrupts
 #define MFS_PIN_RM3100_TIP_DRDY 1
@@ -78,7 +78,7 @@
 
 #define USER_DISP_ROT_90    1
 #define USER_DISP_ROT_NONO  0
-#define MFS_FIRMWARE_VERSION "v5.1.3"
+#define MFS_FIRMWARE_VERSION "v5.1.4"
 
 #define Rotated USER_DISP_ROT_NONO   
 

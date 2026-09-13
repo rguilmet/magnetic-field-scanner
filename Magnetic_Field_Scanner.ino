@@ -442,12 +442,20 @@ void task_sensor_read(void *pvParameters) {
             xQueueOverwrite(audioQueue, &magnitude);
             
             // Re-calculate the audio target frequency for logging
-            float target_freq = 40.0f;
-            if (nt_value > MFS_AUDIO_SQUELCH_NT) {
-                float gain_multiplier = 0.0666f * expf(0.05416f * current_audio_gain);
-                target_freq = 40.0f + ((nt_value - MFS_AUDIO_SQUELCH_NT) * gain_multiplier);
+            float target_freq = current_settings.audio_base_freq;
+            if (nt_value > current_settings.audio_min_range_nT) {
+                float audio_max_range_nT = 500000.0f * expf(-0.062146f * current_audio_gain);
+                if (nt_value > audio_max_range_nT) {
+                    target_freq = current_settings.audio_max_freq;
+                } else {
+                    float n_min_cbrt = cbrtf(current_settings.audio_min_range_nT);
+                    float n_max_cbrt = cbrtf(audio_max_range_nT);
+                    float n_val_cbrt = cbrtf(nt_value);
+                    target_freq = current_settings.audio_base_freq + 
+                                  ((current_settings.audio_max_freq - current_settings.audio_base_freq) * 
+                                  ((n_val_cbrt - n_min_cbrt) / (n_max_cbrt - n_min_cbrt)));
+                }
             }
-            if (target_freq > 3000.0f) target_freq = 3000.0f;
 
             log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref_vec.x, ref_vec.y, ref_vec.z, tip_vec.x, tip_vec.y, tip_vec.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, out.gradX, out.gradY, out.gradZ, magnitude, nt_value, raw_acc[0], raw_acc[1], raw_acc[2], raw_gyr[0], raw_gyr[1], raw_gyr[2], imu_temp, target_freq, is_muted, q0, q1, q2, q3, ui_data.azimuth, ui_data.elevation, current_settings.mag_declination_deg);
 
@@ -550,7 +558,7 @@ void task_audio_alert(void *pvParameters) {
             current_audio_nt = currentMagnitude; // BUGFIX: currentMagnitude is already pure nT
         }
         
-        float target_freq = 40.0f;
+        float target_freq = current_settings.audio_base_freq;
         
         if (force_audio_tone > 0) {
             target_freq = (float)force_audio_tone;
@@ -563,13 +571,22 @@ void task_audio_alert(void *pvParameters) {
             }
 
             // Squelch
-            if (current_audio_nt > 20.0f) {
-                float gain_multiplier = 0.0666f * expf(0.05416f * current_audio_gain);
-                target_freq = 40.0f + ((current_audio_nt - 20.0f) * gain_multiplier);
+            if (current_audio_nt > current_settings.audio_min_range_nT) {
+                float audio_max_range_nT = 500000.0f * expf(-0.062146f * current_audio_gain);
+                if (current_audio_nt > audio_max_range_nT) {
+                    target_freq = current_settings.audio_max_freq;
+                } else {
+                    float n_min_cbrt = cbrtf(current_settings.audio_min_range_nT);
+                    float n_max_cbrt = cbrtf(audio_max_range_nT);
+                    float n_val_cbrt = cbrtf(current_audio_nt);
+                    target_freq = current_settings.audio_base_freq + 
+                                  ((current_settings.audio_max_freq - current_settings.audio_base_freq) * 
+                                  ((n_val_cbrt - n_min_cbrt) / (n_max_cbrt - n_min_cbrt)));
+                }
             }
         }
         
-        if (target_freq > 3000.0f) target_freq = 3000.0f; // Hard cap
+        if (target_freq > current_settings.audio_max_freq) target_freq = current_settings.audio_max_freq; // Hard cap
         
         // EMA smoothing to remove raw sensor jitter (Bypass if forcing tone)
         if (smoothed_freq == 0.0f || force_audio_tone > 0) {

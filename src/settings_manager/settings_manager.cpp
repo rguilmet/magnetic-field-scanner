@@ -29,6 +29,7 @@ struct SystemSettings current_settings = {
     false,  // auto_tare_on
     40.0f,  // audio_base_freq
     2500.0f,// audio_max_freq
+    20.0f,  // audio_min_range_nT
     0,      // audio_waveform (0=Square)
     "Your_SSID",      // wifi_ssid
     "Your_PASSWORD",  // wifi_password
@@ -62,6 +63,7 @@ extern "C" void load_settings(void) {
         if (!doc["auto_tare_on"].isNull()) current_settings.auto_tare_on = doc["auto_tare_on"];
         if (!doc["audio_base_freq"].isNull()) current_settings.audio_base_freq = doc["audio_base_freq"];
         if (!doc["audio_max_freq"].isNull()) current_settings.audio_max_freq = doc["audio_max_freq"];
+        if (!doc["audio_min_range_nT"].isNull()) current_settings.audio_min_range_nT = doc["audio_min_range_nT"];
         if (!doc["audio_waveform"].isNull()) current_settings.audio_waveform = doc["audio_waveform"];
         if (!doc["wifi_ssid"].isNull()) strncpy(current_settings.wifi_ssid, doc["wifi_ssid"], sizeof(current_settings.wifi_ssid) - 1);
         if (!doc["wifi_password"].isNull()) strncpy(current_settings.wifi_password, doc["wifi_password"], sizeof(current_settings.wifi_password) - 1);
@@ -85,6 +87,7 @@ extern "C" void save_settings(void) {
     doc["auto_tare_on"] = current_settings.auto_tare_on;
     doc["audio_base_freq"] = current_settings.audio_base_freq;
     doc["audio_max_freq"] = current_settings.audio_max_freq;
+    doc["audio_min_range_nT"] = current_settings.audio_min_range_nT;
     doc["audio_waveform"] = current_settings.audio_waveform;
     doc["wifi_ssid"] = current_settings.wifi_ssid;
     doc["wifi_password"] = current_settings.wifi_password;
