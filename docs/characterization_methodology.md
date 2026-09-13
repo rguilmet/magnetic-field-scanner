@@ -115,3 +115,10 @@ python scripts/characterize_system.py \
   --calibration "cal_1.csv" "cal_2.csv" "cal_3.csv" "cal_4.csv" "cal_5.csv"
 ```
 The resulting `characterization.md` will be placed in the `docs/` folder.
+
+### Understanding Saturation Testing
+When characterizing the wand's dynamic range, it is crucial to understand that there are two distinct physical phenomena being tested:
+1. **The Rebar Test (Digital Clipping):** By using a large piece of steel (like a 36-inch rebar) which concentrates the Earth's field, we can subject the sensor to a massive ~500 µT anomaly. This tests the **Digital Clipping Limit** of the internal 24-bit integer counter without physically destroying the magnetic properties of the sensor core.
+2. **The Neodymium Magnet Test (Physical Core Saturation):** By bringing a rare-earth magnet directly to the tip, we subject the sensor to an overwhelming Gauss-level magnetic field. This forcibly pushes the RM3100's inductor core past its B-H curve limit, causing the inductance to collapse. This tests the **Physical Core Blind State**, where the sensor fails to oscillate and outputs a `0` count (resulting in the Gradiometer displaying the Earth's background field). 
+
+Both tests are strictly required to map the complete failure envelope of the wand across different Cycle Counts.
