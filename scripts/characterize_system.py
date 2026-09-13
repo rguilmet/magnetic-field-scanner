@@ -47,6 +47,15 @@ def calculate_repeatability_and_isolation(df):
         "earth_baseline_drift_std_uT": round(ref_mags_ut.std(), 4)
     }
     
+def calculate_saturation(df):
+    if 'nT' not in df.columns: return None
+    max_spike_ut = round((df['nT']/1000).max(), 2)
+    # Find the blind state by finding the most common value (plateau) above 40 uT
+    ut_values = (df['nT']/1000).round(0) # round to nearest uT for frequency counting
+    high_values = ut_values[ut_values > 40]
+    blind_state_ut = round(high_values.mode()[0], 2) if not high_values.empty else max_spike_ut
+    return {"clip": max_spike_ut, "blind": blind_state_ut}
+
 def calculate_rebar(df):
     if 'nT' not in df.columns: return None
     # We just grab the maximum anomaly (the Tip strike) for now
@@ -116,18 +125,20 @@ def main():
             report.append(f"| {cc} | {r['max_peak_uT']} | \u00B1 {r['peak_variance_uT']} | \u00B1 {r['earth_baseline_drift_std_uT']} |")
         report.append("\n> **Precision:** Proves instrument stability across 10 identical physical strikes. \n> **Isolation:** Proves the spatial gradiometer completely rejects the massive local anomaly, preventing the Reference Sensor (Earth field) from distorting.\n")
 
-    # 3. Saturation
-    res_sat = process_logs(args.saturation, lambda df: {"clip": round((df['nT']/1000).max(), 2)} if 'nT' in df.columns else None)
-    if res_sat:
-        report.append("## Section 4: Dynamic Range & Saturation")
-        report.append("| Cycle Count (CC) | Empirical Clipping Limit (\u00B5T) |")
-        report.append("|---|---|")
-        for cc, r in res_sat.items():
-            report.append(f"| {cc} | {r['clip']} |")
-        report.append("\n> The maximum magnetic field strength the RM3100 sensors can ingest before hardware saturation blinds the gradiometer.\n")
-
     # 4. Rebar
     res_rebar = process_logs(args.rebar, calculate_rebar)
+
+    # 3. Saturation (Combined with Rebar for true digital limits)
+    res_sat = process_logs(args.saturation, calculate_saturation)
+    if res_sat:
+        report.append("## Section 4: Dynamic Range & Saturation")
+        report.append("| Cycle Count (CC) | Digital Clipping Limit (\u00B5T) | Physical Core Blind State (\u00B5T) |")
+        report.append("|---|---|---|")
+        for cc, r in res_sat.items():
+            rebar_max = res_rebar.get(cc, {}).get('max_dipole_uT', 0) if res_rebar else 0
+            true_clip = max(r['clip'], rebar_max)
+            report.append(f"| {cc} | {true_clip} | {r['blind']} |")
+        report.append("\n> **Digital Clipping Limit:** The maximum valid magnetic field successfully captured before integer overflow (derived across all tests).\n> **Physical Core Blind State:** The steady-state math output (~Earth's background) when a massive external field physically collapses the inductor core, blinding the sensor.\n")
     if res_rebar:
         report.append("## Section 5: Open Air Rebar (Dipole Physics)")
         report.append("| Cycle Count (CC) | Max Dipole Spike (\u00B5T) | Destructive Null Dip (\u00B5T) |")

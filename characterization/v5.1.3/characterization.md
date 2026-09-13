@@ -1,5 +1,5 @@
 # Magnetic Field Scanner - System Characterization
-**Generated:** 2026-09-11 18:03:01
+**Generated:** 2026-09-13 12:38:33
 
 ## Section 0: Methodology
 - **Environment:** Benchmarks captured across multiple Cycle Counts (CC) to characterize the full hardware envelope.
@@ -39,15 +39,16 @@
 > **Isolation:** Proves the spatial gradiometer completely rejects the massive local anomaly, preventing the Reference Sensor (Earth field) from distorting.
 
 ## Section 4: Dynamic Range & Saturation
-| Cycle Count (CC) | Empirical Clipping Limit (µT) |
-|---|---|
-| 200 | 533.3 |
-| 400 | 532.03 |
-| 800 | 62.63 |
-| 1600 | 63.2 |
-| 3200 | 88.73 |
+| Cycle Count (CC) | Digital Clipping Limit (µT) | Physical Core Blind State (µT) |
+|---|---|---|
+| 200 | 533.3 | 60.0 |
+| 400 | 532.03 | 60.0 |
+| 800 | 526.23 | 61.0 |
+| 1600 | 457.23 | 62.0 |
+| 3200 | 88.73 | 60.0 |
 
-> The maximum magnetic field strength the RM3100 sensors can ingest before hardware saturation blinds the gradiometer.
+> **Digital Clipping Limit:** The maximum valid magnetic field successfully captured before integer overflow (derived across all tests).
+> **Physical Core Blind State:** The steady-state math output (~Earth's background) when a massive external field physically collapses the inductor core, blinding the sensor.
 
 ## Section 5: Open Air Rebar (Dipole Physics)
 | Cycle Count (CC) | Max Dipole Spike (µT) | Destructive Null Dip (µT) |
