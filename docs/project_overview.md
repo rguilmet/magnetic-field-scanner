@@ -256,3 +256,22 @@ The polling rate is exclusively governed by the RM3100 `TMRC` hardware register,
 * **CC 3200:** 4.5 Hz (`0x99`)
 
 **Logging Decimation:** To prevent SD Card SPI latency from dropping frames at 150Hz, the data logger decimates 200 CC readings by half (logging at 75Hz) while keeping the math and UI running at the full 150Hz.
+
+## 3. RM3100 Sensor Physics & Limitations
+Through extensive physical characterization, we have identified two distinct failure modes for the RM3100 sensors when exposed to massive magnetic anomalies:
+
+### Digital Clipping Limit (Integer Overflow)
+The maximum valid magnetic field the hardware can compute is inversely proportional to the Cycle Count (CC). The RM3100 works by counting high-frequency oscillator pulses over a set number of LR cycles.
+* **At low CC (e.g., 200 CC, 400 CC, 800 CC):** The measurement cycle is extremely fast. Because it is fast, the internal 24-bit counter has a massive dynamic range and will not digitally overflow until exposed to immense fields (> 500 µT).
+* **At high CC (e.g., 3200 CC):** The measurement cycle stays open 16x longer. Because it counts for so long, a strong field will cause the internal register to mathematically wrap/overflow much sooner. At 3200 CC, the digital clipping limit is roughly **~88 µT** (or ~20 µT if perfectly aligned to a single axis).
+
+### Physical Core Saturation (The "Blind State")
+If a massive magnetic anomaly (such as a neodymium rare-earth magnet) is brought within inches of the sensor, the magnetic field exceeds the physical B-H curve limit of the tiny LR inductor core.
+* When this occurs, the core's magnetic permeability drops to that of air, and the inductance collapses. 
+* The RM3100 fails to oscillate and outputs a raw count of practically `0`.
+* Because the Tip sensor goes "blind" (`0` nT), the Gradiometer math (`| Tip - Reference |`) will simply output exactly what the Reference sensor is reading.
+* This results in the wand falsely displaying a steady-state value of **~60 µT** (the Earth's background magnetic field) during a massive $>500$ µT event.
+* **Important:** This is why the Open Air Rebar test (which concentrates the Earth's field but isn't a permanent magnet) is used to test the *Digital Clipping Limit*, while a Neodymium magnet forces *Physical Core Saturation*.
+
+### The Gradiometer Return Path ("Destructive Null Dip")
+Because the reference sensor is mounted ~24 inches behind the tip sensor on the wand handle, it sits directly inside the near-field magnetic return path of large linear dipoles (like a 36-inch rebar). While the tip sensor measures a massive positive spike as the rebar approaches, the reference sensor measures the negative return-flux pulling in the opposite direction. This opposing flux subtracts from the Earth's background field, causing the reference sensor to measure a distinct "dip" (e.g., dropping from 50 µT down to 48 µT). This proves the spatial gradiometer geometry is successfully interacting with the 3D footprint of the anomaly.
