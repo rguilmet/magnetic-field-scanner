@@ -21,16 +21,16 @@ The ability to perform a 9x9 Jacobi eigenvalue solver and a 3D Kabsch rotational
 * **`scripts/`:** The offline Python ecosystem (`analyze_log.py`, `calibrate_wand.py`, `generate_plots.py`) is completely commercial-grade, featuring `argparse` CLIs, Windows path sanitization, and independent SemVer (`v1.0.0`).
 * **`src/`:** Excellent modularization of the C++ components (`matrix_math`, `wifi_logger`, `lvgl_port`, etc.).
 
-## 3. Missing Documentation & Assets
-To make this a top-tier Hackaday project, you still need to provide a complete path for someone else to replicate your electrical build.
+## 3. Open-Source Replication Assets
+To make this a top-tier Hackaday project, the repository provides a complete path for someone else to replicate your electrical build:
 
 ### A. Bill of Materials (BOM)
-* Create a `BOM.md` file (either in `docs/` or root).
-* Include links or specs for: Waveshare ESP32-S3-Touch-LCD (3.49/4.3), 2x PNI RM3100 breakout boards, 1" Fiberglass outer rod, 1/4" Fiberglass inner rod, 4.7K resistors, battery, and wire.
+* Found in `docs/project_bom.md` and `docs/project_sbom.md`.
+* Includes all links and specs for: Waveshare ESP32-S3-Touch-LCD (3.49/4.3), PNI RM3100 breakout boards, Fiberglass rods, 4.7K resistors, battery, and wire.
 
 ### B. The Wiring Diagram
-* The `docs/electrical/wiring/` folder now contains the official wiring diagrams (`MFS_Wiring_Diagram.png`) and cable color codes.
-* This fulfills a critical requirement for open-source replication.
+* The `docs/electrical/wiring/` folder contains the official wiring diagrams (`MFS_Wiring_Diagram.png`) and cable color codes.
+* This fulfills a critical requirement for open-source electrical replication.
 
 ## 4. Recommended Photography (For Hackaday / README)
 1. **The Hero Shot:** The fully assembled wand leaning against a tree or on the grass, screen on and visible.
@@ -54,9 +54,9 @@ To make this a top-tier Hackaday project, you still need to provide a complete p
 - [x] Built the `characterization/` Data Library
 - [x] Complete Mechanical Asset Library (`docs/mechanical/`)
 - [x] Localized Manufacturer Datasheets (`docs/datasheets/`)
+- [x] Complete hardware Bill of Materials (`docs/project_bom.md`)
+- [x] Electrical Wiring Diagram (`docs/electrical/wiring/`)
 
 ### What You Need (To-Do)
 - [ ] Take the 4 recommended photos and place them in `docs/images/`.
-- [ ] Create a Bill of Materials (`docs/BOM.md`).
-- [x] Create a simple Wiring Diagram showing the 4.7K pull-ups (`docs/electrical/wiring/`).
 
