@@ -1,6 +1,7 @@
 import markdown
 from xhtml2pdf import pisa
 import sys
+import argparse
 import urllib.parse
 import re
 
@@ -20,7 +21,7 @@ def preprocess_markdown(text):
         
     return '\n'.join(processed_lines)
 
-def convert_md_to_pdf(md_file, pdf_file):
+def convert_md_to_pdf(md_file, pdf_file, paper_size="letter"):
     with open(md_file, 'r', encoding='utf-8') as f:
         text = f.read()
         
@@ -57,11 +58,12 @@ def convert_md_to_pdf(md_file, pdf_file):
     <html>
     <head>
     <style>
-        @page {{ size: letter portrait; margin: 2cm; }}
+        @page {{ size: {paper_size} portrait; margin: 2cm; }}
         body {{ font-family: Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #333; }}
         h1, h2, h3 {{ color: #2c3e50; }}
         h1 {{ border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }}
         h2 {{ border-bottom: 1px solid #ecf0f1; padding-bottom: 3px; margin-top: 20px; }}
+        a {{ color: #2980b9; text-decoration: none; border-bottom: 1px solid #2980b9; }}
         table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
         th, td {{ border: 1px solid #bdc3c7; padding: 8px; text-align: left; }}
         th {{ background-color: #ecf0f1; }}
@@ -87,7 +89,11 @@ def convert_md_to_pdf(md_file, pdf_file):
         print(f"Successfully created {pdf_file}")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python md_to_pdf.py <input.md> <output.pdf>")
-    else:
-        convert_md_to_pdf(sys.argv[1], sys.argv[2])
+    parser = argparse.ArgumentParser(description="Convert Markdown to PDF using xhtml2pdf.")
+    parser.add_argument("input", help="Input markdown file")
+    parser.add_argument("output", help="Output PDF file")
+    parser.add_argument("--size", default="letter", help="Target paper size (e.g., 'letter', 'a4', 'legal'). Default is 'letter'.")
+    
+    args = parser.parse_args()
+    
+    convert_md_to_pdf(args.input, args.output, args.size)
