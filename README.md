@@ -24,6 +24,9 @@ Powered by an ESP32-S3 and utilizing dual PNI RM3100 magneto-inductive sensors, 
 
 ## Hardware Configuration
 
+| ![Internals Left (I2C Pull-ups)](docs/images/Magnetic%20Field%20Scanner%20-%20Inside%20Shot%20Left%20-%20Annoated%20(20260914_160351).png) | ![Internals Overview](docs/images/Magnetic%20Field%20Scanner%20-%20Inside%20Shot%20Overview%20-%20Angled%20(20260914_160644).png) | ![Internals Right](docs/images/Magnetic%20Field%20Scanner%20-%20Inside%20Shot%20Right%20(20260914_160351).png) |
+|:---:|:---:|:---:|
+
 ### Core Components
 * **Base Platform:** Waveshare ESP32-S3-Touch-LCD-3.49 v3 (PCBA v1.1 silkscreen). This highly integrated device provides the MCU, display, audio, and power management core.
 * **MCU:** ESP32-S3 (16MB Flash, OPI PSRAM) embedded on the Waveshare board.

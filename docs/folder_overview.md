@@ -34,8 +34,8 @@ To make this a top-tier Hackaday project, the repository provides a complete pat
 
 ## 4. Recommended Photography (For Hackaday / README)
 1. **[COMPLETED] The Hero Shot:** The current `Display View` and `Side View` photos are excellent and fully satisfy this requirement. An outdoor shot is a nice-to-have, but your current hero shots already look highly professional.
-2. **The "Guts" (Crucial):** A close-up of the PLA sensor carrier assembly outside of the tube. Clearly show the Tip and Ref sensors, the upside-down mounting, and the 1/4" fiberglass rod connecting them.
-3. **The I2C Hack:** A macro shot (or clear close-up) of the wire harness at the Waveshare end showing the 4.7K pull-up resistors soldered in.
+2. **[COMPLETED] The "Guts" (Crucial):** The new `Inside Shot Overview` photos cleanly expose the PLA sensor carrier, the 1/4" rod, and the internal mounting layout.
+3. **[COMPLETED] The I2C Hack:** The `Inside Shot Left - Annotated` image points exactly to the 4.7K pull-ups under the shrink wrap, making the electrical replication trivial.
 4. **[COMPLETED] The UI in Action:** The three `Main Screen` screenshots (RAW, TARE, AUTO) perfectly satisfy this requirement.
 
 ---
@@ -58,8 +58,8 @@ To make this a top-tier Hackaday project, the repository provides a complete pat
 - [x] Electrical Wiring Diagram (`docs/electrical/wiring/`)
 - [x] Hero Photography (`Display View` and `Side View`)
 - [x] UI in Action Photography (`Main Screen` RAW/TARE/AUTO shots)
+- [x] Internal Assembly Photography ("Guts" and annotated I2C Hack shots)
 
 ### What You Need (To-Do)
-- [ ] Take a photo of the "Guts" (PLA sensor carrier assembly).
-- [ ] Take a macro photo of the I2C Hack (4.7K pull-ups).
+- [x] **Nothing.** The repository documentation is 100% physically replicable and ready for Hackaday!
 
