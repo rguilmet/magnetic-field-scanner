@@ -42,6 +42,17 @@ def convert_md_to_pdf(md_file, pdf_file):
     # We replace them with a fixed pixel width (e.g., 250px)
     html_content = re.sub(r'width="\d+%"', 'width="250"', html_content)
     
+    # 3. Fix relative links to point to the GitHub repository so they actually work in the PDF
+    repo_url = "https://github.com/rguilmet/magnetic-field-scanner/blob/main/"
+    def fix_relative_links(match):
+        full_tag = match.group(0)
+        href = match.group(1)
+        if href.startswith("http") or href.startswith("#") or href.startswith("mailto:"):
+            return full_tag
+        return full_tag.replace(href, repo_url + href)
+        
+    html_content = re.sub(r'href="([^"]+)"', fix_relative_links, html_content)
+    
     html_template = f"""
     <html>
     <head>
