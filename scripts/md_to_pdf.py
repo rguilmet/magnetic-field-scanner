@@ -57,7 +57,7 @@ def convert_md_to_pdf(md_file, pdf_file):
     <html>
     <head>
     <style>
-        @page {{ size: a4 portrait; margin: 2cm; }}
+        @page {{ size: letter portrait; margin: 2cm; }}
         body {{ font-family: Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #333; }}
         h1, h2, h3 {{ color: #2c3e50; }}
         h1 {{ border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }}
