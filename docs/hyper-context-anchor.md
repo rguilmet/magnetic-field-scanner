@@ -22,13 +22,14 @@
 * **NEVER** place the RM3100 in Continuous Measurement Mode (CMM). If the ESP32 is blocked by an SD card flush or UI rendering, the sensor will lap the CPU, causing an I2C phase collision and a permanent `DRDY` lockup. Always operate exclusively in POLL mode via `REG_POLL` to guarantee deterministic phase synchronization.
 * **NEVER** process calibration ellipsoid math (Kabsch) using raw integer counts. Raw counts scale non-linearly with hardware gain (Cycle Counts) and ZFO. Always convert to physical nanoTeslas (`nT`) *before* applying calibration matrices.
 * **NEVER** bump the main firmware version for documentation-only changes. Documents maintain their own independent history.
+* **NEVER** hardcode magic numbers for audio or UI limits in the `.ino` file; they MUST pull dynamically from `settings.json`.
 
 ## 4. LOGISTICAL STATE & COMPLETED MILESTONES
 * **Completed:** 
-  - Overhauled firmware to v5.0.0 (Unified `nT` Architecture). 
-  - Rewrote `scripts/calibrate_wand.py` to calculate the Kabsch ellipsoid in physical `nT` units.
-  - Refactored `SensorFusion.cpp` to instantly convert raw counts to `float nT`, decoupled calibration from cycle count gain, and deleted the legacy `scaleTare()` logic.
+  - Overhauled firmware to v5.1.4.
+  - Implemented the `cbrtf()` (cube root) algorithm for Audio feedback, perfectly linearizing the 1/r^3 dipole physical field decay.
   - Slayed the hardware lockup dragon by completely abandoning Continuous Measurement Mode (CMM) and moving exclusively to deterministic `POLL` mode.
-* **Current Step:** Stability achieved at `v5.1.2`.
+  - Mapped the two distinct sensor failure modes: Physical Core Saturation (at ~533 µT) and Digital Integer Overflow (at ~88 µT on CC=3200).
+* **Current Step:** Stability achieved at `v5.1.4`.
 * **Next Target Milestone:** 
   - To be determined by the user. Potential exploration of future ideas (e.g. 3rd sensor integration, GPS).
