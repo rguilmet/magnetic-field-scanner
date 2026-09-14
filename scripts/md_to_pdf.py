@@ -1,6 +1,7 @@
 import markdown
 from xhtml2pdf import pisa
 import sys
+import urllib.parse
 import re
 
 def preprocess_markdown(text):
@@ -27,6 +28,19 @@ def convert_md_to_pdf(md_file, pdf_file):
     text = preprocess_markdown(text)
     
     html_content = markdown.markdown(text, extensions=['tables', 'fenced_code', 'sane_lists'])
+    
+    # [PATCH] Fix xhtml2pdf image rendering bugs
+    # 1. xhtml2pdf does not support URL-encoded local paths (like %20 for spaces)
+    def decode_src(match):
+        full_tag = match.group(0)
+        src_url = match.group(1)
+        decoded_url = urllib.parse.unquote(src_url)
+        return full_tag.replace(src_url, decoded_url)
+    html_content = re.sub(r'src="([^"]+)"', decode_src, html_content)
+    
+    # 2. xhtml2pdf does not support percentage widths (e.g. width="32%")
+    # We replace them with a fixed pixel width (e.g., 250px)
+    html_content = re.sub(r'width="\d+%"', 'width="250"', html_content)
     
     html_template = f"""
     <html>
