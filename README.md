@@ -13,18 +13,18 @@ Powered by an ESP32-S3 and utilizing dual PNI RM3100 magneto-inductive sensors, 
 
 
 <p align="center">
-  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Side%20View%20(20260914_125728).png" width="100%" />
+  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Side%20View%20(20260914_125728).png" alt="Magnetic Field Scanner Hardware Side View" width="100%" />
 </p>
 <p align="center">
-  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Display%20View%20(20260914_123335).png" width="80%" />
+  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Display%20View%20(20260914_123335).png" alt="Magnetic Field Scanner LCD Display View" width="80%" />
 </p>
 
 <p align="center">
-  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.png" width="30%" />
+  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.png" alt="HUD Interface - RAW Mode" width="30%" />
   &nbsp;
-  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20TARE.png" width="30%" />
+  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20TARE.png" alt="HUD Interface - TARE Mode" width="30%" />
   &nbsp;
-  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20System%20&%20Hardware%20-%20400%20CC.png" width="30%" />
+  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20System%20&%20Hardware%20-%20400%20CC.png" alt="System Hardware and Diagnostics Screen" width="30%" />
 </p>
 
 ## Hardware Configuration
