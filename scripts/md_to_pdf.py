@@ -40,8 +40,13 @@ def convert_md_to_pdf(md_file, pdf_file, paper_size="letter"):
     html_content = re.sub(r'src="([^"]+)"', decode_src, html_content)
     
     # 2. xhtml2pdf does not support percentage widths (e.g. width="32%")
-    # We replace them with a fixed pixel width (e.g., 250px)
-    html_content = re.sub(r'width="\d+%"', 'width="150"', html_content)
+    # We replace them with a fixed pixel width, scaling based on the percentage
+    def scale_width(match):
+        percent = int(match.group(1))
+        # A4/Letter page width is ~500px usable. 30% -> 150px, 48% -> 240px
+        pixel_width = int((percent / 100.0) * 500)
+        return f'width="{pixel_width}"'
+    html_content = re.sub(r'width="(\d+)%"', scale_width, html_content)
     
     # 3. Fix relative links to point to the GitHub repository so they actually work in the PDF
     repo_url = "https://github.com/rguilmet/magnetic-field-scanner/blob/main/"
