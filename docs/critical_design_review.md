@@ -34,7 +34,26 @@ The wand is physically designed to support a 3rd RM3100 sensor, placed 8 inches 
 
 Because the `v5.1.x` architecture uses synchronized `POLL` triggering and FreeRTOS Event Groups, adding the 3rd sensor requires zero fundamental architectural changes. The ESP32 simply requires the 3rd `DRDY` interrupt bit to set in the Event Group before unblocking the I2C read cycle. This guarantees that 1st-order gradients (TIP-REF) and 2nd-order gradients (TIP-NEAR-REF) are perfectly phase-aligned without introducing any software bottlenecking.
 
+
+## 5. Phase 11 Physics (v5.1.x): Audio Mapping & Core Saturation
+
+### The Cube-Root Audio Algorithm (`cbrtf`)
+In legacy versions, mapping the calculated gradient (`nT`) to audio frequency (`Hz`) was done linearly or with aggressive exponential curves. This felt unnatural in the field (the "squashed" sensation).
+- **The Physics:** The wand detects buried anomalies that act as magnetic dipoles. Dipole magnetic fields decay spatially according to the inverse-cube law (1/r^3).
+- **The Solution:** By applying a mathematically pure cube-root (`cbrtf()`) to the measured `nT` gradient before scaling it to the Audio frequency bounds, the software exactly counteracts the physical 1/r^3 decay. The resulting audio pitch ramps up linearly relative to the user's physical 1/r walking distance toward the target. This provides a remarkably intuitive user experience.
+
+### Saturation Failure Modes
+Through rigorous physical characterization (bringing an 800-pound pull magnet directly to the tip), we proved that the PNI RM3100 exhibits two entirely distinct failure states:
+1. **Digital Integer Overflow:** Occurs in high-gain states (like `CC=3200`). The raw count output simply exceeds the bounds of the internal silicon registers (maxing out around ~88 µT). The sensor still attempts to fire interrupts, but the data is clipped.
+2. **Physical Core Collapse:** Occurs across all Cycle Counts when subjected to extreme fields (e.g., >533 µT). The physical inductors in the RM3100 core saturate, causing the internal resonant circuit to fail. When this happens, the sensor permanently locks up and ceases firing `DRDY` interrupts until the magnetic field is removed.
+
+Understanding this 533 µT physical ceiling is critical; it defines the absolute upper bound of the instrument's dynamic range regardless of how low we set the Cycle Counts.
+
+### The Destructive Null Dip (Return Path)
+When sweeping a large linear dipole (like a 3-foot rebar rod), the reference sensor (located 24 inches back) passes through the negative return path of the magnetic flux lines. This creates a ~3 µT inverted "dip" in the reference sensor data exactly as the tip sensor hits peak saturation. The software gradient math must remain aware that the reference sensor is rarely in a pure "background" state during near-field interaction.
+
 ---
+
 
 ## Appendix A: Mathematical Target Modeling
 

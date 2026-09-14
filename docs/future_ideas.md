@@ -29,3 +29,9 @@ This document captures brainstormed ideas for increasing the usability, capabili
 * **Implementation:** On the next PCB revision, split the analog and digital power planes. Provide a dedicated, ultra-low-noise LDO voltage regulator exclusively for the RM3100 I2C bus.
 * **Benefit:** Shaves an estimated 10-20% off the noise floor with zero impact on UI speed or latency.
 
+
+## 6. Physical Characterization Jig Improvements
+**Concept:** Hand-sweeping a powerful magnet toward the sensor introduces temporal inconsistencies and triggers long hardware timeouts (e.g., 480ms) right at the boundary of saturation. This makes mapping the exact spatial geometry of the core collapse very difficult.
+* **Implementation:** Construct a 3D-printed or wooden jig utilizing a non-ferrous threaded rod (e.g., brass or nylon). One full rotation of the rod advances the magnet exactly 1mm (or 1/16th inch).
+* **Benefit:** Allows the user to precisely step the magnet toward the sensor in absolute $1/r$ increments, waiting for all thermal and temporal transients to settle before recording the log frame. This guarantees perfect spatial mapping of the saturation cliff.
+* **Additional Enhancement:** Angle the target (e.g., rebar) at exactly 45° Pitch and 45° Yaw relative to the wand during tests to perfectly split the field across the X, Y, and Z axes. This distributes the magnetic load and theoretically increases the digital integer overflow ceiling by $\sqrt{3}$.
