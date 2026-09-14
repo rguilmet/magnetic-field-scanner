@@ -1,7 +1,7 @@
 # Repository Review & Publishing Guide (Updated)
 
-**Document Version:** `v1.2.0`
-**Last Updated:** August 28, 2026
+**Document Version:** `v1.3.0`
+**Last Updated:** September 14, 2026
 
 **Objective:** Assess the project structure to determine readiness for GitHub and Hackaday, and provide a roadmap to round it out for the global open-source community.
 
@@ -28,8 +28,8 @@ To make this a top-tier Hackaday project, you still need to provide a complete p
 * Include links or specs for: Waveshare ESP32-S3-Touch-LCD (3.49/4.3), 2x PNI RM3100 breakout boards, 1" Fiberglass outer rod, 1/4" Fiberglass inner rod, 4.7K resistors, battery, and wire.
 
 ### B. The Wiring Diagram
-* The `docs/electrical/wiring/` folder has been created, but it needs a simple **Wiring Diagram** file inside.
-* It must clearly show the two RM3100s tied to `SCL: 48` and `SDA: 47`, and visually highlight the **4.7K pull-up resistors** wired to 3.3V at the Waveshare end. (A hand-drawn sketch photographed is fine, or use Fritzing/Draw.io).
+* The `docs/electrical/wiring/` folder now contains the official wiring diagrams (`MFS_Wiring_Diagram.png`) and cable color codes.
+* This fulfills a critical requirement for open-source replication.
 
 ## 4. Recommended Photography (For Hackaday / README)
 1. **The Hero Shot:** The fully assembled wand leaning against a tree or on the grass, screen on and visible.
@@ -42,7 +42,7 @@ To make this a top-tier Hackaday project, you still need to provide a complete p
 ## 5. Publishing Checklist
 
 ### What You Have (Ready)
-- [x] Functional, stable firmware (v3.0.32)
+- [x] Functional, stable firmware (v5.1.4)
 - [x] Advanced DSP math & On-Device Calibration
 - [x] Professional Python CLI visualization and calibration scripts (`scripts/`)
 - [x] Open-source License (GPLv3)
@@ -55,5 +55,5 @@ To make this a top-tier Hackaday project, you still need to provide a complete p
 ### What You Need (To-Do)
 - [ ] Take the 4 recommended photos and place them in `docs/images/`.
 - [ ] Create a Bill of Materials (`docs/BOM.md`).
-- [ ] Create a simple Wiring Diagram showing the 4.7K pull-ups (`docs/electrical/wiring/`).
+- [x] Create a simple Wiring Diagram showing the 4.7K pull-ups (`docs/electrical/wiring/`).
 
