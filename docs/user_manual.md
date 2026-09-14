@@ -36,7 +36,7 @@ The Wand employs a dual-strategy for zeroing out environmental magnetic interfer
 * **Auto-Tare:** Implements an invisible low-pass filter (multiplier `0.005`) that slowly pulls the baseline back to zero over time to combat temperature drift. Crucially, it **only engages if the gradient jumps by less than 150 nT**. This eats away slow drift while completely ignoring the sharp spikes of a buried utility pipe!
 
 ### System & Hardware (Settings Menu)
-![System & Hardware](images/Magnetic%20Field%20Scanner%20-%20System%26Hardware.png)
+![System & Hardware](images/Magnetic%20Field%20Scanner%20-%20System%20%26%20Hardware%20-%20400%20CC.png)
 
 * **Audio Toggle:** Mutes or enables the variable-pitch audio feedback. The PWM audio frequency dynamically scales with the spatial gradient magnitude, allowing eyes-free locating.
 * **Cycle Count (CC):** Allows you to adjust the internal RM3100 Cycle Count (default `400`). Note: Because the `v5.x` architecture normalizes all raw measurements to physical nanoTeslas (`nT`), the calibration matrix is dimensionless and truly universal. You can change CC seamlessly in the field without drifting!
