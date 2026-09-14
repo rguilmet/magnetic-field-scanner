@@ -13,9 +13,10 @@ Powered by an ESP32-S3 and utilizing dual PNI RM3100 magneto-inductive sensors, 
 
 
 <p align="center">
-  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Display%20View%20(20260914_123335).png" width="48%" />
-  &nbsp;
-  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Side%20View%20(20260914_125728).png" width="48%" />
+  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Side%20View%20(20260914_125728).png" width="100%" />
+</p>
+<p align="center">
+  <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Display%20View%20(20260914_123335).png" width="80%" />
 </p>
 
 <p align="center">
