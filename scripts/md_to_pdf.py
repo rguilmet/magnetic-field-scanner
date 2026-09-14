@@ -4,6 +4,7 @@ import sys
 import argparse
 import urllib.parse
 import re
+import os
 
 def preprocess_markdown(text):
     lines = text.split('\n')
@@ -30,13 +31,32 @@ def convert_md_to_pdf(md_file, pdf_file, paper_size="letter"):
     
     html_content = markdown.markdown(text, extensions=['tables', 'fenced_code', 'sane_lists'])
     
+    # Get the directory of the markdown file so we can resolve relative image paths
+    md_dir = os.path.dirname(os.path.abspath(md_file))
+    
     # [PATCH] Fix xhtml2pdf image rendering bugs
     # 1. xhtml2pdf does not support URL-encoded local paths (like %20 for spaces)
+    #    It also evaluates paths relative to the CWD instead of the markdown file.
     def decode_src(match):
         full_tag = match.group(0)
         src_url = match.group(1)
+        
+        # Don't touch web URLs
+        if src_url.startswith("http://") or src_url.startswith("https://") or src_url.startswith("data:"):
+            return full_tag
+            
+        # Decode %20 and other URL encodings
         decoded_url = urllib.parse.unquote(src_url)
-        return full_tag.replace(src_url, decoded_url)
+        
+        # Resolve path relative to the markdown file, not the script's CWD
+        absolute_path = os.path.abspath(os.path.join(md_dir, decoded_url))
+        
+        # Convert windows backslashes to forward slashes for xhtml2pdf
+        absolute_path = absolute_path.replace("\\", "/")
+        
+        # Return pure absolute path, not file:///
+        return full_tag.replace(src_url, absolute_path)
+        
     html_content = re.sub(r'src="([^"]+)"', decode_src, html_content)
     
     # 2. xhtml2pdf does not support percentage widths (e.g. width="32%")
