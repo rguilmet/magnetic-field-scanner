@@ -33,10 +33,10 @@ To make this a top-tier Hackaday project, the repository provides a complete pat
 * This fulfills a critical requirement for open-source electrical replication.
 
 ## 4. Recommended Photography (For Hackaday / README)
-1. **The Hero Shot:** The fully assembled wand leaning against a tree or on the grass, screen on and visible.
+1. **[COMPLETED] The Hero Shot:** The current `Display View` and `Side View` photos are excellent and fully satisfy this requirement. An outdoor shot is a nice-to-have, but your current hero shots already look highly professional.
 2. **The "Guts" (Crucial):** A close-up of the PLA sensor carrier assembly outside of the tube. Clearly show the Tip and Ref sensors, the upside-down mounting, and the 1/4" fiberglass rod connecting them.
 3. **The I2C Hack:** A macro shot (or clear close-up) of the wire harness at the Waveshare end showing the 4.7K pull-up resistors soldered in.
-4. **The UI in Action:** A screenshot or clear photo of the Waveshare screen showing a massive target spike on the line graph.
+4. **[COMPLETED] The UI in Action:** The three `Main Screen` screenshots (RAW, TARE, AUTO) perfectly satisfy this requirement.
 
 ---
 
@@ -56,7 +56,10 @@ To make this a top-tier Hackaday project, the repository provides a complete pat
 - [x] Localized Manufacturer Datasheets (`docs/datasheets/`)
 - [x] Complete hardware Bill of Materials (`docs/project_bom.md`)
 - [x] Electrical Wiring Diagram (`docs/electrical/wiring/`)
+- [x] Hero Photography (`Display View` and `Side View`)
+- [x] UI in Action Photography (`Main Screen` RAW/TARE/AUTO shots)
 
 ### What You Need (To-Do)
-- [ ] Take the 4 recommended photos and place them in `docs/images/`.
+- [ ] Take a photo of the "Guts" (PLA sensor carrier assembly).
+- [ ] Take a macro photo of the I2C Hack (4.7K pull-ups).
 
