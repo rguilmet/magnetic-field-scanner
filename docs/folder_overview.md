@@ -1,6 +1,6 @@
 # Repository Review & Publishing Guide (Updated)
 
-**Document Version:** `v1.3.0`
+**Document Version:** `v1.4.0`
 **Last Updated:** September 14, 2026
 
 **Objective:** Assess the project structure to determine readiness for GitHub and Hackaday, and provide a roadmap to round it out for the global open-source community.
@@ -16,7 +16,8 @@ The ability to perform a 9x9 Jacobi eigenvalue solver and a 3D Kabsch rotational
 * **`CHANGELOG.md`:** Implementing the "Keep a Changelog" standard in the root is highly professional and separates bug-fix noise from architectural documentation.
 * **`docs/mechanical/`:** A masterclass in open-source hardware organization. Neatly categorizing `dwg`, `SolidEdge`, and `stl` files ensures that makers of all skill levels can replicate or modify the 3D printed components.
 * **`docs/datasheets/`:** Bundling the manufacturer datasheets locally prevents link-rot and guarantees the project's immortality.
-* **`example_logs/`:** Replaced the messy `test/` folder, providing clean, known-good CSV data for users to test the Python scripts on.
+* **`characterization/`:** Replaced the obsolete `example_logs` and `golden-files`. It serves as the ultimate testing ground containing highly structured, multi-CC logs (noise, rebar, saturation, ahrs) for mathematically proving the `v5.1.x` architecture.
+* **`docs/reports/`:** A fully consolidated output directory where the Python ecosystem dynamically saves all automatically generated Markdown analysis reports and Matplotlib graphs, eliminating root folder clutter.
 * **`scripts/`:** The offline Python ecosystem (`analyze_log.py`, `calibrate_wand.py`, `generate_plots.py`) is completely commercial-grade, featuring `argparse` CLIs, Windows path sanitization, and independent SemVer (`v1.0.0`).
 * **`src/`:** Excellent modularization of the C++ components (`matrix_math`, `wifi_logger`, `lvgl_port`, etc.).
 
@@ -48,7 +49,9 @@ To make this a top-tier Hackaday project, you still need to provide a complete p
 - [x] Open-source License (GPLv3)
 - [x] Deep architectural documentation (`docs/`)
 - [x] Version-controlled `CHANGELOG.md` in root
-- [x] Removed AI Scratch Files & Organized Log Examples
+- [x] Purged AI Scratch Files & Obsolete Folders (`reports/`, `plots/`, `example_logs/`, `golden-files/`)
+- [x] Consolidated all Script Outputs to `docs/reports/`
+- [x] Built the `characterization/` Data Library
 - [x] Complete Mechanical Asset Library (`docs/mechanical/`)
 - [x] Localized Manufacturer Datasheets (`docs/datasheets/`)
 
