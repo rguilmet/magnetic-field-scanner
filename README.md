@@ -70,10 +70,11 @@ The `v5.x.x` architecture completely eliminates I2C collisions and phase-drift b
 * **Event Groups (Core 0):** The Sensor Task sleeps at 0% CPU until both hardware `DRDY` GPIO interrupts assert, guaranteeing absolute temporal synchronization between the Tip and Reference sensors before reading.
 * **LVGL UI Task (Core 1):** Handles display rendering, capacitive touch input, and real-time radar / minimap animations without interrupting the rigid I2C sensor polling pipeline.
 
-### 2. Universal Calibration Matrix
-The system applies an advanced 9-parameter Least-Squares Ellipsoid Fit (via the Kabsch Algorithm) to correct for Hard/Soft Iron distortions caused by the battery and LCD:
-* **Pre-Normalization:** The `v5.1.4+` architecture converts raw sensor LSBs into normalized nanoTeslas (nT) *before* the calibration matrix is applied.
-* **Universal Application:** Because the matrix is mathematically dimensionless, a single calibration profile works universally across ALL Cycle Counts (12 to 3200). You calibrate once at 400 CC, and the matrix remains perfectly valid even if you switch the wand to 3200 CC.
+### 2. Deep Mathematics: Kabsch & Madgwick Algorithms
+To achieve military-grade spatial accuracy, the ESP32 natively executes advanced matrix mathematics and 9-axis sensor fusion:
+* **Kabsch Rotational Alignment:** The system applies a 9-parameter Least-Squares Ellipsoid Fit (using a Jacobi Eigenvalue solver and the Kabsch Algorithm) to correct for Hard and Soft Iron magnetic distortions caused by the battery and LCD.
+* **Madgwick 9-Axis Sensor Fusion:** The raw 3-axis Tip magnetometer data is fused with the QMI8658's 6-axis IMU (Accelerometer and Gyroscope) via an asynchronous Madgwick AHRS filter. This provides real-time Pitch, Roll, and Yaw (Azimuth) compensation to project the magnetic vector accurately to the Earth's gravity vector.
+* **Universal Domain Shifting:** The `v5.1.x` architecture converts raw sensor LSBs into normalized physical nanoTeslas (nT) *before* applying the Kabsch calibration matrix. Because the matrix becomes mathematically dimensionless, a single calibration profile works universally across ALL Cycle Counts (12 to 3200).
 
 ### 3. Dynamic UI Scaling (RAW, TARE, and AUTO)
 The LVGL Gradiometer UI dynamically scales its physical range and color bands based on the active mode:
