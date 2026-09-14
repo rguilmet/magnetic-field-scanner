@@ -55,7 +55,7 @@ The MFS hosts a local web server allowing you to wirelessly manage logs and conf
 
 ### Web Interface Features
 *(Please place a screenshot of the web UI here)*
-![Web Interface](images/Magnetic%20Field%20Scanner%20-%20web_interface.png)
+![Web Interface](images/Magnetic%20Field%20Scanner%20-%20%20Web%20Interface.png)
 
 * **Dual-Drive Visibility:** The page distinctly lists files stored on the removable **SD Card** versus the internal **FFat** flash memory.
 * **Download Logs:** Click any `.csv` log file to download it directly.
