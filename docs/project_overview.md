@@ -1,8 +1,8 @@
 # Magnetic Field Scanner - Project Overview
 
-**Document Version:** `v1.2.1`
-**Last Updated:** August 30, 2026
-**Firmware Target:** `v5.0.0`
+**Document Version:** `v1.3.0`
+**Last Updated:** September 14, 2026
+**Firmware Target:** `v5.1.4`
 **Python Ecosystem Target:** `v1.1.1`
 
 This document serves as the master source of truth for the Magnetic Field Scanner project. It details the mechanical assembly, electrical wiring, pinouts, firmware architecture, critical pitfalls to avoid in future development, and the roadmap for upcoming features.
@@ -62,6 +62,8 @@ This permanently locks the Quaternions to True Magnetic North for accurate post-
 ---
 
 ## 3. Wiring & Pinout Assignments
+
+![MFS Wiring Diagram](electrical/wiring/MFS_Wiring_Diagram.png)
 
 ### CRITICAL HARDWARE NOTE: I2C Pull-Up Resistors
 * **The RM3100 breakout boards DO NOT have built-in I2C pull-up resistors.**
@@ -144,7 +146,7 @@ The wand utilizes two completely separate hardware I2C buses to isolate the sens
 
 ### E. Universal Cycle Count Scaling (v5.x.x)
 * **The Physics:** When the user changes the Cycle Count (CC) on the fly, the RM3100's raw output scales non-linearly due to Zero-Field Offsets (ZFO).
-* **The Code (Pre-Normalization):** To eliminate drift and scaling errors, the `v5.0.0+` architecture intercepts raw LSB counts and immediately normalizes them to physical nanoTeslas (`nT`) using the exact `CC` gain scalar *before* any calibration is applied.
+* **The Code (Pre-Normalization):** To eliminate drift and scaling errors, the `v5.1.4+` architecture intercepts raw LSB counts and immediately normalizes them to physical nanoTeslas (`nT`) using the exact `CC` gain scalar *before* any calibration is applied.
 * **Universal Matrices:** Because the Kabsch calibration algorithm now operates entirely in the physical `nT` domain, the resulting Hard and Soft Iron matrices are mathematically dimensionless. You can calibrate the wand at 400 CC, and perfectly seamlessly jump to 3200 CC without re-calibrating or scaling the matrices!
 
 ### F. Auto-Tare vs Manual Tare
@@ -245,7 +247,7 @@ When powering on the ESP32 via the physical battery button, the hardware PMIC re
 * **The Pitfall:** If the firmware waits for a Serial connection or performs long blocking tasks before initializing the IO Expander, the user will be forced to physically hold the power button down for several seconds. If they let go early, power is cut instantly.
 * **The Solution:** The I2C bus (\i2c_master_Init()\) and the IO Expander (\esp_io_expander_set_level(io_expander, MFS_EXIO_PIN_SYS_EN, 1)\) must be executed as the absolute very first commands in \setup()\, BEFORE any \while(!Serial)\ delay loops.
 
-### 2. True Polling Rates (v5.0.0 ISR Architecture)
+### 2. True Polling Rates (v5.1.4 ISR Architecture)
 The firmware utilizes a true zero-latency ISR architecture driven by FreeRTOS Event Groups. The sensor task sleeps at 0% CPU until the RM3100 hardware asserts the DRDY interrupts, at which point it wakes and reads instantly. 
 
 The polling rate is exclusively governed by the RM3100 `TMRC` hardware register, which is dynamically mapped to be safely slower than the physics of the Cycle Count (CC):

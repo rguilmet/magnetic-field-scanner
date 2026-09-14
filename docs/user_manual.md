@@ -1,8 +1,8 @@
 # Magnetic Field Scanner (MFS) - User Manual
 
 **Document Version:** `v5.1.x`
-**Last Updated:** August 28, 2026
-**Firmware Target:** `v5.1.2`
+**Last Updated:** September 14, 2026
+**Firmware Target:** `v5.1.4`
 **Python Ecosystem Target:** `v1.0.0`
 
 Welcome to the User Manual for the Magnetic Field Scanner (MFS). This guide will walk you through the user interface, calibration process, data logging capabilities, and web server connectivity.

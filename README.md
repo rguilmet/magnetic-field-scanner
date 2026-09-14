@@ -1,7 +1,7 @@
 # Magnetic Field Scanner (MFS) Wand
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Firmware](https://img.shields.io/badge/Firmware-v5.1.1-green.svg)]()
+[![Firmware](https://img.shields.io/badge/Firmware-v5.1.4-green.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-ESP32--S3-orange.svg)]()
 [![Build](https://img.shields.io/badge/Build-Arduino%20|%20PlatformIO-lightgrey.svg)]()
 
@@ -28,6 +28,7 @@ Powered by an ESP32-S3 and utilizing dual PNI RM3100 magneto-inductive sensors, 
 * **Display:** 172x640 QSPI LCD with capacitive touch.
 * **Audio Codec:** ES8311 / ES7210 via I2S for audio feedback.
 * **Storage:** External SPI SD Card + Internal FFat (Flash).
+* **Wiring:** See the [MFS Wiring Diagram](docs/electrical/wiring/MFS_Wiring_Diagram.png).
 * **RTC:** PCF85063 for precise timestamping.
 * **I/O Expander:** TCA9554 to offload static control pins (Backlight, Resets) and free up high-speed GPIO.
 
@@ -71,7 +72,7 @@ The `v5.x.x` architecture completely eliminates I2C collisions and phase-drift b
 
 ### 2. Universal Calibration Matrix
 The system applies an advanced 9-parameter Least-Squares Ellipsoid Fit (via the Kabsch Algorithm) to correct for Hard/Soft Iron distortions caused by the battery and LCD:
-* **Pre-Normalization:** The `v5.0.0+` architecture converts raw sensor LSBs into normalized nanoTeslas (nT) *before* the calibration matrix is applied.
+* **Pre-Normalization:** The `v5.1.4+` architecture converts raw sensor LSBs into normalized nanoTeslas (nT) *before* the calibration matrix is applied.
 * **Universal Application:** Because the matrix is mathematically dimensionless, a single calibration profile works universally across ALL Cycle Counts (12 to 3200). You calibrate once at 400 CC, and the matrix remains perfectly valid even if you switch the wand to 3200 CC.
 
 ### 3. Dynamic UI Scaling (RAW, TARE, and AUTO)
