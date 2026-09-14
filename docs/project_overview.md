@@ -57,7 +57,7 @@ float mag_z = -(float)ref.z;  // Maps RM3100 Down to IMU Up
 `
 This permanently locks the Quaternions to True Magnetic North for accurate post-analysis mapping.
 *(Please place your mechanical drawing in a folder named `docs` in the project root and name it `mechanical_drawing.png` or update this link to point to it).*
-![Mechanical Drawing of Wand and Waveshare](docs/mechanical_drawing.png)
+![Mechanical Drawing of Wand and Waveshare](mechanical_drawing.png)
 
 ---
 
