@@ -90,7 +90,7 @@ def generate_plot(input_file, output_file, show_plot):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Wand 3D Point Cloud Plot Generator (v3.0.32)")
     parser.add_argument("-i", "--input", required=True, help="Input calibration.csv file")
-    parser.add_argument("-o", "--output", default=os.path.join("plots", "calibration_plot.png"), help="Output image file")
+    parser.add_argument("-o", "--output", default=os.path.join("docs/reports/plots", "calibration_plot.png"), help="Output image file")
     parser.add_argument("--show", action="store_true", help="Display the plot interactively in a window")
     
     args = parser.parse_args()

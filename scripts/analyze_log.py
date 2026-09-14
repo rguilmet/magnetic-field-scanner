@@ -93,7 +93,7 @@ def analyze_log(input_file, output_file, max_mag):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze and visualize Wand field logs.")
     parser.add_argument("-i", "--input", required=True, help="Input CSV log file (e.g., _log.csv)")
-    parser.add_argument("-o", "--output", default=os.path.join("plots", "log_analysis_plot.png"), help="Output plot image file")
+    parser.add_argument("-o", "--output", default=os.path.join("docs/reports/plots", "log_analysis_plot.png"), help="Output plot image file")
     parser.add_argument("-m", "--max-mag", type=float, default=5000.0, help="Maximum gradient magnitude to display (filters EMI outliers, default: 5000 nT)")
     
     args = parser.parse_args()

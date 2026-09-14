@@ -163,8 +163,8 @@ def main():
     tip_z = (tip_z_raw * 1000.0) / (0.38 * cc)
     
     base_name = os.path.splitext(os.path.basename(input_file))[0]
-    report_path = os.path.join("reports", f"Report_{base_name}.md")
-    img_dir = os.path.join("reports", "images")
+    report_path = os.path.join("docs/reports", f"Report_{base_name}.md")
+    img_dir = os.path.join("docs/reports", "images")
     os.makedirs(img_dir, exist_ok=True)
     
     metrics = {
