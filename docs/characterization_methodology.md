@@ -99,6 +99,13 @@ The order of testing is strictly hierarchical to physically protect the sensor c
 3. Aggressively pitch the wand up and down by 45 degrees, and roll it left and right by 45 degrees for 10 seconds.
 4. Repeat for `CC=200` and `400`.
 
+### 6. The 45-Degree Stress Test (AHRS Validation)
+**Purpose:** An extreme empirical stress test of the Madgwick AHRS filter and the Kabsch calibration matrix. By locking the wand at a 45-degree pitch and roll while sweeping over a known anomaly, we force massive gravitational and magnetic cross-axis distortion. If the software can isolate the anomaly from the massive background shifts, the math is mathematically bulletproof.
+**Execution:**
+1. Secure the wand in a rigid jig fixed at a 45-degree pitch and 45-degree roll.
+2. Slide the 36-inch 0.5" rebar beneath the tip in 6-inch increments, mimicking the standard target test.
+3. Repeat for `CC=400`, `800`, `1600`, and `3200`.
+
 ---
 
 ## Generating the Datasheet
