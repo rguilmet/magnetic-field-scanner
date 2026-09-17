@@ -6,20 +6,28 @@ The resulting data from these physical tests is processed by `scripts/characteri
 
 
 ## Characterization Jig & Staging
+
 <p align="center">
-  <img src="images/Characterization%20Panaroma%20(20260911_092047).jpg" width="100%" />
+  <img src="images/Characterization%20Panaroma%20(20260911_092047).jpg" alt="Characterization Testing Field Panorama" width="100%" />
 </p>
+
+| ![MFS Secured in Jig](images/Characterization%20Jig%20with%20MFS%20Secured%20(20260911_092003).jpg) | &nbsp;&nbsp;&nbsp; | ![Jig Close-Up View](images/Characterization%20Jig%20Closer%20(20260911_092211).jpg) |
+|:---:|:---:|:---:|
+
+| ![Staging Area showing targets](images/Characterization%20Staging%20Area%20(20260911_092239).jpg) | &nbsp;&nbsp;&nbsp; | ![10d Nail and Magnet Block Targets](images/Characterization%20Blocks%20(10d%20Nail,%20and%208d%20Nail%20with%20Magnet%20(20260911_092223).jpg) |
+|:---:|:---:|:---:|
+
 <p align="center">
-  <img src="images/Characterization%20Jig%20with%20MFS%20Secured%20(20260911_092003).jpg" width="48%" />
-  <img src="images/Characterization%20Jig%20Closer%20(20260911_092211).jpg" width="48%" />
+  <img src="images/Characterization%200.5in%20x%2036in%20rebar%20(20260911_092205).jpg" alt="36-inch Steel Rebar Target" width="80%" />
 </p>
-<p align="center">
-  <img src="images/Characterization%20Staging%20Area%20(20260911_092239).jpg" width="48%" />
-  <img src="images/Characterization%20Blocks%20(10d%20Nail,%20and%208d%20Nail%20with%20Magnet%20(20260911_092223).jpg" width="48%" />
-</p>
-<p align="center">
-  <img src="images/Characterization%200.5in%20x%2036in%20rebar%20(20260911_092205).jpg" width="48%" />
-</p>
+
+### 45-Degree Rebar Anomaly Jig
+
+| ![45-Degree Jig - Left Side](images/Characterization%20Rebar%20using%20MFS%20at%2045,%2045%20-%20Left%20Side%20(20260917_132553).png) | &nbsp;&nbsp;&nbsp; | ![45-Degree Jig - Front Long View](images/Characterization%20Rebar%20using%20Wand%20at%2045,%2045%20-%20Front%20Long%20View%20(20260917_132524).png) |
+|:---:|:---:|:---:|
+
+| ![45-Degree Jig - Front Side](images/Characterization%20Rebar%20using%20Wand%20at%2045,%2045%20-%20Front%20Side%20(20260917_132601).png) | &nbsp;&nbsp;&nbsp; | ![45-Degree Jig - Right Side](images/Characterization%20Rebar%20using%20Wand%20at%2045,%2045%20-%20Right%20Side%20(20260917_132609).png) |
+|:---:|:---:|:---:|
 
 ## Testing Environment & Configuration
 To ensure statistically valid and reproducible results across the entire architectural range, the wand must be benchmarked across multiple Cycle Counts.
