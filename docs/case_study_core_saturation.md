@@ -21,7 +21,11 @@ When observing the absolute maximum raw `Tip Z` readings across the tests, the i
 At CC=3200 (the sensor's maximum theoretical resolution), the output should have scaled linearly to over 300,000 LSB. Instead, the sensor locked up entirely, hovering in a dead-state around 55k-58k. The magnetic flux from the massive rebar, combined with the ultra-long integration time of CC=3200, forced the physical soft iron core into total saturation, stalling the LR oscillator.
 
 ## The Solution: Vector Distributed Flux (The 45°/45° Jig)
-To empirically prove this hypothesis and solve the limitation, we engineered a mechanical solution to this digital hardware problem. We fabricated a custom jig from a 13"x13"x16" cardboard box with a precision-cut top hole to hold the 46.5" wand stationary, elevating the rear of the wand so the tip touched the ground at exactly a **45-degree pitch** and **45-degree roll**. The vertical rebar was walked towards the tip in the exact same fashion.
+To empirically prove this hypothesis and solve the limitation, we engineered a mechanical solution to this digital hardware problem. We fabricated a custom jig from a 13"x13"x16" cardboard box with a precision-cut top hole to hold the 46.5" wand stationary. By elevating the rear of the wand, the tip touched the ground at exactly a **45-degree pitch** and **45-degree roll**. The vertical rebar was walked towards the tip in the exact same fashion.
+
+<p align="center">
+  <img src="images/Characterization%20Rebar%20using%20MFS%20at%2045,%2045%20-%20Left%20Side%20%2820260917_132553%29.png" alt="The 13x13x16 cardboard 45-degree jig" width="100%" />
+</p>
 
 By physically angling the sensor array, we took the massive vertical magnetic vector and geometrically projected it across the X, Y, and Z inductors simultaneously. Because of vector math ($\cos(45^\circ)$), the peak flux on any single axis was drastically reduced. The inductors "shared" the magnetic load, keeping them all within their healthy, linear oscillation range.
 
