@@ -83,9 +83,18 @@ By extracting the maximum absolute spike recorded during the `CC=1600` Open Air 
   <img src="../../docs/reports/detection_depth_curve.png" alt="Detection Depth Curve" width="100%" />
 </p>
 
-* **Vertical Property Pins ($1/r^2$):** Can be reliably detected up to **7.1 feet (85 inches)** deep/away.
-* **Horizontal Iron Pipes ($1/r^3$):** Can be reliably detected up to **2.0 feet (24 inches)** deep/away.
-* *(Note: Electrical utility lines encased in PVC emit 60Hz alternating fields, which bypass these static DC falloff curves and appear as distinct, high-frequency aliased ripples in the data stream).*
+To fully characterize the system's operational envelope, we projected the maximum absolute spike recorded at each respective Cycle Count against its own 3x noise floor threshold:
+
+| Cycle Count (CC) | Detection Threshold (3x Noise) | Max Depth (Vertical Pin: $1/r^2$) | Max Depth (Horizontal Pipe: $1/r^3$) |
+|---|---|---|---|
+| **200** | 583 nT | 3.5 ft (42") | 1.3 ft (15") |
+| **400** | 562 nT | 3.8 ft (46") | 1.3 ft (16") |
+| **800** | 391 nT | 6.1 ft (73") | 1.8 ft (22") |
+| **1600** | 208 nT | **7.8 ft (94")** | **2.2 ft (26")** |
+| **3200** | 91 nT | *N/A (Sensor Blinded)* | *N/A (Sensor Blinded)* |
+
+* *(Note 1: CC=3200 cannot be used for close-range massive targets because the sensor physically flatlines/blinds as described in the Core Saturation case study).*
+* *(Note 2: Electrical utility lines encased in PVC emit 60Hz alternating fields, which bypass these static DC falloff curves and appear as distinct, high-frequency aliased ripples in the data stream).*
 
 ## Section 6: Attitude Tracking & AHRS Stability
 | Cycle Count (CC) | Max Pitch Tumble (deg) | Compass Azimuth Drift (deg) |
