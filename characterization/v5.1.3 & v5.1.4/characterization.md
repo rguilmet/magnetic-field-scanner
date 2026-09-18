@@ -26,6 +26,17 @@
 
 > The RMS noise floor dictates the absolute smallest localized anomaly the wand can reliably detect above the background Earth field.
 
+## Section 2.5: The "Diminishing Returns" Tradeoff
+While increasing the Cycle Count (CC) drastically lowers the noise floor (increasing resolution), it requires exponentially more integration time, driving down the `I2C` sample rate (bandwidth). This introduces a classic embedded engineering tradeoff.
+
+By plotting the empirical data, we identified the definitive "Sweet Spots" for real-time gradiometry:
+- **CC=1600:** The ultimate balance for standard operation. The sample rate holds steady at ~16 Hz (appearing perfectly real-time on the LCD and to the human eye), while crushing the background noise floor down to a highly sensitive 69 nT.
+- **CC=3200:** The "Deep Pipe" mode. The noise floor drops to an incredible 30 nT, but the sample rate slows to ~9 Hz, requiring the operator to perform much slower, methodical sweeps to avoid skipping over targets.
+
+<p align="center">
+  <img src="../../docs/reports/cc_tradeoff_curve.png" alt="Diminishing Returns Plot" width="100%" />
+</p>
+
 ## Section 3: Gradiometer Isolation & Measurement Precision
 | Cycle Count (CC) | Max Target Signal (µT) | Precision Peak Variance (µT) | Earth Baseline Drift (µT) |
 |---|---|---|---|
