@@ -110,7 +110,7 @@ The order of testing is strictly hierarchical to physically protect the sensor c
 ### 7. The 45-Degree Rebar Anomaly Test
 **Purpose:** An extreme empirical stress test to prevent single-axis core saturation under massive magnetic loads. By locking the stationary wand at a 45-degree pitch and 45-degree roll while walking a vertical anomaly (rebar) towards it, the anomaly's field lines are geometrically distributed across the X, Y, and Z axes simultaneously. This prevents the saturation lockup seen when the wand is horizontal and proves the system's dynamic range.
 **Execution:**
-1. Secure the wand in a rigid jig, elevating the rear of the wand so the tip touches the ground at a 45-degree pitch and 45-degree roll.
+1. Secure the wand in a custom 13"x13"x16" cardboard box jig (via a top cut-out), elevating the rear of the 46.5" wand so the tip touches the ground at exactly a 45-degree pitch and 45-degree roll.
 2. Hold the 36-inch 0.5" rebar vertically (perpendicular to the ground) so the bottom touches the ground.
 3. Walk the rebar towards the tip in 12-inch increments, pausing for several seconds at each step.
 4. Repeat for `CC=400`, `800`, `1600`, and `3200`.
