@@ -4,9 +4,9 @@
 **System:** Magnetic Field Scanner (RM3100, ESP32-S3, FreeRTOS)
 
 ## The Symptom: The "Double-Spike" Plateau
-During our empirical characterization of the gradiometer, we established a baseline test: passing a massive magnetic anomaly (a 36-inch, 0.5" steel rebar) beneath the sensor tip. During the initial tests with the wand held perfectly flat (0° pitch, 0° roll), a bizarre artifact appeared in the data log. 
+During our empirical characterization of the gradiometer, we established a baseline test using a massive magnetic anomaly: a 36-inch, 0.5" steel rebar. During the initial tests, the wand was held stationary and perfectly horizontal to the ground (0° pitch, 0° roll). The rebar was held perpendicular to the ground (bottom touching the ground, top 36" in the air). The rebar was then "walked" towards the tip of the wand in one-foot increments, pausing for several seconds at each step.
 
-As the rebar passed beneath the sensor, the magnetic field spiked aggressively, but just as the rebar was directly underneath the wand (where the field is strongest), the raw sensor values **dropped into a low, flat plateau** before spiking a second time as the rebar moved away. 
+As the vertical rebar approached the tip of the flat wand, a bizarre artifact appeared in the data log. The magnetic field spiked aggressively, but just as the rebar got closest to the wand (where the field is strongest), the raw sensor values **dropped into a low, flat plateau** before spiking a second time as the rebar was backed away. 
 
 Even more troubling, a post-analysis of the raw CSV timestamps revealed massive timing jitter in the RTOS precisely at the moment of this plateau. The ESP32's `I2C` read loop was suddenly struggling to maintain its sampling rhythm.
 
@@ -15,12 +15,12 @@ Rather than writing this off as a strange magnetic field topology, we hypothesiz
 
 The RM3100 does not measure voltage; it uses physical **LR (Inductor-Resistor) oscillators**. When the Cycle Count (CC) is set, the sensor's internal logic counts how long it takes to complete a specific number of magnetic oscillations. 
 
-Because the rebar was held vertically beneath a flat wand, its magnetic field lines were pointing almost entirely along the wand's Z-axis. 100% of the massive rebar anomaly slammed into the Z-axis inductor. The magnetic flux exceeded the physical capacity of the soft iron core, causing its inductance to violently collapse.
+Because the wand was horizontal and the rebar was vertical, the magnetic field lines emerging from the bottom of the rebar were pointing powerfully along the wand's vertical Z-axis. 100% of the massive rebar anomaly slammed into the Z-axis inductor. The magnetic flux exceeded the physical capacity of the soft iron core, causing its inductance to violently collapse.
 
 When the inductance collapsed, the LR oscillator stalled out entirely. The sensor struggled to finish its designated "Cycle Count," meaning the DRDY (Data Ready) interrupt pin failed to fire on schedule. This starved the ESP32's FreeRTOS `I2C` interrupt loop, resulting in the massive timestamp jitter. The "plateau" in the data was simply the math interpreting a stalled oscillator as a sudden drop in the magnetic gradient!
 
 ## The Solution: Vector Distributed Flux (The 45°/45° Jig)
-To empirically prove this hypothesis, we engineered a mechanical solution to this digital limitation. We designed and built a rigid wooden jig to hold the wand stationary at exactly a **45-degree pitch** and **45-degree roll**.
+To empirically prove this hypothesis, we engineered a mechanical solution to this digital limitation. We designed and built a rigid wooden jig to hold the wand stationary, elevating the rear of the wand so the tip touched the ground at exactly a **45-degree pitch** and **45-degree roll**. The vertical rebar was "walked" towards the tip in the exact same fashion.
 
 By physically angling the sensor array, we took that exact same massive vertical magnetic vector and geometrically projected it across the X, Y, and Z inductors simultaneously. Because of vector math ($\cos(45^\circ)$), the peak flux on any single axis was drastically reduced. The inductors "shared" the magnetic load, keeping them all within their healthy, linear oscillation range.
 

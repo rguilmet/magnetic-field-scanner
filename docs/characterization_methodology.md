@@ -107,12 +107,13 @@ The order of testing is strictly hierarchical to physically protect the sensor c
 3. Aggressively pitch the wand up and down by 45 degrees, and roll it left and right by 45 degrees for 10 seconds.
 4. Repeat for `CC=200` and `400`.
 
-### 6. The 45-Degree Rebar Anomaly Test
-**Purpose:** An extreme empirical stress test of the sensor fusion and Kabsch calibration matrix under massive cross-axis distortion. By locking the stationary wand at a 45-degree pitch and 45-degree roll while sliding a known anomaly (rebar) beneath it, the anomaly's field lines strike the X, Y, and Z axes simultaneously. This proves the system can correctly isolate and resolve the anomaly's gradient magnitude regardless of the wand's physical orientation.
+### 7. The 45-Degree Rebar Anomaly Test
+**Purpose:** An extreme empirical stress test to prevent single-axis core saturation under massive magnetic loads. By locking the stationary wand at a 45-degree pitch and 45-degree roll while walking a vertical anomaly (rebar) towards it, the anomaly's field lines are geometrically distributed across the X, Y, and Z axes simultaneously. This prevents the saturation lockup seen when the wand is horizontal and proves the system's dynamic range.
 **Execution:**
-1. Secure the wand in a rigid jig fixed at a 45-degree pitch and 45-degree roll.
-2. Slide the 36-inch 0.5" rebar beneath the tip in 6-inch increments, matching the standard target test procedure.
-3. Repeat for `CC=400`, `800`, `1600`, and `3200`.
+1. Secure the wand in a rigid jig, elevating the rear of the wand so the tip touches the ground at a 45-degree pitch and 45-degree roll.
+2. Hold the 36-inch 0.5" rebar vertically (perpendicular to the ground) so the bottom touches the ground.
+3. Walk the rebar towards the tip in 12-inch increments, pausing for several seconds at each step.
+4. Repeat for `CC=400`, `800`, `1600`, and `3200`.
 
 ---
 
