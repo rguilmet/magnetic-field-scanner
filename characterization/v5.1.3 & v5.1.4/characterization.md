@@ -108,8 +108,19 @@ To fully characterize the system's operational envelope, we projected the maximu
 *(Analyzed 6 discrete calibration logs)*
 > Proves the mathematical repeatability of the figure-8 calibration routine by ensuring the Kabsch algorithm converges on statistically identical hard/soft iron matrices across multiple runs.
 
-## Section 8: In-Wand Math Processing Power
-- **Algorithm:** 9-parameter Least-Squares Ellipsoid Fit + Kabsch Rotational Alignment
-- **Calibration Matrix Generation Time:** `~10 - 12 seconds`
-- **Real-time Vector Correction Time:** `< 1 ms`
-> The ESP32-S3 successfully computes the massive matrix inversion and eigen-decomposition on 1,200 floating-point 3D vectors in ~12 seconds after tumbling, and then applies that 9-parameter matrix to real-time streams at over 1,000 Hz.
+## Section 8: In-Wand Math Processing Power (The "Math Tax")
+* **Algorithm:** 9-parameter Least-Squares Ellipsoid Fit + Kabsch Rotational Alignment
+* **Calibration Matrix Generation Time:** `~10 - 12 seconds`
+* **Real-time Vector Correction Time:** `< 1 ms`
+
+> **The "Math Tax" Myth:** A common concern is that capturing two 3D vectors (6 floats), running them through a 9-parameter matrix, and applying a Kabsch rotational transformation will cripple the system's bandwidth. Because the wand utilizes the ESP32-S3's hardware Floating-Point Unit (FPU), this complex linear algebra takes **< 1 ms** to execute per cycle. The math overhead is effectively zero; the system's speed is strictly bottlenecked by the RM3100's physical integration time (Cycle Count).
+
+## Section 9: RTOS Pipeline & Timestamp Jitter
+Despite the mathematical efficiency, raw data logs (even when the wand is completely stationary) exhibit random `dt` (delta-time) timestamp spikes ranging from 50 ms to 160 ms. 
+
+Because the RM3100s are hardwired with dedicated **DRDY (Data Ready) hardware interrupts**, the jitter is *not* caused by the I2C polling loop or the sensor itself. The bottleneck is the **SD Card Logger**.
+
+When the FreeRTOS logging task writes to the SD Card (NAND flash memory), 99% of the writes complete instantly. However, when the SD card's internal microcontroller is forced to cross a physical page boundary, perform wear-leveling, or erase a block, the SPI/SDIO write operation can unpredictably block for 50 ms to 250 ms. 
+During this hardware block, the RTOS pipeline backs up. If the inter-task queue fills, the sensor task is temporarily blocked, causing it to miss the next DRDY interrupt. When the SD card finally clears, the next sample is logged with a massive `dt` timestamp gap. 
+
+> **Conclusion:** The RM3100 captures data deterministically, but embedded SD card logging introduces unavoidable pipeline jitter. Any advanced digital signal processing (DSP) or Fast Fourier Transforms (FFT) must be executed in real-time on the live, deterministic buffer *before* the data is handed off to the SD card logger.
