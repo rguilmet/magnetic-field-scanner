@@ -140,6 +140,11 @@ When characterizing the wand's dynamic range, it is crucial to understand that t
 Both tests are strictly required to map the complete failure envelope of the wand across different Cycle Counts.
 
 ### Test 3: Real-World Property Pin (Direct Approach)
+
+![Real Pin Setup](../docs/images/Characterization_Real_Pin_Setup.png)
+
+![Real Pin Closer](../docs/images/Characterization_Real_Pin_Closer.png)
+
 **Goal:** To validate the theoretical $1/r^2$ depth/range detection curve against an actual 5/8" x 36" steel property pin buried in the earth.
 
 **Steps:**
