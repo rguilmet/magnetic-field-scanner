@@ -138,3 +138,32 @@ When characterizing the wand's dynamic range, it is crucial to understand that t
 2. **The Neodymium Magnet Test (Physical Core Saturation):** By bringing a rare-earth magnet directly to the tip, we subject the sensor to an overwhelming Gauss-level magnetic field. This forcibly pushes the RM3100's inductor core past its B-H curve limit, causing the inductance to collapse. This tests the **Physical Core Blind State**, where the sensor fails to oscillate and outputs a `0` count (resulting in the Gradiometer displaying the Earth's background field). 
 
 Both tests are strictly required to map the complete failure envelope of the wand across different Cycle Counts.
+
+### Test 3: Real-World Property Pin (Direct Approach)
+**Goal:** To validate the theoretical $1/r^2$ depth/range detection curve against an actual 5/8" x 36" steel property pin buried in the earth.
+
+**Steps:**
+1. Locate a known buried property pin in an open yard.
+2. Lay a cloth tape measure radially outward from the pin, marking a starting point exactly 10 feet away.
+3. Stand at the 10-foot mark facing the pin, holding the wand naturally (roughly 45-degree pitch towards the ground).
+4. Start the log. Pause for a 5 count to establish a clear Earth baseline.
+5. Advance 1 foot directly towards the pin. Pause for a 5 count.
+6. Repeat 1-foot advancements and 5-count pauses until the wand is directly over the pin (Distance = 0).
+7. Pause over the pin for an 8 to 10 count.
+8. Retreat backward in 1-foot increments, pausing at each step (5 count), until returning to the 10-foot marker. 
+9. Stop the log, switch Cycle Count, and repeat.
+
+### Test 4: Real-World Property Pin (Pendulum Sweep)
+**Goal:** To characterize the spatial signature (Gaussian bell curves) of a buried property pin as it would appear on a user's screen during a standard metal-detector sweeping motion.
+
+**Steps:**
+1. Stand at the 10-foot marker facing the pin, holding the wand normally at ~45-degree pitch.
+2. Start the log. Pause for a 1 to 2 count.
+3. Yaw the wand ~80 to 90 degrees to the left (establishing the far-left baseline).
+4. Sweep the wand smoothly to the right, crossing the center line (over the pin vector) to ~80 to 90 degrees right. Pause for a 10 to 15 count.
+5. Sweep the wand smoothly back to the left side. Pause for a 10 to 15 count.
+6. Sweep the wand back to the center line. Pause for a 1 to 2 count.
+7. Advance 1 foot towards the pin.
+8. Repeat the exact sweep pattern (Center -> Left -> Right -> Left -> Center) at every 1-foot increment until reaching the pin (Distance = 0).
+9. Retreat backward using the same sweeping pattern at each step until returning to the 10-foot marker. 
+10. Stop the log, switch Cycle Count, and repeat.
