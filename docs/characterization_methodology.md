@@ -141,9 +141,9 @@ Both tests are strictly required to map the complete failure envelope of the wan
 
 ### Test 3: Real-World Property Pin (Direct Approach)
 
-![Real Pin Setup](../docs/images/full_res/Characterization%20Real%20Pin%20-%20Setup%2820260919_101016%29.png)
+![Real Pin Setup](../docs/images/Characterization%20Real%20Pin%20-%20Setup%2820260919_101016%29.png)
 
-![Real Pin Closer](../docs/images/full_res/Characterization%20Real%20Pin%20-%20Closer%2820260919_091636.png)
+![Real Pin Closer](../docs/images/Characterization%20Real%20Pin%20-%20Closer%2820260919_091636.png)
 
 **Goal:** To validate the theoretical $1/r^2$ depth/range detection curve against an actual 5/8" x 36" steel property pin buried in the earth.
 
