@@ -124,3 +124,36 @@ When the FreeRTOS logging task writes to the SD Card (NAND flash memory), 99% of
 During this hardware block, the RTOS pipeline backs up. If the inter-task queue fills, the sensor task is temporarily blocked, causing it to miss the next DRDY interrupt. When the SD card finally clears, the next sample is logged with a massive `dt` timestamp gap. 
 
 > **Conclusion:** The RM3100 captures data deterministically, but embedded SD card logging introduces unavoidable pipeline jitter. Any advanced digital signal processing (DSP) or Fast Fourier Transforms (FFT) must be executed in real-time on the live, deterministic buffer *before* the data is handed off to the SD card logger.
+
+## 10. Real-World Field Validation & The Gradiometer Penalty
+
+Following the controlled laboratory tests, the wand was taken into the field to validate its performance against a known 5/8" x 36" steel property pin buried in the earth. The goal was to prove the theoretical detection depth and validate the effectiveness of the dual-sensor gradient architecture in a dynamic, hand-held scenario.
+
+### 10.1 The Gradiometer Trade-off
+In Section 5, we mathematically calculated that a single RM3100 sensor has a theoretical absolute detection limit of **7.8 feet** on a vertical monopole pin. This was validated by moving a rebar towards a perfectly stationary wand.
+
+However, in the real world, the Magnetic Field Scanner operates as a **Gradiometer**. The software continuously subtracts the Reference Sensor (top of wand) from the Tip Sensor (bottom of wand) to calculate the `mag` (Gradient Magnitude). This is mathematically necessary because the Earth's background magnetic field is so massive (~50,000 nT) that merely walking or wobbling the wand's pitch/roll by 1 degree creates a false signal of 2,000+ LSB, rendering raw data unusable.
+
+**The Penalty:** When the Tip Sensor is 4 feet away from the pin, it detects a massive signal. However, the Reference Sensor (located 3 feet higher up the wand) is 7 feet away from the pin. Because 7 feet is still within the 7.8-foot absolute detection range, the Reference Sensor *also* sees the pin! When the software subtracts the Reference from the Tip, it successfully cancels out the Earth's noise, but it also accidentally subtracts a portion of the target pin's signal. 
+
+Because of this physical reality, the real-world operational range of the wand drops to a solid **3 to 4 feet**. We trade absolute maximum depth to gain total immunity against rotational and environmental noise.
+
+### 10.2 The Direct Approach Test
+To validate the gradiometer range, a direct radial walk was performed starting from 10 feet away, advancing in 1-foot increments directly towards the buried pin (pausing for 5 seconds at each step). 
+
+By plotting the resulting Gradient Magnitude on a Logarithmic scale, we can see the hardware baseline gradient offset (roughly 1,800 LSB due to structural alignment offsets), which remains perfectly flat from 10 feet inwards. The signal only begins to break free of the noise floor at approximately the 3 to 4 foot mark, at which point it follows a severe super-exponential climb up to 200,000 LSB directly over the pin.
+
+![Direct Approach Gradient Mag](../../docs/reports/real_pin_direct_mag.png)
+
+### 10.3 The Pendulum Sweep Test (Ultimate Proof)
+The ultimate validation of the software architecture occurs during a natural sweeping motion. The user swept the wand 90 degrees left and 90 degrees right in a pendulum motion while advancing towards the pin.
+
+In the plot below, the **Raw Gradient Magnitude** is shown in light gray, with a **0.5-second running average** (16Hz, 8-sample window) applied in blue. Crucially, the physical **Azimuth / Yaw angle** of the wand is overlaid on the secondary axis in green.
+
+![Pendulum Sweep Gradient Mag](../../docs/reports/real_pin_sweep_ultimate.png)
+
+*(Note: The vertical drops in the green line represent the Azimuth wrapping from 359° back to 0°).*
+
+This plot is the definitive proof of the wand's viability:
+1. **Total Earth Immunity:** While sweeping far away from the pin (1850s to 2050s), the Azimuth (green) swings wildly back and forth across a 180-degree arc. Despite undergoing massive physical rotations inside the Earth's magnetic field, the Gradient Magnitude (blue) remains perfectly flat. The dual-sensor hardware and software gradient completely rejects the false signals that would otherwise plague a single-sensor magnetometer.
+2. **Spatial Targeting:** Right at 2070 seconds, as the user steps within the 3-foot detection radius, the gradient explodes into a 55,000 LSB peak. This peak perfectly aligns with the exact moment the Azimuth sine-wave crosses the user's center line (pointing directly at the target). The wand generates a beautiful, unmistakable Gaussian bell curve purely isolated to the physical location of the buried property pin, proving the instrument is field-ready.
