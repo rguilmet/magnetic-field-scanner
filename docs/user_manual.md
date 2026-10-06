@@ -14,7 +14,7 @@ Welcome to the User Manual for the Magnetic Field Scanner (MFS). This guide will
 The MFS features a touchscreen interface driven by LVGL. The interface is designed for rapid field use and zero-latency feedback.
 
 ### Main Dashboard
-| ![RAW Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.png) | ![TARE Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20TARE.png) | ![AUTO Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20AUTO.png) |
+| ![RAW Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.-%20v5.1.13.png) | ![TARE Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20TARE%20-%20v5.1.13.png) | ![AUTO Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20AUTO%20-%20v5.1.13.png) |
 |:---:|:---:|:---:|
 
 * **Polargraphic Display:** A logarithmic sweeping arc that dynamically tracks the spatial gradient from 0 to over 1,000,000 nT without pegging. 
@@ -25,7 +25,7 @@ The MFS features a touchscreen interface driven by LVGL. The interface is design
 * **Battery & Storage:** Status labels in the hardware tab show battery voltage and logging status.
 
 ### Calibration & Tracking (Tare Operations)
-| ![Ready](images/Magnetic%20Field%20Scanner%20-%20Calibration%20Screen%20-%20Ready.png) | ![Capturing Data](images/Magnetic%20Field%20Scanner%20-%20%20Calibration%20Screen%20-%20Capturing%20Data.png) | ![Stopped](images/Magnetic%20Field%20Scanner%20-%20Calibration%20Screen%20-Stopped.png) |
+| ![Ready](images/Magnetic%20Field%20Scanner%20-%20Calibration%20Screen%20-%20Ready%20-%20v5.1.13.png) | ![Capturing Data](images/Magnetic%20Field%20Scanner%20-%20%20Calibration%20Screen%20-%20Capturing%20Data.png) | ![Stopped](images/Magnetic%20Field%20Scanner%20-%20Calibration%20Screen%20-Stopped.png) |
 |:---:|:---:|:---:|
 
 The Wand employs a dual-strategy for zeroing out environmental magnetic interference:
@@ -33,7 +33,7 @@ The Wand employs a dual-strategy for zeroing out environmental magnetic interfer
 * **Auto-Tare:** Implements an invisible low-pass filter (multiplier `0.005`) that slowly pulls the baseline back to zero over time to combat temperature drift. Crucially, it **only engages if the gradient jumps by less than 150 nT**. This eats away slow drift while completely ignoring the sharp spikes of a buried utility pipe!
 
 ### System & Hardware (Settings Menu)
-![System & Hardware](images/Magnetic%20Field%20Scanner%20-%20System%20%26%20Hardware%20-%20400%20CC.png)
+![System & Hardware](images/Magnetic%20Field%20Scanner%20-%20System%20%26%20Hardware%20-%20800%20CC%20-%20v5.1.13..png)
 
 * **Audio Toggle:** Mutes or enables the variable-pitch audio feedback. The PWM audio frequency dynamically scales with the spatial gradient magnitude, allowing eyes-free locating.
 * **Cycle Count (CC):** Allows you to adjust the internal RM3100 Cycle Count (default `400`). Note: Because the `v5.x` architecture normalizes all raw measurements to physical nanoTeslas (`nT`), the calibration matrix is dimensionless and truly universal. You can change CC seamlessly in the field without drifting!
