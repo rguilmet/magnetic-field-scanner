@@ -78,7 +78,7 @@
 
 #define USER_DISP_ROT_90    1
 #define USER_DISP_ROT_NONO  0
-#define MFS_FIRMWARE_VERSION "v5.1.5"
+#define MFS_FIRMWARE_VERSION "v5.1.6"
 
 #define Rotated USER_DISP_ROT_NONO   
 

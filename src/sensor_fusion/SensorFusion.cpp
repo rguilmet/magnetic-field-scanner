@@ -218,7 +218,7 @@ SensorFusionOutput SensorFusion::processUpdate(Vector3Float& tip, Vector3Float& 
     out.true_Z = ((float)gradX * norm_ax) + ((float)gradY * norm_ay) + ((float)gradZ * norm_az);
 
     out.is_pin = false;
-    if (out.true_Z < -30.0f || out.true_Z > 30.0f) { 
+    if (out.true_Z > 30.0f) { 
         out.is_pin = true;
     }
 
