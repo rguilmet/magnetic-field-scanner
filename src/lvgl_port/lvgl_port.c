@@ -22,6 +22,8 @@ static const char *TAG = "lvgl_port";
 static SemaphoreHandle_t lvgl_mux = NULL;
 
 // UI Elements for Detector
+static lv_obj_t * bg_arc_left;
+static lv_obj_t * bg_arc_right;
 static lv_obj_t * mag_arc;
 static lv_obj_t * compass_label_n;
 static lv_obj_t * compass_label_e;
@@ -650,12 +652,35 @@ void create_detector_ui(void) {
     lv_obj_set_style_text_font(fw_label, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_align(fw_label, LV_ALIGN_TOP_MID, 0, 60);
 
-    // Arc / Dial Indicator
+    // Background Arc (Left Half - Negative/South)
+    bg_arc_left = lv_arc_create(tile1);
+    lv_obj_set_size(bg_arc_left, 160, 160);
+    lv_arc_set_rotation(bg_arc_left, 0);
+    lv_arc_set_bg_angles(bg_arc_left, 90, 225); // Left side only
+    lv_obj_align(bg_arc_left, LV_ALIGN_TOP_MID, 0, 110);
+    lv_obj_set_style_arc_color(bg_arc_left, lv_color_hex(0x002266), LV_PART_MAIN);
+    lv_obj_remove_style(bg_arc_left, NULL, LV_PART_KNOB); 
+    lv_obj_remove_style(bg_arc_left, NULL, LV_PART_INDICATOR); 
+    lv_obj_clear_flag(bg_arc_left, LV_OBJ_FLAG_CLICKABLE);
+
+    // Background Arc (Right Half - Positive/North)
+    bg_arc_right = lv_arc_create(tile1);
+    lv_obj_set_size(bg_arc_right, 160, 160);
+    lv_arc_set_rotation(bg_arc_right, 0);
+    lv_arc_set_bg_angles(bg_arc_right, 315, 90); // Right side only
+    lv_obj_align(bg_arc_right, LV_ALIGN_TOP_MID, 0, 110);
+    lv_obj_set_style_arc_color(bg_arc_right, lv_color_hex(0x660000), LV_PART_MAIN);
+    lv_obj_remove_style(bg_arc_right, NULL, LV_PART_KNOB); 
+    lv_obj_remove_style(bg_arc_right, NULL, LV_PART_INDICATOR); 
+    lv_obj_clear_flag(bg_arc_right, LV_OBJ_FLAG_CLICKABLE);
+
+    // Main Active Arc
     mag_arc = lv_arc_create(tile1);
     lv_obj_set_size(mag_arc, 160, 160);
-    lv_arc_set_rotation(mag_arc, 0); // Polargraphic display
-    lv_arc_set_bg_angles(mag_arc, 315, 225); // Gap at top, crosses bottom center
-    lv_arc_set_mode(mag_arc, LV_ARC_MODE_SYMMETRICAL); // Zero at bottom center
+    lv_arc_set_rotation(mag_arc, 0); 
+    lv_arc_set_bg_angles(mag_arc, 315, 225);
+    lv_arc_set_mode(mag_arc, LV_ARC_MODE_SYMMETRICAL);
+    lv_obj_set_style_arc_opa(mag_arc, 0, LV_PART_MAIN); // Make its own background fully transparent!
     lv_arc_set_range(mag_arc, -5000, 5000); 
     lv_arc_set_value(mag_arc, 0);
     lv_obj_align(mag_arc, LV_ALIGN_TOP_MID, 0, 110);
