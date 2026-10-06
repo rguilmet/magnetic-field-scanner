@@ -19,7 +19,7 @@ Powered by an ESP32-S3 and utilizing dual PNI RM3100 magneto-inductive sensors, 
   <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Display%20View%20(20260914_123335).png" alt="Magnetic Field Scanner LCD Display View" width="80%" />
 </p>
 
-| ![HUD Interface - RAW Mode](docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.png) | ![HUD Interface - TARE Mode](docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20TARE.png) | ![System Hardware and Diagnostics Screen](docs/images/Magnetic%20Field%20Scanner%20-%20System%20&%20Hardware%20-%20400%20CC.png) |
+| ![HUD Interface - RAW Mode](docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.-%20v5.1.13.png) | ![HUD Interface - AUTO Mode](docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20AUTO%20-%20v5.1.13.png) | ![System Hardware and Diagnostics Screen](docs/images/Magnetic%20Field%20Scanner%20-%20System%20%26%20Hardware%20-%20800%20CC%20-%20v5.1.13..png) |
 |:---:|:---:|:---:|
 
 ## Hardware Configuration
@@ -86,8 +86,8 @@ To achieve military-grade spatial accuracy, the ESP32 natively executes advanced
 * **Madgwick 9-Axis Sensor Fusion:** The raw 3-axis Tip magnetometer data is fused with the QMI8658's 6-axis IMU (Accelerometer and Gyroscope) via an asynchronous Madgwick AHRS filter. This provides real-time Pitch, Roll, and Yaw (Azimuth) compensation to project the magnetic vector accurately to the Earth's gravity vector.
 * **Universal Domain Shifting:** The `v5.1.x` architecture converts raw sensor LSBs into normalized physical nanoTeslas (nT) *before* applying the Kabsch calibration matrix. Because the matrix becomes mathematically dimensionless, a single calibration profile works universally across ALL Cycle Counts (12 to 3200).
 
-### 3. Dynamic UI Scaling (RAW, TARE, and AUTO)
-The LVGL Gradiometer UI dynamically scales its physical range and color bands based on the active mode:
+### 3. Polargraphic Display & UI Scaling
+The LVGL Gradiometer UI features a true Log10 Polargraphic Arc that displays the vertical gradient (`trueZ`). The left side (Blue) represents a negative vertical gradient (the 'halo' outside a pin), and the right side (Red) represents a positive vertical gradient (dead-center over a pin).
 * **RAW Mode (0 - 25,000 nT):** Wide dynamic range to absorb the baseline physical misalignment of the sensors (typically ~4,900 nT) without pinning the needle in the red.
 * **TARE Mode (0 - 5,000 nT):** Manual zeroing of the baseline, tightening the visual arc (Green: 0-150, Yellow: 150-500, Red: >500) for extreme sensitivity to tiny localized anomalies.
 * **AUTO Mode (0 - 5,000 nT):** Engages an invisible low-pass filter (triggered under `150 nT`) that acts as an aggressive Auto-Tare to slowly eat away temperature drift and background anomalies while ignoring the sharp gradients of a real target.
