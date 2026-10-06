@@ -1048,38 +1048,20 @@ void update_detector_ui(const UIData *data) {
             }
             lv_arc_set_value(mag_arc, arc_val);
             
-            static int last_color_state = -1;
-            int current_color_state = 0;
-            
-            if (data->tare_active || data->auto_tare_on) {
-                // TARE/AUTO Mode: Baseline is 0 nT. Tight bands for detecting small metal objects.
-                lv_arc_set_range(mag_arc, -5000, 5000); 
-                if (data->nt > 1000) current_color_state = 2; // Red
-                else if (data->nt > 200) current_color_state = 1; // Yellow
-                else current_color_state = 0; // Green
-            } else {
-                // RAW Mode: Baseline includes physical misalignment. Wide bands.
-                lv_arc_set_range(mag_arc, -25000, 25000); 
-                if (data->nt > 15000) current_color_state = 2; // Red
-                else if (data->nt > 5000) current_color_state = 1; // Yellow
-                else current_color_state = 0; // Green
-            }
-            
-            if (current_color_state != last_color_state) {
-                if (current_color_state == 2) {
-                    lv_obj_set_style_arc_color(mag_arc, lv_color_hex(0xff0000), LV_PART_INDICATOR);
-                    lv_obj_set_style_text_color(mag_label, lv_color_hex(0xff0000), LV_PART_MAIN);
-                    if (nt_label != NULL) lv_obj_set_style_text_color(nt_label, lv_color_hex(0xff0000), LV_PART_MAIN);
-                } else if (current_color_state == 1) {
-                    lv_obj_set_style_arc_color(mag_arc, lv_color_hex(0xffff00), LV_PART_INDICATOR);
-                    lv_obj_set_style_text_color(mag_label, lv_color_hex(0xffff00), LV_PART_MAIN);
-                    if (nt_label != NULL) lv_obj_set_style_text_color(nt_label, lv_color_hex(0xffff00), LV_PART_MAIN);
+            static int last_polarity_state = 0; // 1=Right/Red, 2=Left/Blue
+            int current_polarity_state = (arc_val < 0) ? 1 : 2;
+
+            if (current_polarity_state != last_polarity_state) {
+                if (current_polarity_state == 1) {
+                    lv_obj_set_style_arc_color(mag_arc, lv_color_hex(0xff3333), LV_PART_INDICATOR); 
                 } else {
-                    lv_obj_set_style_arc_color(mag_arc, lv_color_hex(0x00ff00), LV_PART_INDICATOR);
-                    lv_obj_set_style_text_color(mag_label, lv_color_hex(0x00ff00), LV_PART_MAIN);
-                    if (nt_label != NULL) lv_obj_set_style_text_color(nt_label, lv_color_hex(0xffffff), LV_PART_MAIN);
+                    lv_obj_set_style_arc_color(mag_arc, lv_color_hex(0x3388ff), LV_PART_INDICATOR); 
                 }
-                last_color_state = current_color_state;
+                
+                lv_obj_set_style_text_color(mag_label, lv_color_hex(0xffffff), LV_PART_MAIN);
+                if (nt_label != NULL) lv_obj_set_style_text_color(nt_label, lv_color_hex(0xffffff), LV_PART_MAIN);
+                
+                last_polarity_state = current_polarity_state;
             }
 
             lv_label_set_text_fmt(mag_label, "%ld", (int32_t)data->nt);
