@@ -457,7 +457,7 @@ void task_sensor_read(void *pvParameters) {
                 }
             }
 
-            log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref_vec.x, ref_vec.y, ref_vec.z, tip_vec.x, tip_vec.y, tip_vec.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, out.gradX, out.gradY, out.gradZ, magnitude, nt_value, raw_acc[0], raw_acc[1], raw_acc[2], raw_gyr[0], raw_gyr[1], raw_gyr[2], imu_temp, target_freq, is_muted, q0, q1, q2, q3, ui_data.azimuth, ui_data.elevation, current_settings.mag_declination_deg);
+            log_data(millis(), current_battery_voltage, current_audio_gain, current_cycle_count, ref_raw_x, ref_raw_y, ref_raw_z, tip_raw_x, tip_raw_y, tip_raw_z, ref_vec.x, ref_vec.y, ref_vec.z, tip_vec.x, tip_vec.y, tip_vec.z, calibration_offset.x, calibration_offset.y, calibration_offset.z, out.gradX, out.gradY, out.gradZ, magnitude, nt_value, raw_acc[0], raw_acc[1], raw_acc[2], raw_gyr[0], raw_gyr[1], raw_gyr[2], imu_temp, target_freq, is_muted, q0, q1, q2, q3, ui_data.azimuth, ui_data.elevation, current_settings.mag_declination_deg, out.true_Z, out.is_pin);
 
             // --- ON-WAND CALIBRATION LOGIC ---
             if (is_calibrating) {

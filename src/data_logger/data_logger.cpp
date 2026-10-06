@@ -285,7 +285,7 @@ extern "C" bool process_calibration_file(void) {
 }
 
 
-extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, int cc, int32_t refX_raw, int32_t refY_raw, int32_t refZ_raw, int32_t tipX_raw, int32_t tipY_raw, int32_t tipZ_raw, float refX_cal, float refY_cal, float refZ_cal, float tipX_cal, float tipY_cal, float tipZ_cal, float calOffsetX, float calOffsetY, float calOffsetZ, float gradX, float gradY, float gradZ, float mag, float nT, float accX, float accY, float accZ, float gyrX, float gyrY, float gyrZ, int16_t imu_temp, float freq, bool is_muted, float qw, float qx, float qy, float qz, float azimuth, float elevation, float declination) {
+extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, int cc, int32_t refX_raw, int32_t refY_raw, int32_t refZ_raw, int32_t tipX_raw, int32_t tipY_raw, int32_t tipZ_raw, float refX_cal, float refY_cal, float refZ_cal, float tipX_cal, float tipY_cal, float tipZ_cal, float calOffsetX, float calOffsetY, float calOffsetZ, float gradX, float gradY, float gradZ, float mag, float nT, float accX, float accY, float accZ, float gyrX, float gyrY, float gyrZ, int16_t imu_temp, float freq, bool is_muted, float qw, float qx, float qy, float qz, float azimuth, float elevation, float declination, float trueZ, bool is_pin) {
     // Logging Decimator to protect SD card bandwidth at 150Hz
     static uint32_t frame_counter = 0;
     frame_counter++;
@@ -298,7 +298,7 @@ extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, in
     
     char buffer[512];
     snprintf(buffer, sizeof(buffer), 
-             "%lu,%s,%s,%.2f,%.1f,%d,%ld,%ld,%ld,%ld,%ld,%ld,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%d,%.4f,%.4f,%.4f,%.4f,%.1f,%.1f,%.1f",
+             "%lu,%s,%s,%.2f,%.1f,%d,%ld,%ld,%ld,%ld,%ld,%ld,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%.1f,%d,%.4f,%.4f,%.4f,%.4f,%.1f,%.1f,%.1f,%.2f,%d",
              timestamp, ts, MFS_FIRMWARE_VERSION, voltage, audio_gain, cc,
              refX_raw, refY_raw, refZ_raw,
              tipX_raw, tipY_raw, tipZ_raw,
@@ -310,7 +310,7 @@ extern "C" void log_data(uint32_t timestamp, float voltage, float audio_gain, in
              accX, accY, accZ,
              gyrX, gyrY, gyrZ,
              imu_temp,
-             freq, is_muted ? 1 : 0, qw, qx, qy, qz, azimuth, elevation, declination);
+             freq, is_muted ? 1 : 0, qw, qx, qy, qz, azimuth, elevation, declination, trueZ, is_pin ? 1 : 0);
 
     if (current_settings.enable_serial_logging) {
         Serial.println(buffer);
