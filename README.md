@@ -88,9 +88,9 @@ To achieve military-grade spatial accuracy, the ESP32 natively executes advanced
 
 ### 3. Polargraphic Display & UI Scaling
 The LVGL Gradiometer UI features a true Log10 Polargraphic Arc that displays the vertical gradient (`trueZ`). The left side (Blue) represents a negative vertical gradient (the 'halo' outside a pin), and the right side (Red) represents a positive vertical gradient (dead-center over a pin).
-* **RAW Mode (0 - 25,000 nT):** Wide dynamic range to absorb the baseline physical misalignment of the sensors (typically ~4,900 nT) without pinning the needle in the red.
-* **TARE Mode (0 - 5,000 nT):** Manual zeroing of the baseline, tightening the visual arc (Green: 0-150, Yellow: 150-500, Red: >500) for extreme sensitivity to tiny localized anomalies.
-* **AUTO Mode (0 - 5,000 nT):** Engages an invisible low-pass filter (triggered under `150 nT`) that acts as an aggressive Auto-Tare to slowly eat away temperature drift and background anomalies while ignoring the sharp gradients of a real target.
+* **RAW Mode:** Displays the absolute, unadulterated magnetic gradient. The Log10 scale easily absorbs the baseline physical misalignment of the sensors (typically ~4,900 nT) without pinning the needle.
+* **TARE Mode:** Manual zeroing of the baseline. It memorizes the current environmental gradient shadow and subtracts it from future readings, allowing extreme sensitivity to tiny localized anomalies.
+* **AUTO Mode:** Engages an invisible low-pass filter (triggered under `150 nT`) that acts as an aggressive Auto-Tare to slowly eat away temperature drift and background anomalies while ignoring the sharp gradients of a real target.
 
 ### 4. Dual-Drive Filesystem & Integrated Web Server
 * **Smart Fallback:** Dynamically routes file I/O to the high-speed SD Card, or falls back to Internal FFat if the card is missing or corrupted.
