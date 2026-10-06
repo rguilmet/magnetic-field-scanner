@@ -996,6 +996,31 @@ void create_detector_ui(void) {
     set_rm3100_cycle_count(current_settings.cycle_count);
 }
 
+
+// Helper to format integers with commas
+static void format_with_commas(int32_t num, char * out_buf) {
+    char temp[32];
+    snprintf(temp, sizeof(temp), "%ld", num);
+    
+    int len = strlen(temp);
+    int out_idx = 0;
+    
+    int start_idx = 0;
+    if (temp[0] == '-') {
+        out_buf[out_idx++] = '-';
+        start_idx = 1;
+    }
+    
+    for (int i = start_idx; i < len; i++) {
+        out_buf[out_idx++] = temp[i];
+        int remaining_digits = len - i - 1;
+        if (remaining_digits > 0 && remaining_digits % 3 == 0) {
+            out_buf[out_idx++] = ',';
+        }
+    }
+    out_buf[out_idx] = '\0';
+}
+
 void update_detector_ui(const UIData *data) {
     if (mfs_lvgl_lock(-1)) {
 
@@ -1064,7 +1089,9 @@ void update_detector_ui(const UIData *data) {
                 last_polarity_state = current_polarity_state;
             }
 
-            lv_label_set_text_fmt(mag_label, "%ld", (int32_t)data->nt);
+            char formatted_nt[32];
+            format_with_commas((int32_t)data->nt, formatted_nt);
+            lv_label_set_text(mag_label, formatted_nt);
             
             if (nt_label != NULL) {
                 char buf[32];
