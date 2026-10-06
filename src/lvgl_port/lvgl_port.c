@@ -752,16 +752,16 @@ void create_detector_ui(void) {
     
     // Huge Mag Label
     mag_label = lv_label_create(tile1);
-    lv_obj_set_width(mag_label, 172);
+    lv_obj_set_width(mag_label, 230);
     lv_obj_set_style_text_align(mag_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_text(mag_label, "0");
     lv_obj_set_style_text_color(mag_label, lv_color_hex(0xffffff), LV_PART_MAIN);
-    lv_obj_set_style_text_font(mag_label, &lv_font_montserrat_48, LV_PART_MAIN);
+    lv_obj_set_style_text_font(mag_label, &lv_font_montserrat_36, LV_PART_MAIN);
     lv_obj_align(mag_label, LV_ALIGN_TOP_MID, 0, 280);
 
     // Medium nT Label
     nt_label = lv_label_create(tile1);
-    lv_obj_set_width(nt_label, 172);
+    lv_obj_set_width(nt_label, 230);
     lv_obj_set_style_text_align(nt_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_text(nt_label, "0.0 nT");
     lv_obj_set_style_text_color(nt_label, lv_color_hex(0xffffff), LV_PART_MAIN);
@@ -1094,9 +1094,9 @@ void update_detector_ui(const UIData *data) {
             lv_label_set_text(mag_label, formatted_nt);
             
             if (nt_label != NULL) {
-                char buf[32];
-                snprintf(buf, sizeof(buf), "%ld", (int32_t)data->mag);
-                lv_label_set_text(nt_label, buf);
+                char int_buf[32];
+                format_with_commas((int32_t)data->mag, int_buf);
+                lv_label_set_text(nt_label, int_buf);
             }
         }
         
