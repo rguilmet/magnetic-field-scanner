@@ -653,9 +653,10 @@ void create_detector_ui(void) {
     // Arc / Dial Indicator
     mag_arc = lv_arc_create(tile1);
     lv_obj_set_size(mag_arc, 160, 160);
-    lv_arc_set_rotation(mag_arc, 135);
-    lv_arc_set_bg_angles(mag_arc, 0, 270);
-    lv_arc_set_range(mag_arc, 0, 5000); 
+    lv_arc_set_rotation(mag_arc, 0); // Polargraphic display
+    lv_arc_set_bg_angles(mag_arc, 315, 225); // Gap at top, crosses bottom center
+    lv_arc_set_mode(mag_arc, LV_ARC_MODE_SYMMETRICAL); // Zero at bottom center
+    lv_arc_set_range(mag_arc, -5000, 5000); 
     lv_arc_set_value(mag_arc, 0);
     lv_obj_align(mag_arc, LV_ALIGN_TOP_MID, 0, 110);
     lv_obj_remove_style(mag_arc, NULL, LV_PART_KNOB); 
@@ -1011,20 +1012,29 @@ void update_detector_ui(const UIData *data) {
         }
     
         if (mag_arc != NULL && mag_label != NULL) {
-            lv_arc_set_value(mag_arc, (int32_t)data->nt);
+            // Determine visual polarity based on trueZ sign.
+            // In LVGL symmetric arc (315 to 225): 
+            // - Positive arc values grow toward 225 (Left side).
+            // - Negative arc values grow toward 315 (Right side).
+            // The user requested Negative Polarity to go Left, and Positive to go Right.
+            int32_t arc_val = (int32_t)data->nt;
+            if (data->trueZ > 0.0f) {
+                arc_val = -arc_val; // Positive polarity goes Right
+            }
+            lv_arc_set_value(mag_arc, arc_val);
             
             static int last_color_state = -1;
             int current_color_state = 0;
             
             if (data->tare_active || data->auto_tare_on) {
                 // TARE/AUTO Mode: Baseline is 0 nT. Tight bands for detecting small metal objects.
-                lv_arc_set_range(mag_arc, 0, 5000); 
-                if (data->nt > 500) current_color_state = 2; // Red
-                else if (data->nt > 150) current_color_state = 1; // Yellow
+                lv_arc_set_range(mag_arc, -5000, 5000); 
+                if (data->nt > 1000) current_color_state = 2; // Red
+                else if (data->nt > 200) current_color_state = 1; // Yellow
                 else current_color_state = 0; // Green
             } else {
                 // RAW Mode: Baseline includes physical misalignment. Wide bands.
-                lv_arc_set_range(mag_arc, 0, 25000); 
+                lv_arc_set_range(mag_arc, -25000, 25000); 
                 if (data->nt > 15000) current_color_state = 2; // Red
                 else if (data->nt > 5000) current_color_state = 1; // Yellow
                 else current_color_state = 0; // Green
