@@ -83,10 +83,10 @@
 #define Rotated USER_DISP_ROT_NONO   
 
 #define MFS_LCD_H_RES 172   
-#define MFS_LCD_V_RES 320
+#define MFS_LCD_V_RES 640
 
 #define LCD_NOROT_HRES     172
-#define LCD_NOROT_VRES     320
+#define LCD_NOROT_VRES     640
 #define LVGL_DMA_BUFF_LEN (LCD_NOROT_HRES * 64 * 2)
 #define LVGL_SPIRAM_BUFF_LEN (MFS_LCD_H_RES * MFS_LCD_V_RES * 2)
 

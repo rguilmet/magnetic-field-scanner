@@ -1067,10 +1067,18 @@ void update_detector_ui(const UIData *data) {
             // - Positive arc values grow toward 225 (Left side).
             // - Negative arc values grow toward 315 (Right side).
             // The user requested Negative Polarity to go Left, and Positive to go Right.
-            int32_t arc_val = (int32_t)data->nt;
+            // Log10 scaling: f(x) = log10((x / 100) + 1)
+            float nt_val = data->nt;
+            if (nt_val < 0.0f) nt_val = 0.0f;
+            
+            float log_val = log10f((nt_val / 100.0f) + 1.0f);
+            int32_t arc_val = (int32_t)(log_val * 100.0f); 
+            
             if (data->trueZ > 0.0f) {
-                arc_val = -arc_val; // Positive polarity goes Right
+                arc_val = -arc_val; 
             }
+            
+            lv_arc_set_range(mag_arc, -400, 400); 
             lv_arc_set_value(mag_arc, arc_val);
             
             static int last_polarity_state = 0; // 1=Right/Red, 2=Left/Blue
