@@ -1,8 +1,8 @@
 # Magnetic Field Scanner - Project Overview
 
-**Document Version:** `v1.3.0`
-**Last Updated:** September 14, 2026
-**Firmware Target:** `v5.1.4`
+**Document Version:** `v1.4.0`
+**Last Updated:** October 06, 2026
+**Firmware Target:** `v5.1.15`
 **Python Ecosystem Target:** `v1.1.1`
 
 This document serves as the master source of truth for the Magnetic Field Scanner project. It details the mechanical assembly, electrical wiring, pinouts, firmware architecture, critical pitfalls to avoid in future development, and the roadmap for upcoming features.
@@ -23,12 +23,24 @@ To prevent documentation rot and excessive maintenance overhead, documentation u
 
 ## 2. Hardware Architecture & Mechanical Setup
 * **The Wand:** Constructed from a rigid 1" fiberglass outer rod with a 3/4" ID.
-* **Main Controller (The Handle):** Waveshare ESP32-S3-Touch-LCD (4.3 / 3.49 v2) with an integrated screen, battery ADC, IMU (QMI8658, addr `0x6B`), and RTC (PCF85063, addr `0x51`). This unit sits at the top of the wand acting as the primary handle and UI display. A custom wiring harness runs down from this unit into the main fiberglass tube.
+* **Main Controller (The Handle):** Waveshare ESP32-S3-Touch-LCD 3.49 v2 (172x640 Bar LCD) with an integrated screen, battery ADC, IMU (QMI8658, addr `0x6B`), and RTC (PCF85063, addr `0x51`). This unit sits at the top of the wand acting as the primary handle and UI display. A custom wiring harness runs down from this unit into the main fiberglass tube.
 * **The Sensor Array:** The wand acts as a **Magnetic Gradiometer**. It currently utilizes two PNI RM3100 magnetometer breakout boards ("Tip" and "Reference").
   * The boards are mounted to a PLA mechanical carrier that slides directly into the 3/4" ID of the fiberglass tube.
   * **Carrier Rigidity:** To ensure absolute rigidity between the Tip and Reference sensors, the PLA board carriers are physically joined to each other by a solid 1/4" internal fiberglass rod.
   * **Sensor Orientation:** The boards were recently flipped 180 degrees (upside down) in the assembly. 
   * **Physical Misalignment:** There is a permanent, measured physical flex/bend in the carrier assembly of roughly `~9.4` to `~9.8` degrees. The firmware mathematically eliminates this using the Kabsch alignment algorithm.
+
+
+### True Vertical Gradient (trueZ) & Dipole Physics
+In firmware v5.1.15, the wand implements true magnetic dipole physics. The absolute magnitude of the magnetic field (nT) is highly useful, but it does not tell the user *what* they are looking at or *where* the edges are. 
+By projecting the 3D magnetic gradient vector against the Earth's Gravity (Down) Vector (which is derived from the IMU's quaternion), the wand isolates `trueZ`—the pure vertical component of the magnetic gradient.
+* **Vertical Property Pins:** Behave as vertical magnetic dipoles. Sweeping dead center over the top pole (South pole) results in a massive POSITIVE `trueZ` (field lines pointing straight down). Sweeping off to the side results in a NEGATIVE `trueZ` (field lines pointing back up). This creates a sharp "halo" effect that allows pinpoint centering.
+* **Horizontal Pipes / Rebar:** Behave as horizontal magnetic dipoles. Sweeping perpendicular across the center of a horizontal pipe yields massive absolute magnitude, but a `trueZ` of zero, because the field lines are purely horizontal.
+
+### Polargraphic Display & Log10 Scaling
+To visually represent the `trueZ` physics, the UI features a symmetrical Polargraphic Arc.
+* **Polarity:** Left (Blue) represents Negative vertical gradient. Right (Red) represents Positive vertical gradient.
+* **Log10 Scaling:** The arc is driven by a `log10((nT/100)+1)` curve. This provides extreme visual sensitivity to tiny signals at long range, while allowing the arc to dynamically scale all the way up to 1,000,000+ nT without "pegging" when the wand is an inch away from a massive target.
 
 ### Mechanical Diagram
 (Assuming visual diagram exists elsewhere)

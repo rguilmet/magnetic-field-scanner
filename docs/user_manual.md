@@ -1,8 +1,8 @@
 # Magnetic Field Scanner (MFS) - User Manual
 
-**Document Version:** `v5.1.x`
-**Last Updated:** September 14, 2026
-**Firmware Target:** `v5.1.4`
+**Document Version:** `v5.2.0`
+**Last Updated:** October 06, 2026
+**Firmware Target:** `v5.1.15`
 **Python Ecosystem Target:** `v1.0.0`
 
 Welcome to the User Manual for the Magnetic Field Scanner (MFS). This guide will walk you through the user interface, calibration process, data logging capabilities, and web server connectivity.
@@ -17,9 +17,12 @@ The MFS features a touchscreen interface driven by LVGL. The interface is design
 | ![RAW Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.png) | ![TARE Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20TARE.png) | ![AUTO Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20AUTO.png) |
 |:---:|:---:|:---:|
 
-* **Live Telemetry:** Displays real-time magnetic field strength in NanoTeslas (nT) for the TIP, NEAR (8" offset), and REF sensors.
-* **Spatial Gradient:** Shows the delta between sensors (e.g., TIP-REF), isolating localized magnetic anomalies from Earth's background field.
-* **Battery & Storage:** Status icons in the header show battery voltage and whether the SD Card / FFat is actively mounted.
+* **Polargraphic Display:** A logarithmic sweeping arc that dynamically tracks the spatial gradient from 0 to over 1,000,000 nT without pegging. 
+* **True Vertical Gradient (trueZ):** The UI intelligently isolates the vertical component of the magnetic field from the wand's tilt.
+  * **Negative Halo (Left/Blue Arc):** Indicates the wand is sweeping the return-path field lines (the "halo") just off to the side of a vertical property pin.
+  * **Positive Peak (Right/Red Arc):** Indicates the wand is dead-center over a South pole (top of a property pin), triggering the "FERROUS PIN" identification label.
+* **Live Telemetry:** The central labels display the precise absolute magnitude in NanoTeslas (nT), cleanly formatted with thousands separators.
+* **Battery & Storage:** Status labels in the hardware tab show battery voltage and logging status.
 
 ### Calibration & Tracking (Tare Operations)
 | ![Ready](images/Magnetic%20Field%20Scanner%20-%20Calibration%20Screen%20-%20Ready.png) | ![Capturing Data](images/Magnetic%20Field%20Scanner%20-%20%20Calibration%20Screen%20-%20Capturing%20Data.png) | ![Stopped](images/Magnetic%20Field%20Scanner%20-%20Calibration%20Screen%20-Stopped.png) |
