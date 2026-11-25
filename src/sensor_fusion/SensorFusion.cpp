@@ -24,6 +24,8 @@ SensorFusion::SensorFusion() {
 void SensorFusion::init(CalibrationConfig* config, SystemSettings* settings) {
     _cal_config = config;
     _settings = settings;
+    ahrs_9dof_init(&_ahrs, NULL);
+    _ahrs.cfg.beta = 0.05f;
 }
 
 void SensorFusion::setTareRequested() {
@@ -209,7 +211,11 @@ SensorFusionOutput SensorFusion::processUpdate(Vector3Float& tip, Vector3Float& 
     }
     last_micros = now_micros;
     
-    MadgwickAHRSupdate(ned_gx, ned_gy, ned_gz, ned_ax, ned_ay, ned_az, ned_mx, ned_my, ned_mz, dt);
+    ahrs_9dof_madgwick_9dof(&_ahrs, ned_gx, ned_gy, ned_gz, ned_ax, ned_ay, ned_az, ned_mx, ned_my, ned_mz, dt);
+    float q0 = _ahrs.q0;
+    float q1 = _ahrs.q1;
+    float q2 = _ahrs.q2;
+    float q3 = _ahrs.q3;
     
     float norm_ax = 2.0f * (q1 * q3 - q0 * q2);
     float norm_ay = 2.0f * (q0 * q1 + q2 * q3);

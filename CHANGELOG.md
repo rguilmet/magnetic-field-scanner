@@ -1,4 +1,11 @@
-# Changelog
+﻿# Changelog
+
+## [v6.0.0] - 2026-11-24
+### Changed
+- **Shared Core Library Migration (`Field_Instrument_Core v1.1.0`):** Migrated `Magnetic_Field_Scanner` onto `<Field_Instrument_Core.h>` + `<boards/waveshare_s3_349_v3.h>`, removing 11 duplicated internal BSP, codec, display, storage, sensor fusion, math, and web-portal directories (`src/PCF85063`, `src/axs15231b`, `src/codec_board`, `src/esp_codec_dev`, `src/i2c_bsp`, `src/imu_bsp`, `src/matrix_math`, `src/screenshot`, `src/tca9554`, `src/touch`, `src/web_server`). *(Pre-migration standalone firmware snapshot preserved at Git tag `v5.1.15`.)*
+- **Resilient Dual-Bus I2C & Power Sequencing:** Adopted `fic_i2c_bsp` FreeRTOS recursive locks, GPIO SCL bus-clear, sentinel glitch detection, and RM3100 `I2C0` recovery hooks alongside `EXIO6` (`SYS_EN`) early boot power latching and `I2C1` (`0x3B`) swapped/Y-inverted touch mapping.
+- **LVGL `v9.6.0` UI Split & Deadlock Fix:** Split `src/lvgl_port/lvgl_port.c` into `mfs_ui_create.c` and `mfs_ui_update.c`; eliminated an `lvgl_mux` deadlock in `update_wifi_ip_label()` by buffering portal status updates with a `portMUX_TYPE` spinlock; updated LVGL flag setters to `lv_obj_set_hidden` / `lv_obj_set_clickable` / `lv_obj_set_checkable` for `0` compiler warnings.
+- **Instance-Safe Sensor Fusion & Atomic Persistence:** Replaced global `MadgwickAHRS` state in `SensorFusion` with per-instance `Ahrs9DofState_t` (`ahrs_9dof_madgwick_9dof`), wired `process_calibration_file()` to `kabsch_align_3x3_f32()`, upgraded `settings.json` and `calibration.json` persistence to `fic_json_write_atomic()` / `fic_json_load_with_recovery()`, and switched screenshots to lock-free `fic_screenshot_save_bmp()`.
 
 ## [v5.1.4] - 2026-09-13
 ### Changed

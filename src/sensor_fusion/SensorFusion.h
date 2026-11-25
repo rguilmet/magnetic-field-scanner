@@ -1,9 +1,9 @@
 
 #pragma once
 #include <Arduino.h>
-#include "src/settings_manager/settings_manager.h"
-#include "src/imu_bsp/MadgwickAHRS.h"
-#include "user_config.h"
+#include <Field_Instrument_Core.h>
+#include "../settings_manager/settings_manager.h"
+#include "../../user_config.h"
 
 struct Vector3Int {
     int32_t x;
@@ -48,6 +48,10 @@ public:
     bool isAutoTareEnabled() const { return auto_tare_enabled; }
     bool isTareActive() const { return (calibration_offset.x != 0 || calibration_offset.y != 0 || calibration_offset.z != 0); }
     bool isTareRequested() const { return tare_requested; }
+    float getQ0() const { return _ahrs.q0; }
+    float getQ1() const { return _ahrs.q1; }
+    float getQ2() const { return _ahrs.q2; }
+    float getQ3() const { return _ahrs.q3; }
     
     Vector3Float getCalibrationOffset() const { return calibration_offset; }
 
@@ -56,6 +60,7 @@ public:
 private:
     CalibrationConfig* _cal_config;
     SystemSettings* _settings;
+    Ahrs9DofState_t _ahrs;
 
     bool tare_requested;
     bool auto_tare_enabled;

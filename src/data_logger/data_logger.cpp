@@ -3,77 +3,26 @@
 #include "../settings_manager/settings_manager.h"
 #include <SD.h>
 #include <FFat.h>
+#include <Field_Instrument_Core.h>
 fs::FS& get_active_fs();
-static const uint8_t daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-static bool isLeapYear(int y) {
-    return (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0);
-}
-#include "../PCF85063/rtc_bsp.h"
-#include "../matrix_math/matrix_math.h"
 volatile bool is_logging = false; uint32_t log_sample_count = 0; String current_log_filename = ""; File logFile; SemaphoreHandle_t log_mux = NULL;
 extern "C" void get_formatted_timestamp(char* buffer, size_t max_len, bool include_ms) {
-    RtcDateTime_t t = i2c_rtc_get();
-    
-    // Apply offset manually
-    int total_minutes = t.hour * 60 + t.minute + current_settings.minutesOffsetToUTC;
-    
-    int new_hour = t.hour;
-    int new_min = t.minute;
-    int day_offset = 0;
-    
-    if (total_minutes < 0) {
-        int days_back = (abs(total_minutes) + 1439) / 1440; // ceil division
-        day_offset = -days_back;
-        total_minutes = (total_minutes % 1440) + 1440; // positive modulo
-    } else if (total_minutes >= 1440) {
-        day_offset = total_minutes / 1440;
-        total_minutes = total_minutes % 1440;
-    }
-    
-    new_hour = total_minutes / 60;
-    new_min = total_minutes % 60;
-    
-    int new_year = t.year;
-    int new_month = t.month;
-    int new_day = t.day;
-    
-    if (day_offset != 0) {
-        new_day += day_offset;
-        while (new_day < 1) {
-            new_month--;
-            if (new_month < 1) {
-                new_month = 12;
-                new_year--;
-            }
-            uint8_t dim = daysInMonth[new_month - 1];
-            if (new_month == 2 && isLeapYear(new_year)) dim = 29;
-            new_day += dim;
-        }
-        while (true) {
-            uint8_t dim = daysInMonth[new_month - 1];
-            if (new_month == 2 && isLeapYear(new_year)) dim = 29;
-            if (new_day <= dim) break;
-            
-            new_day -= dim;
-            new_month++;
-            if (new_month > 12) {
-                new_month = 1;
-                new_year++;
-            }
-        }
-    }
-    
-    uint16_t ms = (millis() % 1000);
-    
+    FicRtcTime_t local_dt = {0};
+    fic_rtc_get_local_datetime(&local_dt);
+    uint16_t ms = (uint16_t)(millis() % 1000UL);
     char sign = (current_settings.minutesOffsetToUTC >= 0) ? '+' : '-';
     int abs_offset = abs(current_settings.minutesOffsetToUTC);
-    
+
     if (include_ms) {
-        snprintf(buffer, max_len, "%04d-%02d-%02d_%02d-%02d-%02d.%03d%c%d", 
-                 new_year, new_month, new_day, new_hour, new_min, t.second, ms, sign, abs_offset);
+        snprintf(buffer, max_len, "%04u-%02u-%02u_%02u-%02u-%02u.%03u%c%d",
+                 (unsigned int)local_dt.year, (unsigned int)local_dt.month, (unsigned int)local_dt.day,
+                 (unsigned int)local_dt.hour, (unsigned int)local_dt.minute, (unsigned int)local_dt.second,
+                 (unsigned int)ms, sign, abs_offset);
     } else {
-        snprintf(buffer, max_len, "%04d-%02d-%02d_%02d-%02d-%02d%c%d", 
-                 new_year, new_month, new_day, new_hour, new_min, t.second, sign, abs_offset);
+        snprintf(buffer, max_len, "%04u-%02u-%02u_%02u-%02u-%02u%c%d",
+                 (unsigned int)local_dt.year, (unsigned int)local_dt.month, (unsigned int)local_dt.day,
+                 (unsigned int)local_dt.hour, (unsigned int)local_dt.minute, (unsigned int)local_dt.second,
+                 sign, abs_offset);
     }
 }
 
@@ -141,8 +90,6 @@ extern "C" void rename_calibration_file_to_stopped(void) {
     if (log_mux) xSemaphoreGive(log_mux);
 }
 
-
-#include "../matrix_math/matrix_math.h"
 
 extern "C" bool process_calibration_file(void) {
     if (current_log_filename.length() == 0) return false;
@@ -238,26 +185,44 @@ extern "C" bool process_calibration_file(void) {
         
         
         if (ref_ok && tip_ok) {
-            // Apply Kabsch alignment to align Tip to Ref
-            float R_align[3][3];
-            
-            if (kabsch_align_3x3(cal_tip_x, cal_tip_y, cal_tip_z, 
-                                 cal_ref_x, cal_ref_y, cal_ref_z, 
-                                 count, tip_center, tip_soft, ref_center, ref_soft, R_align)) {
-                
-                // Multiply Tip Soft-Iron Matrix by R_align
-                // R_align * tip_soft
-                float new_tip_soft[3][3];
-                mat_mult_3x3_float(R_align, tip_soft, new_tip_soft);
-                
-                for(int i=0; i<3; i++) {
-                    for(int j=0; j<3; j++) {
-                        tip_soft[i][j] = new_tip_soft[i][j];
-                    }
+            // Apply Kabsch alignment to align Tip to Ref using normalized float vectors
+            float *f_tip_x = (float *)heap_caps_malloc(count * sizeof(float), MALLOC_CAP_SPIRAM);
+            float *f_tip_y = (float *)heap_caps_malloc(count * sizeof(float), MALLOC_CAP_SPIRAM);
+            float *f_tip_z = (float *)heap_caps_malloc(count * sizeof(float), MALLOC_CAP_SPIRAM);
+            float *f_ref_x = (float *)heap_caps_malloc(count * sizeof(float), MALLOC_CAP_SPIRAM);
+            float *f_ref_y = (float *)heap_caps_malloc(count * sizeof(float), MALLOC_CAP_SPIRAM);
+            float *f_ref_z = (float *)heap_caps_malloc(count * sizeof(float), MALLOC_CAP_SPIRAM);
+
+            if (f_tip_x && f_tip_y && f_tip_z && f_ref_x && f_ref_y && f_ref_z) {
+                for (int i = 0; i < count; i++) {
+                    f_tip_x[i] = (float)cal_tip_x[i];
+                    f_tip_y[i] = (float)cal_tip_y[i];
+                    f_tip_z[i] = (float)cal_tip_z[i];
+                    f_ref_x[i] = (float)cal_ref_x[i];
+                    f_ref_y[i] = (float)cal_ref_y[i];
+                    f_ref_z[i] = (float)cal_ref_z[i];
                 }
-                Serial.println("process_calibration_file: Kabsch physical alignment successfully applied.");
+
+                float R_align[3][3];
+                if (kabsch_align_3x3_f32(f_tip_x, f_tip_y, f_tip_z,
+                                         f_ref_x, f_ref_y, f_ref_z,
+                                         count, tip_center, tip_soft, ref_center, ref_soft,
+                                         10000.0, R_align)) {
+                    // Multiply Tip Soft-Iron Matrix by R_align (R_align * tip_soft)
+                    float new_tip_soft[3][3];
+                    mat_mult_3x3_float(R_align, tip_soft, new_tip_soft);
+
+                    for (int i = 0; i < 3; i++) {
+                        for (int j = 0; j < 3; j++) {
+                            tip_soft[i][j] = new_tip_soft[i][j];
+                        }
+                    }
+                    Serial.println("process_calibration_file: Kabsch physical alignment successfully applied.");
+                }
             }
-            
+            if (f_tip_x) free(f_tip_x); if (f_tip_y) free(f_tip_y); if (f_tip_z) free(f_tip_z);
+            if (f_ref_x) free(f_ref_x); if (f_ref_y) free(f_ref_y); if (f_ref_z) free(f_ref_z);
+
             save_calibration(ref_center, ref_soft, tip_center, tip_soft);
             
             // Instantly apply to live memory

@@ -2,13 +2,17 @@
 #include <ArduinoJson.h>
 #include <SD.h>
 #include <FFat.h>
+#include <Field_Instrument_Core.h>
+
 extern SemaphoreHandle_t log_mux;
+
 fs::FS& get_active_fs() {
     if (sd_card_mounted) {
         return SD;
     }
     return FFat;
 }
+
 CalibrationConfig cal_config = {
     {24.10f, -9.20f, -32.84f},
     {{0.9890f, 0.0214f, -0.1652f}, {-0.0385f, 1.0030f, 0.0006f}, {0.1710f, -0.0272f, 0.9793f}},
@@ -17,7 +21,6 @@ CalibrationConfig cal_config = {
     60.0f,
     {0.0f, 0.0f, 0.0f}
 };
-
 
 struct SystemSettings current_settings = {
     0,      // minutesOffsetToUTC
@@ -37,46 +40,62 @@ struct SystemSettings current_settings = {
     "UTC",            // timezone_label
     0.0f              // mag_declination_deg
 };
+
 volatile bool settings_dirty = false;
 volatile uint32_t last_settings_change_ms = 0;
-extern "C" void load_settings(void) {
-    File file = get_active_fs().open("/settings.json", "r");
-    // Smart Fallback: If using SD but settings don't exist yet, try to load from FFat
-    if (!file && sd_card_mounted) {
-        file = FFat.open("/settings.json", "r");
-        if (file) Serial.println("Loaded settings.json from FFat fallback (will save to SD later)");
+
+static void apply_settings_doc(const JsonDocument &doc) {
+    if (!doc["minutesOffsetToUTC"].isNull()) current_settings.minutesOffsetToUTC = doc["minutesOffsetToUTC"];
+    if (!doc["brightness"].isNull()) current_settings.brightness = doc["brightness"];
+    if (!doc["volume"].isNull()) current_settings.volume = doc["volume"];
+    if (!doc["audio_gain"].isNull()) current_settings.audio_gain = doc["audio_gain"];
+    if (!doc["cycle_count"].isNull()) current_settings.cycle_count = doc["cycle_count"];
+    if (!doc["is_muted"].isNull()) current_settings.is_muted = doc["is_muted"];
+    if (!doc["auto_tare_on"].isNull()) current_settings.auto_tare_on = doc["auto_tare_on"];
+    if (!doc["audio_base_freq"].isNull()) current_settings.audio_base_freq = doc["audio_base_freq"];
+    if (!doc["audio_max_freq"].isNull()) current_settings.audio_max_freq = doc["audio_max_freq"];
+    if (!doc["audio_min_range_nT"].isNull()) current_settings.audio_min_range_nT = doc["audio_min_range_nT"];
+    if (!doc["audio_waveform"].isNull()) current_settings.audio_waveform = doc["audio_waveform"];
+    if (!doc["wifi_ssid"].isNull()) {
+        strncpy(current_settings.wifi_ssid, doc["wifi_ssid"] | "", sizeof(current_settings.wifi_ssid) - 1);
+        current_settings.wifi_ssid[sizeof(current_settings.wifi_ssid) - 1] = '\0';
     }
-    
-    if (!file) {
+    if (!doc["wifi_password"].isNull()) {
+        strncpy(current_settings.wifi_password, doc["wifi_password"] | "", sizeof(current_settings.wifi_password) - 1);
+        current_settings.wifi_password[sizeof(current_settings.wifi_password) - 1] = '\0';
+    }
+    if (!doc["enable_serial_logging"].isNull()) current_settings.enable_serial_logging = doc["enable_serial_logging"];
+    const char *tz = doc["timezonelabel"] | (doc["timezone_label"] | (const char *)NULL);
+    if (tz != NULL) {
+        strncpy(current_settings.timezone_label, tz, sizeof(current_settings.timezone_label) - 1);
+        current_settings.timezone_label[sizeof(current_settings.timezone_label) - 1] = '\0';
+    }
+    if (!doc["mag_declination_deg"].isNull()) current_settings.mag_declination_deg = doc["mag_declination_deg"];
+}
+
+extern "C" void load_settings(void) {
+    if (log_mux) xSemaphoreTake(log_mux, portMAX_DELAY);
+    JsonDocument doc;
+    bool loaded = false;
+    if (sd_card_mounted) {
+        loaded = fic_json_load_with_recovery(SD, "/settings.json", "/settings.json.bak", "/settings.json.tmp", doc, NULL);
+    }
+    if (!loaded) {
+        loaded = fic_json_load_with_recovery(FFat, "/settings.json", "/settings.json.bak", "/settings.json.tmp", doc, NULL);
+        if (loaded && sd_card_mounted) {
+            Serial.println("Loaded settings.json from FFat fallback (will save to SD later)");
+        }
+    }
+    if (log_mux) xSemaphoreGive(log_mux);
+
+    if (!loaded) {
         Serial.println("No settings.json found, using defaults.");
         return;
     }
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, file);
-    if (!error) {
-        if (!doc["minutesOffsetToUTC"].isNull()) current_settings.minutesOffsetToUTC = doc["minutesOffsetToUTC"];
-        if (!doc["brightness"].isNull()) current_settings.brightness = doc["brightness"];
-        if (!doc["volume"].isNull()) current_settings.volume = doc["volume"];
-        if (!doc["audio_gain"].isNull()) current_settings.audio_gain = doc["audio_gain"];
-        if (!doc["cycle_count"].isNull()) current_settings.cycle_count = doc["cycle_count"];
-        if (!doc["is_muted"].isNull()) current_settings.is_muted = doc["is_muted"];
-        if (!doc["auto_tare_on"].isNull()) current_settings.auto_tare_on = doc["auto_tare_on"];
-        if (!doc["audio_base_freq"].isNull()) current_settings.audio_base_freq = doc["audio_base_freq"];
-        if (!doc["audio_max_freq"].isNull()) current_settings.audio_max_freq = doc["audio_max_freq"];
-        if (!doc["audio_min_range_nT"].isNull()) current_settings.audio_min_range_nT = doc["audio_min_range_nT"];
-        if (!doc["audio_waveform"].isNull()) current_settings.audio_waveform = doc["audio_waveform"];
-        if (!doc["wifi_ssid"].isNull()) strncpy(current_settings.wifi_ssid, doc["wifi_ssid"], sizeof(current_settings.wifi_ssid) - 1);
-        if (!doc["wifi_password"].isNull()) strncpy(current_settings.wifi_password, doc["wifi_password"], sizeof(current_settings.wifi_password) - 1);
-        if (!doc["enable_serial_logging"].isNull()) current_settings.enable_serial_logging = doc["enable_serial_logging"];
-        if (!doc["timezonelabel"].isNull()) strncpy(current_settings.timezone_label, doc["timezonelabel"], sizeof(current_settings.timezone_label) - 1);
-        if (!doc["mag_declination_deg"].isNull()) current_settings.mag_declination_deg = doc["mag_declination_deg"];
-    }
-    file.close();
+    apply_settings_doc(doc);
 }
 
 extern "C" void save_settings(void) {
-    File file = get_active_fs().open("/settings.json", "w");
-    if (!file) return;
     JsonDocument doc;
     doc["minutesOffsetToUTC"] = current_settings.minutesOffsetToUTC;
     doc["brightness"] = current_settings.brightness;
@@ -94,144 +113,137 @@ extern "C" void save_settings(void) {
     doc["enable_serial_logging"] = current_settings.enable_serial_logging;
     doc["timezonelabel"] = current_settings.timezone_label;
     doc["mag_declination_deg"] = current_settings.mag_declination_deg;
-    
+
     String output;
     serializeJson(doc, output);
-    file.print(output);
-    file.close();
-    
-    // Mirror to FFat if SD card is currently active (ensure internal storage is always up to date)
+
+    if (log_mux) xSemaphoreTake(log_mux, portMAX_DELAY);
+    bool sd_ok = false;
     if (sd_card_mounted) {
-        File ffat_file = FFat.open("/settings.json", "w");
-        if (ffat_file) {
-            ffat_file.print(output);
-            ffat_file.close();
-        }
+        sd_ok = fic_json_write_atomic(SD, "/settings.json", "/settings.json.bak", "/settings.json.tmp", output, NULL);
     }
-    if (sd_card_mounted) {
+    // Mirror to FFat so internal storage always retains latest settings
+    fic_json_write_atomic(FFat, "/settings.json", "/settings.json.bak", "/settings.json.tmp", output, NULL);
+    if (log_mux) xSemaphoreGive(log_mux);
+
+    if (sd_card_mounted && sd_ok) {
         Serial.println("Settings saved to SD Card.");
     } else {
         Serial.println("Settings saved to FFat.");
     }
 }
 
-// Days in month lookup (non-leap year)
-
 extern "C" void init_wifi_logger(void) {
     if (log_mux == NULL) {
         log_mux = xSemaphoreCreateMutex();
     }
+    fic_fs_set_mutex(log_mux);
     load_settings();
 }
 
 extern "C" void load_calibration(void) {
-    File file = get_active_fs().open("/calibration.json", "r");
-    // Smart Fallback: If using SD but cal doesn't exist yet, try to load from FFat
-    if (!file && sd_card_mounted) {
-        file = FFat.open("/calibration.json", "r");
-        if (file) Serial.println("Loaded calibration.json from FFat fallback (will save to SD later)");
+    if (log_mux) xSemaphoreTake(log_mux, portMAX_DELAY);
+    JsonDocument doc;
+    bool loaded = false;
+    if (sd_card_mounted) {
+        loaded = fic_json_load_with_recovery(SD, "/calibration.json", "/calibration.json.bak", "/calibration.json.tmp", doc, NULL);
     }
-    
-    if (!file) {
+    if (!loaded) {
+        loaded = fic_json_load_with_recovery(FFat, "/calibration.json", "/calibration.json.bak", "/calibration.json.tmp", doc, NULL);
+        if (loaded && sd_card_mounted) {
+            Serial.println("Loaded calibration.json from FFat fallback (will save to SD later)");
+        }
+    }
+    if (log_mux) xSemaphoreGive(log_mux);
+
+    if (!loaded) {
         Serial.println("No calibration.json found. Creating default...");
         return;
     }
-    
-    JsonDocument doc;
-    DeserializationError err = deserializeJson(doc, file);
-    if (!err) {
-        if(doc["ref_hard"].is<JsonArray>()) {
-            JsonArray arr = doc["ref_hard"].as<JsonArray>();
-            for(int i=0; i<3; i++) cal_config.ref_hard[i] = arr[i];
-        }
-        if(doc["ref_soft"].is<JsonArray>()) {
-            JsonArray arr = doc["ref_soft"].as<JsonArray>();
-            for(int i=0; i<3; i++) {
-                JsonArray row = arr[i].as<JsonArray>();
-                for(int j=0; j<3; j++) cal_config.ref_soft[i][j] = row[j];
-            }
-        }
-        if(doc["tip_hard"].is<JsonArray>()) {
-            JsonArray arr = doc["tip_hard"].as<JsonArray>();
-            for(int i=0; i<3; i++) cal_config.tip_hard[i] = arr[i];
-        }
-                if(doc["gyr_offset"].is<JsonArray>()) {
-            JsonArray arr = doc["gyr_offset"].as<JsonArray>();
-            for(int i=0; i<3; i++) cal_config.gyr_offset[i] = arr[i];
-        }
-        if(doc["tip_soft"].is<JsonArray>()) {
-            JsonArray arr = doc["tip_soft"].as<JsonArray>();
-            for(int i=0; i<3; i++) {
-                JsonArray row = arr[i].as<JsonArray>();
-                for(int j=0; j<3; j++) cal_config.tip_soft[i][j] = row[j];
-            }
-        }
-        if(!doc["imu_rotation_deg"].isNull()) {
-            cal_config.imu_rotation_deg = doc["imu_rotation_deg"];
+
+    if (doc["ref_hard"].is<JsonArray>()) {
+        JsonArray arr = doc["ref_hard"].as<JsonArray>();
+        for (int i = 0; i < 3; i++) cal_config.ref_hard[i] = arr[i];
+    }
+    if (doc["ref_soft"].is<JsonArray>()) {
+        JsonArray arr = doc["ref_soft"].as<JsonArray>();
+        for (int i = 0; i < 3; i++) {
+            JsonArray row = arr[i].as<JsonArray>();
+            for (int j = 0; j < 3; j++) cal_config.ref_soft[i][j] = row[j];
         }
     }
-    file.close();
+    if (doc["tip_hard"].is<JsonArray>()) {
+        JsonArray arr = doc["tip_hard"].as<JsonArray>();
+        for (int i = 0; i < 3; i++) cal_config.tip_hard[i] = arr[i];
+    }
+    if (doc["gyr_offset"].is<JsonArray>()) {
+        JsonArray arr = doc["gyr_offset"].as<JsonArray>();
+        for (int i = 0; i < 3; i++) cal_config.gyr_offset[i] = arr[i];
+    }
+    if (doc["tip_soft"].is<JsonArray>()) {
+        JsonArray arr = doc["tip_soft"].as<JsonArray>();
+        for (int i = 0; i < 3; i++) {
+            JsonArray row = arr[i].as<JsonArray>();
+            for (int j = 0; j < 3; j++) cal_config.tip_soft[i][j] = row[j];
+        }
+    }
+    if (!doc["imu_rotation_deg"].isNull()) {
+        cal_config.imu_rotation_deg = doc["imu_rotation_deg"];
+    }
 }
 
 extern "C" void save_calibration(float ref_hard[3], float ref_soft[3][3], float tip_hard[3], float tip_soft[3][3]) {
-    File file = get_active_fs().open("/calibration.json", "w");
-    if (!file) {
-        Serial.println("Failed to open calibration.json for writing");
-        return;
-    }
-    
     JsonDocument doc;
     doc["calibration_type"] = "Magneto 1.2";
-    
-    // Add missing tags to match Python script
-    // Note: Arduino millis() isn't unix epoch, but the Python script expects a number here, or it can be a 0 placeholder.
-    // Or we can just use 0, since it's just a timestamp reference.
-    doc["calibration_date_ms"] = millis(); 
-    
+    doc["calibration_date_ms"] = millis();
+
     extern void get_formatted_timestamp(char* buffer, size_t max_len, bool include_ms);
     char time_str[64];
     get_formatted_timestamp(time_str, sizeof(time_str), false);
-    // Replace underscores and hyphens in the filename-safe timestamp to match standard YYYY-MM-DD HH:MM:SS if possible
-    // actually, let's just use the timestamp as is (YYYY-MM-DD_HH-MM-SS)
     doc["calibration_date"] = time_str;
-    
     doc["matrix_version"] = "2.0";
-    
+
     JsonArray rh = doc["ref_hard"].to<JsonArray>();
-    for(int i=0; i<3; i++) rh.add(ref_hard[i]);
-    
+    for (int i = 0; i < 3; i++) rh.add(ref_hard[i]);
+
     JsonArray rs = doc["ref_soft"].to<JsonArray>();
-    for(int i=0; i<3; i++) {
+    for (int i = 0; i < 3; i++) {
         JsonArray row = rs.add<JsonArray>();
-        for(int j=0; j<3; j++) row.add(ref_soft[i][j]);
+        for (int j = 0; j < 3; j++) row.add(ref_soft[i][j]);
     }
-    
+
     JsonArray th = doc["tip_hard"].to<JsonArray>();
-    for(int i=0; i<3; i++) th.add(tip_hard[i]);
-    
+    for (int i = 0; i < 3; i++) th.add(tip_hard[i]);
+
     doc["tip_soft_note"] = "Matrix includes Kabsch rotational alignment to match the Reference sensor.";
-    
+
     JsonArray go = doc["gyr_offset"].to<JsonArray>();
-    for(int i=0; i<3; i++) go.add(cal_config.gyr_offset[i]);
-    
+    for (int i = 0; i < 3; i++) go.add(cal_config.gyr_offset[i]);
+
     JsonArray ts = doc["tip_soft"].to<JsonArray>();
-    for(int i=0; i<3; i++) {
+    for (int i = 0; i < 3; i++) {
         JsonArray row = ts.add<JsonArray>();
-        for(int j=0; j<3; j++) row.add(tip_soft[i][j]);
+        for (int j = 0; j < 3; j++) row.add(tip_soft[i][j]);
     }
-    
+
     doc["imu_rotation_deg"] = cal_config.imu_rotation_deg;
-    
-    serializeJson(doc, file);
-    file.close();
-    
-    // Mirror to FFat if SD card is currently active (ensure internal storage is always calibrated)
+
+    String output;
+    serializeJson(doc, output);
+
+    if (log_mux) xSemaphoreTake(log_mux, portMAX_DELAY);
+    bool wrote = false;
     if (sd_card_mounted) {
-        File ffat_file = FFat.open("/calibration.json", "w");
-        if (ffat_file) {
-            serializeJson(doc, ffat_file);
-            ffat_file.close();
-        }
+        wrote = fic_json_write_atomic(SD, "/calibration.json", "/calibration.json.bak", "/calibration.json.tmp", output, NULL);
     }
-    Serial.println("Calibration saved!");
+    if (fic_json_write_atomic(FFat, "/calibration.json", "/calibration.json.bak", "/calibration.json.tmp", output, NULL)) {
+        wrote = true;
+    }
+    if (log_mux) xSemaphoreGive(log_mux);
+
+    if (wrote) {
+        Serial.println("Calibration saved!");
+    } else {
+        Serial.println("Failed to open calibration.json for writing");
+    }
 }

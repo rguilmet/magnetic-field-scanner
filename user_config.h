@@ -78,7 +78,7 @@
 
 #define USER_DISP_ROT_90    1
 #define USER_DISP_ROT_NONO  0
-#define MFS_FIRMWARE_VERSION "v5.1.13"
+#define MFS_FIRMWARE_VERSION "v6.0.0"
 
 #define Rotated USER_DISP_ROT_NONO   
 
@@ -91,33 +91,6 @@
 #define LVGL_SPIRAM_BUFF_LEN (MFS_LCD_H_RES * MFS_LCD_V_RES * 2)
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

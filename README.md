@@ -1,7 +1,7 @@
 # Magnetic Field Scanner (MFS) Wand
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Firmware](https://img.shields.io/badge/Firmware-v5.1.4-green.svg)]()
+[![Firmware](https://img.shields.io/badge/Firmware-v6.0.0-green.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-ESP32--S3-orange.svg)]()
 [![Build](https://img.shields.io/badge/Build-Arduino%20|%20PlatformIO-lightgrey.svg)]()
 
@@ -145,19 +145,21 @@ The static control pins for the LCD and IMU were aggressively offloaded to the T
 ## How to Build & Deploy
 
 ### Prerequisites
-* **Environment:** Arduino IDE v2+ or VSCode/Arduino.
-* **Core:** ESP32 Board Package v3.3.x (ESP-IDF v5 based).
+* **Environment:** Arduino IDE v2+ or `arduino-cli`.
+* **Core:** ESP32 Board Package v3.3.x (`esp32:esp32`, ESP-IDF v5 based).
+* **Shared BSP Library:** [`Field_Instrument_Core`](https://github.com/rguilmet/field-instrument-core) `>= v1.1.0` installed under `Documents/Arduino/libraries/Field_Instrument_Core` (plus `lvgl v9.6.x`, `ArduinoJson v7.x`, and `SensorLib`).
+* **Standalone Pre-Core Archive:** The final self-contained standalone firmware release prior to `Field_Instrument_Core` extraction is preserved at Git tag `v5.1.15`.
 
 ### Board Settings (ESP32-S3 Dev Module)
-* **USB Mode:** Hardware CDC and JTAG
-* **PSRAM:** OPI PSRAM
+* **USB Mode:** Hardware CDC and JTAG (`USBMode=hwcdc,CDCOnBoot=cdc`)
+* **PSRAM:** OPI PSRAM (`PSRAM=opi`)
 * **Flash Mode:** QIO 80MHz
 * **Flash Size:** 16MB (128Mb)
 * **Partition Scheme:** Custom or `app3M_fat9M_16MB`
 * **Core Debug Level:** None (for performance)
 
 ### Compilation Note
-All code files adhere to a strict Semantic Versioning (`vX.Y.Z`) rule enforced at every file iteration. Ensure you are building the latest `user_config.h` baseline.
+All code files adhere to strict Semantic Versioning (`vX.Y.Z`) rules enforced at every iteration. Ensure you are building the latest `user_config.h` baseline alongside `Field_Instrument_Core >= v1.1.0`.
 
 ## Open Source & Contributing
 This project is open-sourced under the **GPLv3 License**. See [LICENSE](LICENSE) for details.
