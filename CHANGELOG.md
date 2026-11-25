@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+## [v6.0.1] - 2026-11-24
+### Fixed
+- **Real-Time Audio Isolation & Unified FreeRTOS Contract:** Elevated `task_audio_alert` (`AudioTask`) to `FIC_PRIO_AUDIO` (`4`) on `FIC_CORE_UI` (`1`), aligned `LVGL` to `FIC_PRIO_LVGL` (`3`, using `Field_Instrument_Core v1.1.1`'s `40`-row / `16`-strip QSPI DMA buffer), aligned `DisplayTask` / `mfs_button_pwr_task` to `FIC_PRIO_UI_FEED` (`2`) and `SensorTask` to `FIC_PRIO_UI_FEED` (`2`) on `FIC_CORE_ACQ` (`0`), eliminating Core 1 I2S DMA audio chopping during active HUD redraws.
+- **Background Persistence Safety:** Moved the `5 s` debounced `save_settings()` persistence from `task_display_update()` into Priority-1 `loop()` so SPI Flash `FFat` writes never stall UI updates.
+
 ## [v6.0.0] - 2026-11-24
 ### Changed
 - **Shared Core Library Migration (`Field_Instrument_Core v1.1.0`):** Migrated `Magnetic_Field_Scanner` onto `<Field_Instrument_Core.h>` + `<boards/waveshare_s3_349_v3.h>`, removing 11 duplicated internal BSP, codec, display, storage, sensor fusion, math, and web-portal directories (`src/PCF85063`, `src/axs15231b`, `src/codec_board`, `src/esp_codec_dev`, `src/i2c_bsp`, `src/imu_bsp`, `src/matrix_math`, `src/screenshot`, `src/tca9554`, `src/touch`, `src/web_server`). *(Pre-migration standalone firmware snapshot preserved at Git tag `v5.1.15`.)*

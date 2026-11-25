@@ -66,7 +66,7 @@
 #define LVGL_TASK_MAX_DELAY_MS 500
 #define LVGL_TASK_MIN_DELAY_MS 5
 #define LVGL_TASK_STACK_SIZE   (8 * 1024)
-#define LVGL_TASK_PRIORITY     2
+#define LVGL_TASK_PRIORITY     3
 
 /*bl test*/
 #define Backlight_Testing 0
@@ -78,7 +78,7 @@
 
 #define USER_DISP_ROT_90    1
 #define USER_DISP_ROT_NONO  0
-#define MFS_FIRMWARE_VERSION "v6.0.0"
+#define MFS_FIRMWARE_VERSION "v6.0.1"
 
 #define Rotated USER_DISP_ROT_NONO   
 

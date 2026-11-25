@@ -1,7 +1,7 @@
 # Magnetic Field Scanner (MFS) Wand
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Firmware](https://img.shields.io/badge/Firmware-v6.0.0-green.svg)]()
+[![Firmware](https://img.shields.io/badge/Firmware-v6.0.1-green.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-ESP32--S3-orange.svg)]()
 [![Build](https://img.shields.io/badge/Build-Arduino%20|%20PlatformIO-lightgrey.svg)]()
 

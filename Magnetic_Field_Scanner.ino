@@ -515,11 +515,6 @@ void task_display_update(void *pvParameters) {
     ui_data.cal_progress = 0;
 
     for (;;) {
-        // Auto-save debounce
-        if (settings_dirty && (millis() - last_settings_change_ms > 5000)) {
-            save_settings();
-            settings_dirty = false;
-        }
         // Wait for new data from the queue, blocking indefinitely
         if (xQueueReceive(gradientQueue, &ui_data, portMAX_DELAY) == pdPASS) {
             update_detector_ui(&ui_data);
@@ -871,7 +866,7 @@ void setup() {
     FicLvglDisplayCfg_t disp_cfg;
     fic_lvgl_cfg_from_board(&s_board_cfg, &disp_cfg);
     disp_cfg.task_stack_size   = LVGL_TASK_STACK_SIZE;
-    disp_cfg.task_priority     = LVGL_TASK_PRIORITY;
+    disp_cfg.task_priority     = FIC_PRIO_LVGL;
     disp_cfg.init_backlight_cb = init_backlight_pwm;
     disp_cfg.create_ui_cb      = create_detector_ui;
     fic_lvgl_port_init(&disp_cfg);
@@ -899,9 +894,9 @@ void setup() {
     pinMode(MFS_PIN_NUM_SYS_OUT, INPUT);
     button_Init();
 
-    // Power tasks
-    xTaskCreatePinnedToCore(mfs_button_pwr_task, "mfs_button_pwr_task", 4 * 1024, NULL, 2, NULL, 1);
-    xTaskCreatePinnedToCore(power_Test, "power_Test", 4 * 1024, NULL, 3, NULL, 1);
+    // Power tasks (Core 1 UI & power tier, matching unified FIC priority contract)
+    xTaskCreatePinnedToCore(mfs_button_pwr_task, "mfs_button_pwr_task", 4 * 1024, NULL, FIC_PRIO_UI_FEED, NULL, FIC_CORE_UI);
+    xTaskCreatePinnedToCore(power_Test, "power_Test", 4 * 1024, NULL, FIC_PRIO_UI_FEED, NULL, FIC_CORE_UI);
 
     Serial.println("Configuring Wand Sensors on Hardware I2C Bus...");
 
@@ -921,14 +916,20 @@ void setup() {
                   (unsigned)heap_caps_get_free_size(MALLOC_CAP_DMA),
                   (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024U));
 
-    xTaskCreatePinnedToCore(task_sensor_read, "SensorTask", 4096, NULL, 2, NULL, 0);
-    xTaskCreatePinnedToCore(task_display_update, "DisplayTask", 8192, NULL, 1, NULL, 1);
-    xTaskCreatePinnedToCore(task_audio_alert, "AudioTask", 4096, NULL, 1, NULL, 1);
-    xTaskCreatePinnedToCore(task_battery_monitor, "BatteryTask", 2048, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(task_sensor_read, "SensorTask", 4096, NULL, FIC_PRIO_UI_FEED, NULL, FIC_CORE_ACQ);
+    xTaskCreatePinnedToCore(task_audio_alert, "AudioTask", 4096, NULL, FIC_PRIO_AUDIO, NULL, FIC_CORE_UI);
+    xTaskCreatePinnedToCore(task_display_update, "DisplayTask", 8192, NULL, FIC_PRIO_UI_FEED, NULL, FIC_CORE_UI);
+    xTaskCreatePinnedToCore(task_battery_monitor, "BatteryTask", 2048, NULL, FIC_PRIO_BACKGROUND, NULL, FIC_CORE_UI);
 }
 
 void loop() {
     fic_web_portal_handle();
+
+    // Debounced 5s settings persistence strictly on Priority-1 background loop() (never on UI tasks)
+    if (settings_dirty && ((int32_t)(millis() - last_settings_change_ms) > 5000)) {
+        settings_dirty = false;
+        save_settings();
+    }
 
     // BOOT Button Screenshot Trigger
     static uint32_t btn_press_start = 0;
