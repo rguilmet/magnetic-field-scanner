@@ -19,7 +19,7 @@ Powered by an ESP32-S3 and utilizing dual PNI RM3100 magneto-inductive sensors, 
   <img src="docs/images/Magnetic%20Field%20Scanner%20-%20Display%20View%20(20260914_123335).png" alt="Magnetic Field Scanner LCD Display View" width="80%" />
 </p>
 
-| ![HUD Interface - RAW Mode](docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.-%20v5.1.13.png) | ![HUD Interface - AUTO Mode](docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20AUTO%20-%20v5.1.13.png) | ![System Hardware and Diagnostics Screen](docs/images/Magnetic%20Field%20Scanner%20-%20System%20%26%20Hardware%20-%20800%20CC%20-%20v5.1.13..png) |
+| ![HUD Interface - RAW Mode](docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW%20-%20v5.1.13.png) | ![HUD Interface - AUTO Mode](docs/images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20AUTO%20-%20v5.1.13.png) | ![System Hardware and Diagnostics Screen](docs/images/Magnetic%20Field%20Scanner%20-%20System%20%26%20Hardware%20-%20800%20CC%20-%20v5.1.13..png) |
 |:---:|:---:|:---:|
 
 ## Hardware Configuration

@@ -14,7 +14,7 @@ Welcome to the User Manual for the Magnetic Field Scanner (MFS). This guide will
 The MFS features a touchscreen interface driven by LVGL. The interface is designed for rapid field use and zero-latency feedback.
 
 ### Main Dashboard
-| ![RAW Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW.-%20v5.1.13.png) | ![TARE Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20TARE%20-%20v5.1.13.png) | ![AUTO Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20AUTO%20-%20v5.1.13.png) |
+| ![RAW Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20RAW%20-%20v5.1.13.png) | ![TARE Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20TARE%20-%20v5.1.13.png) | ![AUTO Mode](images/Magnetic%20Field%20Scanner%20-%20Main%20Screen%20-%20AUTO%20-%20v5.1.13.png) |
 |:---:|:---:|:---:|
 
 * **Polargraphic Display:** A logarithmic sweeping arc that dynamically tracks the spatial gradient from 0 to over 1,000,000 nT without pegging. 
