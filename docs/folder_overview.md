@@ -1,7 +1,7 @@
 # Repository Review & Publishing Guide (Updated)
 
-**Document Version:** `v1.4.0`
-**Last Updated:** September 14, 2026
+**Document Version:** `v1.5.0`
+**Last Updated:** November 24, 2026
 
 **Objective:** Assess the project structure to determine readiness for GitHub and Hackaday, and provide a roadmap to round it out for the global open-source community.
 
@@ -19,7 +19,7 @@ The ability to perform a 9x9 Jacobi eigenvalue solver and a 3D Kabsch rotational
 * **`characterization/`:** Replaced the obsolete `example_logs` and `golden-files`. It serves as the ultimate testing ground containing highly structured, multi-CC logs (noise, rebar, saturation, ahrs) for mathematically proving the `v5.1.x` architecture.
 * **`docs/reports/`:** A fully consolidated output directory where the Python ecosystem dynamically saves all automatically generated Markdown analysis reports and Matplotlib graphs, eliminating root folder clutter.
 * **`scripts/`:** The offline Python ecosystem (`analyze_log.py`, `calibrate_wand.py`, `generate_plots.py`) is completely commercial-grade, featuring `argparse` CLIs, Windows path sanitization, and independent SemVer (`v1.0.0`).
-* **`src/`:** Excellent modularization of the C++ components (`matrix_math`, `wifi_logger`, `lvgl_port`, etc.).
+* **`src/`:** Sketch-local C/C++ application modules (`button_bsp/`, `data_logger/`, split `lvgl_port/mfs_ui_{create,update}.c`, `sensor_fusion/`, `settings_manager/`), paired with the shared [`Field_Instrument_Core`](https://github.com/rguilmet/field-instrument-core) Arduino library (`v1.1.1`) for hardware BSP, I2C recovery, LVGL port, codec, RTC, matrix/AHRS math, lock-free screenshots, atomic JSON storage, and the web portal.
 
 ## 3. Open-Source Replication Assets
 To make this a top-tier Hackaday project, the repository provides a complete path for someone else to replicate your electrical build:
@@ -43,7 +43,7 @@ To make this a top-tier Hackaday project, the repository provides a complete pat
 ## 5. Publishing Checklist
 
 ### What You Have (Ready)
-- [x] Functional, stable firmware (v5.1.4)
+- [x] Functional, stable firmware (`v6.0.1` on `Field_Instrument_Core v1.1.1`; standalone snapshot tagged `v5.1.15`)
 - [x] Advanced DSP math & On-Device Calibration
 - [x] Professional Python CLI visualization and calibration scripts (`scripts/`)
 - [x] Open-source License (GPLv3)

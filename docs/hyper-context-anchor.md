@@ -1,9 +1,9 @@
 # Hyper-Context Anchor
 
 ## 1. CORE TECHNICAL ARCHITECTURE & STACK
-* **Hardware:** Waveshare ESP32-S3 Touch LCD 3.49 v2 [PCBA silkscreen v1.1] (PMIC requires `SYS_EN` latch on boot via TCA9554 IO Expander), Dual PNI RM3100 Magnetometers (Tip and Reference), 60-inch CAT6 cable with parallel 4.7K pull-ups, QMI8658 (LSM6DS3) IMU.
-* **Firmware:** FreeRTOS zero-latency ISR architecture. Sensor reads are triggered by `DRDY` hardware interrupts mapped to FreeRTOS EventGroups (`drdy_event_group`).
-* **UI:** LVGL graphics library. Custom layouts driven by physical constraints (e.g., Gradiometer VuMeter arc, dynamic color palette for depth/speed, N/S/E/W minimap based on IMU azimuth).
+* **Hardware:** Waveshare ESP32-S3 Touch LCD 3.49 v3 (`172x640` QSPI LCD + `I2C1` `0x3B` touch; `TCA9554` requires early `EXIO6` `SYS_EN` latch on boot), Dual PNI RM3100 Magnetometers (`Tip` `0x23` and `Ref` `0x21`, 60-inch CAT6 with `4.7K` pull-ups on `I2C0` @ `200 kHz`), `QMI8658` (`0x6B`) IMU, `PCF85063` (`0x51`) RTC.
+* **Firmware & Shared Core:** Built on [`Field_Instrument_Core`](https://github.com/rguilmet/field-instrument-core) (`v1.1.1`) using unified FreeRTOS dual-core allocation: `FIC_CORE_ACQ` (`0`) for `SensorTask` (`DRDY` ISR `drdy_event_group`, `FIC_PRIO_UI_FEED = 2`); `FIC_CORE_UI` (`1`) for `AudioTask` (`FIC_PRIO_AUDIO = 4`), `LVGL` (`FIC_PRIO_LVGL = 3`), `DisplayTask` (`FIC_PRIO_UI_FEED = 2`), and Priority-1 `loop()` background web portal + debounced `save_settings()`.
+* **UI & Memory:** LVGL `9.6.0` split UI (`mfs_ui_create.c` / `mfs_ui_update.c`) with `heap_caps_malloc_extmem_enable(64)` -> `4096` PSRAM widget routing, spinlock-buffered Wi-Fi status updates, and lock-free `fic_screenshot_save_bmp()`.
 * **Constraints:** 
   - I2C bus speed strictly capped at `200KHz` (CAT6 cable RC time constant causes data corruption at 400KHz).
   - SD Card SPI flash writes block the CPU for up to 20ms, meaning high-speed hardware cycles (e.g., 200cc at 150Hz) must be frame-decimated for logging to prevent lockups.

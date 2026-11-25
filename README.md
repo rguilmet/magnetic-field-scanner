@@ -70,31 +70,31 @@ Used to handle low-speed/static signals to conserve MCU pins:
 
 ---
 
-## Software Architecture (v5.x.x)
+## Software Architecture (v6.x)
 
-The software is built on the Arduino ESP32 Core but heavily utilizes ESP-IDF native features and FreeRTOS for professional-grade isolation and performance.
+Built on top of [`Field_Instrument_Core`](https://github.com/rguilmet/field-instrument-core) (`>= v1.1.1`) and FreeRTOS under a unified dual-core & memory contract:
 
-### 1. Synchronized POLL Architecture & FreeRTOS
-The `v5.x.x` architecture completely eliminates I2C collisions and phase-drift by orchestrating synchronized measurements:
-* **POLL Mode:** The ESP32 broadcasts a simultaneous `REG_POLL` command to both RM3100 sensors across the I2C bus.
-* **Event Groups (Core 0):** The Sensor Task sleeps at 0% CPU until both hardware `DRDY` GPIO interrupts assert, guaranteeing absolute temporal synchronization between the Tip and Reference sensors before reading.
-* **LVGL UI Task (Core 1):** Handles display rendering, capacitive touch input, and real-time radar / minimap animations without interrupting the rigid I2C sensor polling pipeline.
+### 1. Synchronized POLL Architecture & Unified FreeRTOS Contract
+The `v6.x` architecture delegates hardware BSP, I2C fault recovery, LVGL port/PSRAM isolation, RTC, web portal, 9-DOF Madgwick math, matrix calibration math, and lock-free BMP screenshots to `Field_Instrument_Core`:
+* **Core `0` (`FIC_CORE_ACQ`):** Runs the Wi-Fi/TCP-IP stack and `SensorTask` (`FIC_PRIO_UI_FEED = 2`). `SensorTask` broadcasts simultaneous `REG_POLL` commands across `I2C0` (`200 kHz`) and sleeps at `0%` CPU until both hardware `DRDY` GPIO interrupts assert before reading `Tip` (`0x23`), `Ref` (`0x21`), and `QMI8658` (`0x6B`).
+* **Core `1` (`FIC_CORE_UI`):** Strictly prioritizes real-time I2S `ES8311` audio (`AudioTask` at `FIC_PRIO_AUDIO = 4`) above `LVGL` rendering (`FIC_PRIO_LVGL = 3` with `16`-strip `<= 16 KB` DMA flushes and `I2C1` `0x3B` touch), UI feed / power tasks (`DisplayTask`, `mfs_button_pwr_task` at `FIC_PRIO_UI_FEED = 2`), and Priority-1 `loop()` background web portal polling + `5 s` debounced `save_settings()` persistence.
+* **Resilient `I2C0`/`I2C1` & Internal `DRAM0` Isolation:** Enforces recursive bus mutexes, 18-clock GPIO SCL bus-clear, sentinel glitch detection, and RM3100 `I2C0` recovery hooks, while routing LVGL widget allocations `>= 64 B` to Octal PSRAM (`16%` static `DRAM0` / `~162 KB` free internal heap post-setup).
 
 ### 2. Deep Mathematics: Kabsch & Madgwick Algorithms
-To achieve military-grade spatial accuracy, the ESP32 natively executes advanced matrix mathematics and 9-axis sensor fusion:
-* **Kabsch Rotational Alignment:** The system applies a 9-parameter Least-Squares Ellipsoid Fit (using a Jacobi Eigenvalue solver and the Kabsch Algorithm) to correct for Hard and Soft Iron magnetic distortions caused by the battery and LCD.
-* **Madgwick 9-Axis Sensor Fusion:** The raw 3-axis Tip magnetometer data is fused with the QMI8658's 6-axis IMU (Accelerometer and Gyroscope) via an asynchronous Madgwick AHRS filter. This provides real-time Pitch, Roll, and Yaw (Azimuth) compensation to project the magnetic vector accurately to the Earth's gravity vector.
-* **Universal Domain Shifting:** The `v5.1.x` architecture converts raw sensor LSBs into normalized physical nanoTeslas (nT) *before* applying the Kabsch calibration matrix. Because the matrix becomes mathematically dimensionless, a single calibration profile works universally across ALL Cycle Counts (12 to 3200).
+To achieve survey-grade spatial accuracy, the ESP32 executes ellipsoid matrix calibration and 9-axis sensor fusion using `Field_Instrument_Core`'s shared math primitives:
+* **Kabsch Rotational Alignment (`fic_matrix_math.h`):** Runs a 9-parameter Least-Squares Ellipsoid Fit (Jacobi Eigenvalue solver + `kabsch_align_3x3_f32()`) to correct Hard and Soft Iron magnetic distortions caused by the battery and LCD.
+* **Instance-Safe Madgwick 9-DOF (`fic_ahrs_9dof.h`):** `SensorFusion` encapsulates `Ahrs9DofState_t` (`ahrs_9dof_madgwick_9dof()`) to fuse Tip/Ref magnetometers with QMI8658 accelerometer and gyroscope data, projecting the gradient vector onto Earth's gravity vector.
+* **Universal Domain Shifting:** Converts raw sensor LSBs into normalized physical nanoTeslas (`nT`) *before* applying Kabsch calibration matrices so a single profile scales across all Cycle Counts (`200` to `3200`).
 
 ### 3. Polargraphic Display & UI Scaling
-The LVGL Gradiometer UI features a true Log10 Polargraphic Arc that displays the vertical gradient (`trueZ`). The left side (Blue) represents a negative vertical gradient (the 'halo' outside a pin), and the right side (Red) represents a positive vertical gradient (dead-center over a pin).
-* **RAW Mode:** Displays the absolute, unadulterated magnetic gradient. The Log10 scale easily absorbs the baseline physical misalignment of the sensors (typically ~4,900 nT) without pinning the needle.
-* **TARE Mode:** Manual zeroing of the baseline. It memorizes the current environmental gradient shadow and subtracts it from future readings, allowing extreme sensitivity to tiny localized anomalies.
-* **AUTO Mode:** Engages an invisible low-pass filter (triggered under `150 nT`) that acts as an aggressive Auto-Tare to slowly eat away temperature drift and background anomalies while ignoring the sharp gradients of a real target.
+The split LVGL `9.6.0` HUD (`mfs_ui_create.c` / `mfs_ui_update.c`) features a Log10 Polargraphic Arc showing vertical gradient polarity (`trueZ`): left (Blue) for negative vertical gradient ('halo' outside a pin), right (Red) for positive vertical gradient (centered over a pin).
+* **RAW Mode:** Displays the absolute magnetic gradient while absorbing mechanical sensor misalignment offsets.
+* **TARE Mode:** Manual baseline zeroing for maximum sensitivity around localized targets.
+* **AUTO Mode:** Slowly adapts out thermal and geologic drift below threshold while preserving sharp dipole spikes.
 
-### 4. Dual-Drive Filesystem & Integrated Web Server
-* **Smart Fallback:** Dynamically routes file I/O to the high-speed SD Card, or falls back to Internal FFat if the card is missing or corrupted.
-* **Captive Portal:** Hosts a Web Server allowing seamless download of `.csv` characterization logs and upload of `calibration.json` profiles.
+### 4. Dual-Drive Filesystem & Shared Web Portal
+* **Atomic Persistence (`fic_settings_json`):** `settings.json` and `calibration.json` use atomic `.tmp` + read-back length verify + `.bak` writes mirrored from SD primary (`SPI`) to internal `FFat` fallback.
+* **Captive Portal (`fic_web_portal`):** Core 1 HTTP portal supporting sortable CSV logs, lock-free BMP screenshots (`fic_screenshot`), NTP RTC sync, and OTA calibration uploads with deadlock-free spinlock status buffering.
 
 ---
 

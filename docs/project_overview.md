@@ -1,8 +1,8 @@
-# Magnetic Field Scanner - Project Overview
+﻿# Magnetic Field Scanner - Project Overview
 
-**Document Version:** `v1.4.0`
-**Last Updated:** October 06, 2026
-**Firmware Target:** `v5.1.15`
+**Document Version:** `v1.5.0`
+**Last Updated:** November 24, 2026
+**Firmware Target:** `v6.0.1` (`Field_Instrument_Core v1.1.1`; standalone snapshot tagged `v5.1.15`)
 **Python Ecosystem Target:** `v1.1.1`
 
 This document serves as the master source of truth for the Magnetic Field Scanner project. It details the mechanical assembly, electrical wiring, pinouts, firmware architecture, critical pitfalls to avoid in future development, and the roadmap for upcoming features.
@@ -60,13 +60,12 @@ Due to the physical mounting of the breakout boards inside the wand, the RM3100 
 * +Z Axis: Points **Down** (Into the ground)
 
 **The Translation Key:**
-To safely feed the Magnetometer data into the Right-Handed 9-DOF Madgwick algorithm, the software applies the following mathematical mapping to the RM3100 (
-efX_cal, refY_cal, refZ_cal) values:
-`c
+To safely feed the Magnetometer data into the Right-Handed 9-DOF Madgwick algorithm, the software applies the following mathematical mapping to the RM3100 (`refX_cal`, `refY_cal`, `refZ_cal`) values:
+```c
 float mag_x =  (float)ref.y;  // Maps RM3100 Forward to IMU Forward
 float mag_y = -(float)ref.x;  // Maps RM3100 Right to IMU Left
 float mag_z = -(float)ref.z;  // Maps RM3100 Down to IMU Up
-`
+```
 This permanently locks the Quaternions to True Magnetic North for accurate post-analysis mapping.
 *(Please place your mechanical drawing in a folder named `docs` in the project root and name it `mechanical_drawing.png` or update this link to point to it).*
 ![Mechanical Drawing of Wand and Waveshare](mechanical_drawing.png)
@@ -101,30 +100,31 @@ For the full visual diagram, reference the spreadsheet: docs/electrical/Cable_Co
 ### I2C Architecture & Device Addresses
 The wand utilizes two completely separate hardware I2C buses to isolate the sensitive long-wire sensors from the noisy high-speed screen components.
 
-#### 1. I2C0 (External Sensor Bus)
-* **Purpose:** Drives the long wire harness running down the 3-foot fiberglass tube to the RM3100 sensors.
-* **Speed:** Hardcoded to **100kHz** to fight cable capacitance.
+#### 1. I2C0 (Shared Sensor & Onboard Peripheral Bus)
+* **Purpose:** Drives the onboard SMD peripherals alongside the long CAT6 harness down the 3-foot fiberglass tube to the RM3100 sensors (protected by `Field_Instrument_Core` `fic_i2c_bsp` recursive mutexes, 18-clock GPIO SCL bus-clear, and runtime recovery hooks).
+* **Speed:** Configured in `waveshare_s3_349_v3.h` at **200kHz** (`scl_wait_us = 20000`) to balance CAT6 cable capacitance against 150Hz polling bandwidth.
 * **Pins:** SCL: `48`, SDA: `47`
 * **Devices on Bus:**
+  * **TCA9554 I/O Expander:** `0x20`
+  * **RTC (PCF85063):** `0x51`
+  * **IMU (QMI8658):** `0x6B`
   * **RM3100 Tip:** `0x23` (DRDY: `GPIO 1`)
   * **RM3100 Ref:** `0x21` (DRDY: `GPIO 2`)
   * **RM3100 Mid (Future):** `0x22` (DRDY: `GPIO 5`) *(Reserved for planned 3rd sensor)*
-* **CRITICAL CONFLICT HISTORY (Address `0x20`):** Initially, an RM3100 was set to address `0x20`. This caused a total system failure because the Waveshare board has an undocumented internal I/O Expander hardcoded to `0x20`. **Never use `0x20` on the sensor bus**, even though the buses are logically separated; we mapped the RM3100s to `0x21`, `0x22`, and `0x23` to safely avoid any internal hardware routing conflicts.
+* **CRITICAL CONFLICT HISTORY (Address `0x20`):** The Waveshare TCA9554 I/O Expander occupies `0x20`. **Never assign an RM3100 sensor to `0x20`**; the external magnetometers are mapped to `0x21`, `0x22`, and `0x23`.
 
-#### 2. I2C1 (Internal Waveshare Bus)
-* **Purpose:** Local communication for the Waveshare board's integrated SMD components.
+#### 2. I2C1 (Isolated Display Touch Bus)
+* **Purpose:** Dedicated hardware I2C bus for the capacitive touch controller, isolated from long-cable magnetometer traffic.
+* **Speed:** **200kHz** (`waveshare_s3_349_v3.h`)
 * **Pins:** SCL: `18`, SDA: `17`
 * **Devices on Bus:**
-  * **Capacitive Touch Controller:** `0x3B`
-  * **RTC (PCF85063):** `0x51`
-  * **IMU (QMI8658):** `0x6B`
-  * **I/O Expander:** `0x20` *(The source of the conflict mentioned above)*
+  * **Capacitive Touch Controller (`AXS15231B`):** `0x3B`
 
-### Other Master Pinouts (Defined in `user_config.h`)
+### Other Master Pinouts (Defined in `user_config.h` & `waveshare_s3_349_v3.h`)
 
 | Component | Pin (GPIO) | Notes / Details |
 | :--- | :--- | :--- |
-| **SPI (SD Card)** | CS: `38`, MOSI: `39`, MISO: `40`, CLK: `41` | Used by `wifi_logger.cpp` to save `calibration.csv` and logs. |
+| **SPI (SD Card)** | CS: `38`, MOSI: `39`, MISO: `40`, CLK: `41` | Used by `data_logger.cpp` & `settings_manager.cpp` (with atomic `FFat` failover/mirroring). |
 | **GPS Module** | TX: `43`, RX: `44` | *Planned Future State.* |
 
 ---
@@ -172,10 +172,10 @@ The wand utilizes two completely separate hardware I2C buses to isolate the sens
 ---
 
 ## 5. Current State of the Project
-* **Core Functionality:** The Gradiometer math (`Tip - Ref`) is fully operational and extremely sensitive.
-* **On-Device Calibration:** Functional. `matrix_math.h` performs a 9x9 Jacobi eigenvalue solver and 3D ellipsoid fit using only local stack memory. It applies Kabsch alignment to precisely orient the Tip sensor onto the Reference sensor's frame, nullifying the 9-degree mechanical flex.
-* **Data Logging:** SD card saving is stable. Python companion scripts (`calibrate_wand.py` and `plot_pins.py`) can ingest `_log.csv` and `_calibration.csv` files to visualize the exact sweeping motions using IMU Gyroscope Z-axis tracking.
-* **Audio & UI:** LVGL runs successfully on Core 1 while the bitbanging/I2C sensor tasks run on Core 0. (Note: `lv_conf.h` must remain in the root directory due to library constraints).
+* **Core Functionality:** The Gradiometer math (`Tip - Ref`) is operational and shares its low-level hardware substrate with `RTK_Rover` through [`Field_Instrument_Core`](https://github.com/rguilmet/field-instrument-core) (`v1.1.1`).
+* **On-Device Calibration:** `data_logger.cpp` delegates 9-parameter ellipsoid fitting (`get_calibration_matrices()`), `kabsch_align_3x3_f32()`, and `mat_mult_3x3_float()` to `fic_matrix_math.h`, then persists `calibration.json` atomically via `fic_json_write_atomic()`.
+* **Data Logging:** SPI SD card logging (with `FFat` fallback) is stable. Python companion scripts (`calibrate_wand.py` and `analyze_log.py`) process `_log.csv` and `_calibration.csv` datasets cleanly.
+* **Audio & UI Separation:** `AudioTask` runs at `FIC_PRIO_AUDIO` (`4`) on `FIC_CORE_UI` (`1`) strictly above `LVGL` (`FIC_PRIO_LVGL = 3`, PSRAM-isolated `172x640` UI with `16`-strip `<= 16 KB` DMA flushes) while `SensorTask` runs on `FIC_CORE_ACQ` (`0`). (`lv_conf.h` remains in the sketch root.)
 
 ---
 
@@ -234,30 +234,25 @@ MEMS Gyroscopes (like the BMI270) suffer from thermal drift and high "g-sensitiv
 ## 9. Firmware Architecture & Single Responsibility Principle
 Following the Phase 3 structural refactor, the firmware heavily adheres to the **Single Responsibility Principle (SRP)**. Monolithic files have been rigorously decomposed to prevent cross-domain contamination, particularly between Core 0 (Sensor/SD) and Core 1 (UI/Web).
 
-### src/ Directory Breakdown:
-* **sensor_fusion/**: A dedicated, stateful C++ class that handles all 3D matrix algebra, auto-tare EMA filtering, Madgwick AHRS updates, and vector geometry for the radar dot. Extracts all dense math from the main `.ino` loop.
-* **data_logger/**: Solely responsible for writing CSV data to the SD card/FFat and handling file flushes.
-* **settings_manager/**: Exclusively manages the saving, loading, and JSON serialization of SystemSettings and CalibrationConfig.
-* **web_server/**: A pure UI/networking layer running on Core 1. It handles HTTP endpoints, file downloads, uploads, and OTA operations without directly touching hardware logic.
-* **screenshot/**: Isolated LVGL screen capture logic (RGB565 to BMP conversion).
-* **lvgl_port/**: Handles the physical drawing of the screen and UI layout.
-* **matrix_math/**: A pure, header-only implementation of the 9x9 Gaussian elimination and 3D Kabsch alignment algorithms.
-* **Hardware BSPs (i2c_bsp, imu_bsp, 
-tc_bsp)**: Board Support Packages that isolate the direct register-level I2C commands from the main business logic.
+### `Field_Instrument_Core` (`v1.1.1`) + Local `src/` Breakdown:
+* **Shared Core (`Documents/Arduino/libraries/Field_Instrument_Core`):** Provides `fic_board_types.h` / `waveshare_s3_349_v3.h`, `fic_i2c_bsp` (dual-bus locking + recovery), `esp_io_expander_tca9554`, `fic_qmi8658`, `fic_pcf85063`, `fic_lvgl_port`, lock-free `fic_screenshot`, `esp_codec_dev`/`codec_board`, `fic_matrix_math`, `fic_ahrs_9dof`, `fic_settings_json`, and `fic_web_portal`.
+* **`src/sensor_fusion/`:** Encapsulates per-instance `Ahrs9DofState_t` (`ahrs_9dof_madgwick_9dof()`), auto-tare EMA filtering, gyro FOC, and gradient projections (`SensorFusion`).
+* **`src/data_logger/`:** Manages SPI SD / `FFat` CSV logging, local timestamps (`fic_rtc_get_local_datetime()`), and on-wand calibration processing (`get_calibration_matrices()`, `kabsch_align_3x3_f32()`).
+* **`src/settings_manager/`:** Atomic `.tmp`/`.bak` persistence and recovery (`fic_json_write_atomic()`, `fic_json_load_with_recovery()`) for `settings.json` and `calibration.json` mirrored between SD and `FFat`.
+* **`src/lvgl_port/` (`mfs_ui_create.c`, `mfs_ui_update.c`, `lvgl_port.h`):** MFS HUD/Settings/Calibration UI (`172x640` LVGL `9.6.0`), using `fic_lvgl_port` display init and a `portMUX_TYPE` spinlock status buffer in `update_wifi_ip_label()` to avoid `lvgl_mux` deadlocks.
+* **`src/button_bsp/`:** Hardware power/BOOT button debounce and event groups.
 
-**Core Separation & Thread Safety:**
-* **Core 0 (Data/Hardware):** 	ask_sensor_read, 	ask_battery_monitor, 	ask_audio_alert. I2C reads and fast math.
-* **Core 1 (UI/Network):** 	ask_display_update (LVGL), mfs_button_pwr_task, WiFi server.
-* **Mutexes:** mfs_lvgl_lock() must be acquired before touching UI elements from Core 0. log_mux must be acquired before writing to logFile.
-
-
+**Unified FreeRTOS Core Separation & Thread Safety (`FIC_CORE_*` / `FIC_PRIO_*`):**
+* **Core `0` (`FIC_CORE_ACQ`):** `SensorTask` (`FIC_PRIO_UI_FEED = 2`, RM3100 DRDY + QMI8658 + `SensorFusion`) and Wi-Fi/TCP-IP stack.
+* **Core `1` (`FIC_CORE_UI`):** `AudioTask` (`FIC_PRIO_AUDIO = 4`, real-time ES8311 I2S TDM), `LVGL` (`FIC_PRIO_LVGL = 3`, `16`-strip DMA flush + `I2C1` touch), `DisplayTask` & power tasks (`FIC_PRIO_UI_FEED = 2`), and Priority-1 `loop()` + `BatteryTask` (`FIC_PRIO_BACKGROUND = 1`, handling HTTP requests, `5 s` debounced `save_settings()`, and lock-free `fic_screenshot_save_bmp()`).
+* **Mutexes:** `mfs_lvgl_lock()` (`fic_lvgl_lock()`) wraps `LVGL` widget access from `DisplayTask`; `fic_i2c_lock()`/`fic_i2c_unlock()` protect `I2C0`; `log_mux` serializes SD/`FFat` file I/O.
 
 ## 10. Critical Hardware Quirks & Engineering Notes
 
-### 1. Battery Power Keep-Alive Latch (SYS_EN)
-When powering on the ESP32 via the physical battery button, the hardware PMIC requires the ESP32 to quickly assert the \SYS_EN\ pin HIGH (via the TCA9554 IO Expander on I2C) to latch the power circuit on.
-* **The Pitfall:** If the firmware waits for a Serial connection or performs long blocking tasks before initializing the IO Expander, the user will be forced to physically hold the power button down for several seconds. If they let go early, power is cut instantly.
-* **The Solution:** The I2C bus (\i2c_master_Init()\) and the IO Expander (\esp_io_expander_set_level(io_expander, MFS_EXIO_PIN_SYS_EN, 1)\) must be executed as the absolute very first commands in \setup()\, BEFORE any \while(!Serial)\ delay loops.
+### 1. Battery Power Keep-Alive Latch (`SYS_EN` / `EXIO6`)
+When powering on the ESP32 via the physical battery button, the hardware PMIC requires the ESP32 to assert `MFS_EXIO_PIN_SYS_EN` (`EXIO6`) HIGH via the TCA9554 IO Expander to latch power on.
+* **The Pitfall:** Waiting for native USB `Serial` before latching `SYS_EN` forces the user to hold the power button down for 3+ seconds or power drops immediately.
+* **The Solution:** `fic_i2c_init_from_board()` and TCA9554 `MFS_EXIO_PIN_SYS_EN` = HIGH execute at the very top of `setup()`, BEFORE the bounded `while (!Serial)` wait.
 
 ### 2. True Polling Rates (v5.1.4 ISR Architecture)
 The firmware utilizes a true zero-latency ISR architecture driven by FreeRTOS Event Groups. The sensor task sleeps at 0% CPU until the RM3100 hardware asserts the DRDY interrupts, at which point it wakes and reads instantly. 
