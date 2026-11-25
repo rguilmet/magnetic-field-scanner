@@ -148,6 +148,7 @@ The static control pins for the LCD and IMU were aggressively offloaded to the T
 * **Environment:** Arduino IDE v2+ or `arduino-cli`.
 * **Core:** ESP32 Board Package v3.3.x (`esp32:esp32`, ESP-IDF v5 based).
 * **Shared BSP Library:** [`Field_Instrument_Core`](https://github.com/rguilmet/field-instrument-core) `>= v1.1.0` installed under `Documents/Arduino/libraries/Field_Instrument_Core` (plus `lvgl v9.6.x`, `ArduinoJson v7.x`, and `SensorLib`).
+* **Hardware Datasheets & Articles:** Archived centrally in [`Field_Instrument_Reference`](https://github.com/rguilmet/field-instrument-reference) (`datasheets/RM3100`, `datasheets/Waveshare-ESP32-S3-Touch-LCD-3.49-v2`, `articles/RM3100`, `articles/I2C`, etc.).
 * **Standalone Pre-Core Archive:** The final self-contained standalone firmware release prior to `Field_Instrument_Core` extraction is preserved at Git tag `v5.1.15`.
 
 ### Board Settings (ESP32-S3 Dev Module)
